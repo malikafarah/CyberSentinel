@@ -355,3 +355,43 @@ async def intervene_freeze_node(payload: InterveneFreezeRequest, request: Reques
         "node_status": "FROZEN",
         "reason": payload.reason
     }
+
+audit_router = APIRouter(prefix="/audit", tags=["Audit & DPDP Compliance"])
+
+class AuditLogAccessRequest(BaseModel):
+    entityId: str
+    reason: str
+    action: str = "UNMASK_PII"
+    pii_type: Optional[str] = None
+    officer_id: Optional[str] = "OFFICER_409"
+
+@audit_router.post("/log-access")
+async def log_access(payload: AuditLogAccessRequest, request: Request):
+    """
+    POST /api/v1/audit/log-access
+    Logs DPDP Act compliance justification before unmasking PII.
+    """
+    db = get_db(request)
+    audit_col = db["audit_logs"]
+
+    access_entry = {
+        "action": payload.action,
+        "targetEntityId": payload.entityId,
+        "reason": payload.reason,
+        "piiType": payload.pii_type,
+        "officerId": payload.officer_id,
+        "compliance": "DPDP_ACT_2023",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+    # Deterministic SHA-256 hash
+    canonical_access = json.dumps(access_entry, separators=(',', ':'), sort_keys=True)
+    access_entry["record_hash"] = generate_sha256_hash(canonical_access)
+
+    await audit_col.insert_one(access_entry)
+
+    return {
+        "status": "success",
+        "message": f"Access logged for entity {payload.entityId} under DPDP compliance.",
+        "record_hash": access_entry["record_hash"]
+    }
