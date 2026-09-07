@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Banknote, MapPinned, MessageSquare, RefreshCw, ShieldAlert, Radio } from 'lucide-react';
+import { AlertTriangle, Banknote, MapPinned, MessageSquare, RefreshCw, ShieldAlert, Radio, Terminal } from 'lucide-react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, Legend } from 'recharts';
 import { dashboardService, predictionService, alertService, locationService } from '../services/services';
 import type { Alert, DashboardSummary, Prediction, LocationItem } from '../types';
 import { trend } from '../mocks/data';
 import { MapView } from '../components/MapView';
+import MlPipelineConsole from '../components/MlPipelineConsole';
 import { Loading, PageHeader, RiskBadge, StatusBadge, ErrorState } from '../components/ui';
 
 const icon = [MessageSquare, MapPinned, AlertTriangle, Banknote];
@@ -17,6 +18,7 @@ export function Dashboard() {
   const [locs, setLocs] = useState<LocationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showConsole, setShowConsole] = useState(false);
   const nav = useNavigate();
 
   const loadData = async () => {
@@ -90,6 +92,13 @@ export function Dashboard() {
     <div className="page">
       <PageHeader eyebrow="OPERATIONAL OVERVIEW" title="Threat picture">
         <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className={`btn ${showConsole ? '' : 'secondary'}`}
+            onClick={() => setShowConsole((prev) => !prev)}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Terminal size={14} /> {showConsole ? 'Close ML Console' : 'ML Pipeline Console'}
+          </button>
           <button className="btn secondary" onClick={loadData}>
             <RefreshCw size={14} /> Refresh
           </button>
@@ -98,6 +107,13 @@ export function Dashboard() {
           </button>
         </div>
       </PageHeader>
+
+      {/* Live SSE ML Intelligence Pipeline Console */}
+      {showConsole && (
+        <div style={{ marginBottom: '24px' }}>
+          <MlPipelineConsole onComplete={loadData} />
+        </div>
+      )}
 
       {/* 1. Top Scalar KPI Cards */}
       <div className="kpis">
