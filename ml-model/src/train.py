@@ -8,6 +8,11 @@ from sklearn.metrics import classification_report, confusion_matrix, precision_s
 
 from features import load_feature_splits
 from preprocessing import preprocess_pipeline
+try:
+    from src.mongo_exporter import extract_and_merge_mongodb_data
+except ImportError:
+    from mongo_exporter import extract_and_merge_mongodb_data
+
 
 # ── Timing Helper ──────────────────────────────────────────────────────────────
 def _fmt(seconds: float) -> str:
@@ -67,6 +72,10 @@ def train_and_evaluate_model(force_reprocess: bool = False, contamination: float
     processed_dir = os.path.join(base_dir, 'data', 'processed')
     model_dir     = os.path.join(base_dir, 'models')
     model_path    = os.path.join(model_dir, 'model.pkl')
+    merged_csv_out= os.path.join(processed_dir, 'merged_mongodb_transactions.csv')
+
+    # Extract any new records from MongoDB and merge into processed folder
+    target_csv_path = extract_and_merge_mongodb_data(raw_csv_path, merged_csv_out)
 
     TOTAL_STEPS = 5
     timer = Timer(TOTAL_STEPS)
@@ -78,13 +87,14 @@ def train_and_evaluate_model(force_reprocess: bool = False, contamination: float
 
     # ── Step 1: Preprocess raw data ─────────────────────────────────────────────
     train_csv = os.path.join(processed_dir, 'train_data.csv')
-    if force_reprocess or not os.path.exists(train_csv):
-        print("\n[Step 1/5] Running preprocessing pipeline on Indian dataset...")
-        preprocess_pipeline(raw_csv_path, processed_dir, train_ratio=0.80)
+    if force_reprocess or not os.path.exists(train_csv) or target_csv_path == merged_csv_out:
+        print("\n[Step 1/5] Running preprocessing pipeline...")
+        preprocess_pipeline(target_csv_path, processed_dir, train_ratio=0.80)
     else:
         print("\n[Step 1/5] Processed splits found — skipping preprocessing.")
         print("  (Run with force_reprocess=True to rebuild from raw data)")
     timer.tick("Preprocessing complete")
+
 
     # ── Step 2: Load feature splits ─────────────────────────────────────────────
     print("\n[Step 2/5] Loading feature matrices from processed splits...")
