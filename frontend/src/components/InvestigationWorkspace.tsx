@@ -11,11 +11,11 @@ import {
   Database,
   RefreshCw,
   X,
-  Radio,
-  Lock
+  Radio
 } from 'lucide-react';
 import EntityNode, { type EntityNodeData } from './EntityNode';
 import SecureActionModal, { type Receipt } from './SecureActionModal';
+import EntityActionPanel from './EntityActionPanel';
 import { getLayoutedElements } from './layout';
 import { intakeService, type ExtractedEntities } from '../services/intakeService';
 
@@ -807,20 +807,34 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
                   <div className="pt-2 flex flex-col gap-3">
                     {selectedNode.data.status === 'FROZEN' ? (
-                      <button
-                        onClick={handleUnfreezeAccount}
-                        disabled={isFreezing}
-                        className="w-full py-3 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all disabled:opacity-50 tracking-widest uppercase cursor-pointer"
-                      >
-                        {isFreezing ? 'Executing...' : 'Unfreeze Node Account'}
-                      </button>
+                      <div className="bg-blue-950/40 p-4 border border-blue-500/40 rounded-lg text-gray-200">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="badge bg-blue-600 text-white text-xs px-2.5 py-1 rounded font-bold font-mono tracking-wider uppercase">
+                            ACCOUNT FROZEN / LIEN ACTIVE
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-300 mt-2">
+                          Lien active on node. Officers can unfreeze or process appeals off-ramp.
+                        </p>
+                        <button
+                          onClick={handleUnfreezeAccount}
+                          disabled={isFreezing}
+                          className="w-full mt-3 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all disabled:opacity-50 tracking-widest uppercase cursor-pointer"
+                        >
+                          {isFreezing ? 'Executing...' : 'Unfreeze Node / Process Appeal'}
+                        </button>
+                      </div>
                     ) : (
-                      <button
-                        onClick={() => setIsSecureModalOpen(true)}
-                        className="w-full py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-xs rounded-lg border border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all uppercase tracking-widest cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <Lock size={13} /> Initiate CFCFRMS Lien-Marking
-                      </button>
+                      <EntityActionPanel
+                        riskScore={Number(selectedNode.data.riskScore) || 0}
+                        entityStatus={selectedNode.data.status || 'ACTIVE'}
+                        onInitiateLien={() => setIsSecureModalOpen(true)}
+                        onMarkDeepDive={() => {
+                          if (selectedNode.data.metadata?.evidence_chain) {
+                            onNodeClick({} as any, selectedNode);
+                          }
+                        }}
+                      />
                     )}
                   </div>
                 </div>
