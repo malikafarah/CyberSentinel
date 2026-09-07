@@ -8,9 +8,10 @@ const nav = [
   ['/heatmap', 'Risk Heatmap', Map],
   ['/alerts', 'Alerts', Bell],
   ['/complaints', 'Complaints Registry', FileText],
-  ['/investigations/CYB-2026-1024', 'Investigations', BriefcaseBusiness],
+  ['/cases', 'Investigation Cases', BriefcaseBusiness],
   ['/settings', 'Profile & Settings', Settings],
 ] as const;
+
 
 
 export function DashboardLayout() {

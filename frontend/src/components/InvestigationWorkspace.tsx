@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, BackgroundVariant, MarkerType, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import EntityNode, { type EntityNodeData } from './EntityNode';
@@ -40,6 +40,9 @@ const DEFAULT_FALLBACK_LOGS: TerminalLog[] = [
 
 export default function InvestigationWorkspace() {
   const navigate = useNavigate();
+  const { id: paramCaseId } = useParams<{ id?: string }>();
+  const caseId = paramCaseId || 'CYB-2026-1024';
+
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<EntityNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNode, setSelectedNode] = useState<Node<EntityNodeData> | null>(null);
@@ -59,10 +62,12 @@ export default function InvestigationWorkspace() {
       
       let graphRes: Response | null = null;
       const graphUrls = [
-        'http://localhost:8001/api/engine/case/CYB-2026-1024',
-        'http://localhost:8000/api/engine/case/CYB-2026-1024',
-        '/api/engine/case/CYB-2026-1024'
+        `http://localhost:8001/api/engine/case/${encodeURIComponent(caseId)}`,
+        `http://localhost:8000/api/engine/case/${encodeURIComponent(caseId)}`,
+        `/api/v1/engine/case/${encodeURIComponent(caseId)}`,
+        `/api/engine/case/${encodeURIComponent(caseId)}`
       ];
+
 
       for (const url of graphUrls) {
         try {
@@ -327,7 +332,7 @@ export default function InvestigationWorkspace() {
       {/* 1. Workspace Header */}
       <header className="px-6 py-3 border-b border-white/10 bg-white/[0.02] flex justify-between items-center z-20 shrink-0">
         <div className="flex items-center gap-4">
-          <h1 className="text-sm font-semibold tracking-wide text-white uppercase">CASE CYB-2026-1024</h1>
+          <h1 className="text-sm font-semibold tracking-wide text-white uppercase">CASE #{caseId}</h1>
           <span className="text-[9px] font-bold bg-[#48D878]/20 text-[#48D878] px-2 py-1 rounded border border-[#48D878]/30 uppercase tracking-widest">
             Live Telemetry
           </span>

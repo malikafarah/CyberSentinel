@@ -45,26 +45,60 @@ export function Investigation() {
 
   const hot = p.filter((x) => c.hotspot_ids?.includes(x.id));
 
+  const updateCaseStatus = async (newStatus: string) => {
+    try {
+      await caseService.updateCase(c.id, { status: newStatus });
+      setC((prev) => prev ? { ...prev, status: newStatus } : undefined);
+    } catch (err: any) {
+      alert(`Failed to update case status: ${err?.message || 'Server error'}`);
+    }
+  };
+
   return (
     <div className="page">
       <PageHeader eyebrow="INVESTIGATION / CASE VIEW" title={`CASE #${c.id}`}>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn primary" onClick={() => nav(`/investigations/${c.id}/graph`)}>
+          <button className="btn" onClick={() => nav(`/cases/${c.id}/graph`)}>
             Interactive Money Trail Graph
           </button>
-          <button className="btn secondary" onClick={() => nav('/alerts')}>
-            View related alerts
+          <button className="btn secondary" onClick={() => nav('/cases')}>
+            Back to Directory
           </button>
         </div>
       </PageHeader>
 
       <div className="case-header">
-        <div>
-          <span className="status ack">{c.status}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-subtle)', textTransform: 'uppercase', fontWeight: 700 }}>
+              Status:
+            </span>
+            <select
+              value={c.status}
+              onChange={(e) => updateCaseStatus(e.target.value)}
+              style={{
+                background: 'var(--surface-muted)',
+                border: '1px solid var(--border-strong)',
+                color: c.status === 'CLOSED' ? '#A6ADA8' : c.status === 'ACTIVE' ? 'var(--accent)' : '#FFD166',
+                borderRadius: 'var(--radius-sm)',
+                padding: '4px 8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="IN_PROGRESS">IN PROGRESS</option>
+              <option value="PENDING">PENDING</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+          </div>
           <RiskBadge level={c.risk_level} />
         </div>
-        <p>{c.summary}</p>
+        <p style={{ marginTop: '12px' }}>{c.summary || c.title}</p>
       </div>
+
       <div className="case-grid">
         <section className="panel">
           <p className="eyebrow">RELATED COMPLAINTS</p>

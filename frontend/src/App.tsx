@@ -11,8 +11,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Loading } from './components/ui';
 
 import InvestigationWorkspace from './components/InvestigationWorkspace';
-
 import { ComplaintsPage } from './pages/Complaints';
+import CasesPage from './pages/CasesPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -46,6 +46,9 @@ export default function App() {
           <Route path="heatmap" element={<Heatmap />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="complaints" element={<ComplaintsPage />} />
+          <Route path="cases" element={<CasesPage />} />
+          <Route path="cases/:id" element={<Investigation />} />
+          <Route path="cases/:id/graph" element={<InvestigationWorkspace />} />
           <Route path="predictions/:id" element={<PredictionDetail />} />
           <Route path="investigations/:id" element={<Investigation />} />
           <Route path="investigations/:id/graph" element={<InvestigationWorkspace />} />

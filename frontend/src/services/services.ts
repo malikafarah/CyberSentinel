@@ -1,6 +1,5 @@
 import { api } from './api';
-import type { Alert, DashboardSummary, Filters, Prediction, Role, User, Case } from '../types';
-import { cases as mockCases } from '../mocks/data';
+import type { Alert, DashboardSummary, Filters, Prediction, Role, User } from '../types';
 
 
 interface TokenResponse {
@@ -215,31 +214,8 @@ export const alertService = {
 };
 
 export { locationService } from './locationService';
+export { caseService } from './caseService';
+export { complaintService } from './complaintService';
 
-
-export const caseService = {
-  get: async (id: string): Promise<Case | undefined> => {
-    try {
-      const caseData = await api.get<Case>(`/cases/${encodeURIComponent(id)}`);
-      if (caseData && caseData.id) return caseData;
-    } catch {
-      // Fall back to baseline mock if needed
-    }
-    const found = mockCases.find((c) => c.id === id);
-    return found;
-  },
-
-  addNote: async (id: string, note: string): Promise<Case | undefined> => {
-    try {
-      return await api.post<Case>(`/cases/${encodeURIComponent(id)}/notes`, { note });
-    } catch {
-      const found = mockCases.find((c) => c.id === id);
-      if (found) {
-        found.notes.push(note);
-        return { ...found };
-      }
-    }
-  },
-};
 
 

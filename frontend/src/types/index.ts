@@ -80,14 +80,17 @@ export interface Alert {
 
 export interface Case {
   id: string;
-  status: 'ACTIVE' | 'PENDING' | 'CLOSED';
+  title?: string;
+  status: 'ACTIVE' | 'IN_PROGRESS' | 'PENDING' | 'CLOSED' | 'OPEN' | string;
   summary: string;
   risk_level: RiskLevel;
   complaints: string[];
   hotspot_ids: string[];
   notes: string[];
   timeline: { time: string; event: string; location: string }[];
+  created_at?: string;
 }
+
 
 export interface DashboardSummary {
   totalComplaints: number;
