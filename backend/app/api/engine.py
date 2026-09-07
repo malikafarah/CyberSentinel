@@ -847,6 +847,68 @@ async def get_forecast_zones(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class SingleFeedback(BaseModel):
+    node_id: str
+    status: str  # "FALSE_POSITIVE", "TRUE_POSITIVE", "APPEAL_APPROVED"
+    reason: Optional[str] = "Investigator feedback"
+    officer_id: Optional[str] = "OFFICER_409"
+
+class FeedbackRequest(BaseModel):
+    feedback: Optional[List[SingleFeedback]] = None
+    node_id: Optional[str] = None
+    status: Optional[str] = None
+    reason: Optional[str] = None
+    officer_id: Optional[str] = None
+
+@router.post("/feedback")
+async def submit_ml_feedback(payload: FeedbackRequest, request: Request):
+    """
+    Submits investigator confirmation or false positive feedback.
+    Recalibrates Isolation Forest contamination and PageRank alpha damping.
+    """
+    try:
+        from app.engine.feedback import recalibrate_models
+        db = get_db(request)
+
+        batch: List[Dict[str, Any]] = []
+        if payload.feedback:
+            batch = [f.model_dump() for f in payload.feedback]
+        elif payload.node_id and payload.status:
+            batch = [{
+                "node_id": payload.node_id,
+                "status": payload.status,
+                "reason": payload.reason or "Investigator active learning label",
+                "officer_id": payload.officer_id or "OFFICER_409"
+            }]
+        else:
+            raise HTTPException(status_code=400, detail="Must provide feedback list or node_id + status")
+
+        recalibrated = recalibrate_models(batch)
+
+        # Log feedback batch to MongoDB
+        await db["ml_feedback"].insert_many([
+            {**item, "timestamp": datetime.now(timezone.utc).isoformat()}
+            for item in batch
+        ])
+
+        return {
+            "status": "success",
+            "message": "Feedback ingested and ML models dynamically recalibrated.",
+            "recalibration": recalibrated
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/hyperparams")
+async def get_active_hyperparams():
+    """Returns active runtime hyperparameters for Isolation Forest and PageRank."""
+    from app.engine.feedback import get_current_hyperparam, _RUNTIME_HYPERPARAMS
+    return {
+        "status": "success",
+        "hyperparameters": dict(_RUNTIME_HYPERPARAMS)
+    }
+
+
 
 
 

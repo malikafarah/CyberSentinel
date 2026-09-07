@@ -487,6 +487,21 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
       } else {
         fetchGraphAndLogs(true);
       }
+
+      // Submit Active Learning Feedback to tune ML parameters
+      try {
+        await fetch('/api/v1/engine/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            node_id: targetId,
+            status: 'FALSE_POSITIVE',
+            reason: 'Investigator unfreeze appeal approval'
+          })
+        });
+      } catch {
+        // silent fallback
+      }
     } catch (error) {
       console.error('Unfreeze failed:', error);
     } finally {

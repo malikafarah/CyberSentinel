@@ -260,9 +260,22 @@ async def unfreeze_account(request_body: UnfreezeRequest, request: Request):
     
     await audit_col.insert_one(new_audit_entry)
 
+    # 8. Active Learning: Trigger ML Feedback Recalibration
+    from app.engine.feedback import recalibrate_models
+    recalibration_result = recalibrate_models([
+        {
+            "node_id": target_id_val,
+            "status": "FALSE_POSITIVE",
+            "action": "UNFROZEN_APPEAL",
+            "reason": request_body.reason,
+            "officer_id": request_body.officer_id
+        }
+    ])
+
     return {
         "status": "success",
-        "message": f"Account {request_body.node_id} successfully unfrozen.",
+        "message": f"Account {request_body.node_id} successfully unfrozen. Active learning model recalibrated.",
+        "active_learning_recalibration": recalibration_result,
         "audit_receipt": {
             "transaction_hash": current_hash,
             "previous_hash": previous_hash,
