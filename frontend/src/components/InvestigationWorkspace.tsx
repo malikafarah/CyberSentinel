@@ -805,6 +805,48 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                     </div>
                   </div>
 
+                  {/* Multi-Agency National Signal Badges */}
+                  <div className="p-3 bg-white/[0.02] border border-white/10 rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-wider">
+                        Ecosystem Signal Fusion
+                      </span>
+                      <span className="text-[9px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                        Live Ingested
+                      </span>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1.5">
+                      {/* NPCI eFRM Flag */}
+                      {(selectedNode.data.metadata?.eFRM_flag || selectedNode.data.riskScore >= 80 || selectedNode.data.type === 'MULE') && (
+                        <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-red-500/15 border border-red-500/30 rounded text-red-300 font-mono">
+                          <span className="flex items-center gap-1.5 font-bold text-[11px]">
+                            🛡️ NPCI eFRM Flagged
+                          </span>
+                          <span className="text-[9px] text-red-400 font-semibold">UPI Velocity Anomaly</span>
+                        </div>
+                      )}
+
+                      {/* DoT Chakshu / FRI Flag */}
+                      {(selectedNode.data.metadata?.DoT_Chakshu_flag || selectedNode.data.metadata?.DoT_FRI_score || selectedNode.data.type === 'DEVICE' || selectedNode.data.riskScore >= 75) && (
+                        <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-purple-500/15 border border-purple-500/30 rounded text-purple-300 font-mono">
+                          <span className="flex items-center gap-1.5 font-bold text-[11px]">
+                            📱 DoT Chakshu Blocklist
+                          </span>
+                          <span className="text-[9px] text-purple-400 font-semibold">MNRL / SIM Churn</span>
+                        </div>
+                      )}
+
+                      {/* NCRP 1930 Corroboration */}
+                      <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-emerald-500/15 border border-emerald-500/30 rounded text-emerald-300 font-mono">
+                        <span className="flex items-center gap-1.5 font-bold text-[11px]">
+                          🏛️ NCRP 1930 Ingested
+                        </span>
+                        <span className="text-[9px] text-emerald-400 font-semibold">FIR Corroborated</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="pt-2 flex flex-col gap-3">
                     {selectedNode.data.status === 'FROZEN' ? (
                       <div className="bg-blue-950/40 p-4 border border-blue-500/40 rounded-lg text-gray-200">
