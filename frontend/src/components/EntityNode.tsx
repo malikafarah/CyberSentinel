@@ -11,6 +11,7 @@ export interface EntityNodeData extends Record<string, unknown> {
   isDimmed?: boolean;
   metadata?: Record<string, any>;
   evidence_chain?: string[];
+  linked_cases?: string[];
 }
 
 export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
@@ -115,9 +116,17 @@ export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
       <div className="text-xs font-semibold tracking-wide text-white mb-1 truncate" title={data.label || data.id}>
         {data.label || data.id}
       </div>
-      <div className="text-[9px] font-mono text-gray-400 mb-3 truncate">
+      <div className="text-[9px] font-mono text-gray-400 mb-2 truncate">
         ID: {data.id}
       </div>
+
+      {/* Cross-Case / Multi-FIR Indicator Badge */}
+      {data.linked_cases && data.linked_cases.length > 1 && (
+        <div className="text-[8px] font-mono font-bold text-purple-300 bg-purple-950/80 px-1.5 py-0.5 rounded border border-purple-500/50 mb-2 flex items-center justify-between">
+          <span>🚨 MULTI-FIR LINK</span>
+          <span>{data.linked_cases.length} Cases</span>
+        </div>
+      )}
 
       {/* Threat Level Bar & Risk Score */}
       <div className="pt-2 border-t border-white/10 flex justify-between items-center">

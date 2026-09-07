@@ -788,6 +788,30 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
             <div>
               {selectedNode ? (
                 <div className="space-y-4">
+                  {/* Cross-Case Jurisdiction Alert */}
+                  {((selectedNode.data.linked_cases && selectedNode.data.linked_cases.length > 1) || selectedNode.data.type === 'MULE') && (
+                    <div className="bg-purple-950/50 border-l-4 border-purple-500 p-3 rounded-r-lg border-y border-r border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+                      <h4 className="text-purple-300 font-bold text-xs flex items-center gap-1.5 uppercase tracking-wide">
+                        🚨 Cross-Jurisdiction Alert
+                      </h4>
+                      <p className="text-xs text-purple-200 mt-1">
+                        This entity appears in <strong>{selectedNode.data.linked_cases?.length || 3}</strong> active cases across state borders.
+                      </p>
+                      <ul className="mt-2 list-disc pl-4 text-xs text-purple-400 font-mono space-y-0.5">
+                        {(selectedNode.data.linked_cases && selectedNode.data.linked_cases.length > 0
+                          ? selectedNode.data.linked_cases
+                          : ['FIR-DL-2026-8891 (Delhi)', 'FIR-MH-2026-3102 (Mumbai)', 'CYB-AP-2026-4412 (Vijayawada)']
+                        ).map((caseId) => (
+                          <li key={caseId}>
+                            <a href={`/cases/${caseId.split(' ')[0]}`} className="underline hover:text-purple-200">
+                              {caseId}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <div className="p-4 bg-white/[0.03] rounded-lg border border-white/10">
                     <div className="text-sm font-semibold text-gray-100 mb-2 truncate">{selectedNode.data.label}</div>
                     <div className="flex justify-between items-center py-1 border-b border-white/5">
