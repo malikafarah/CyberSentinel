@@ -104,39 +104,18 @@ const DEFAULT_FALLBACK_LOGS: TerminalLog[] = [
   }
 ];
 
-// Helper: BFS path finder between source victim node and target node
-function findTopologicalPath(startId: string, endId: string, edges: Edge[]): string[] | null {
-  const adj = new Map<string, string[]>();
-  edges.forEach((e) => {
-    const list = adj.get(e.source) || [];
-    list.push(e.target);
-    adj.set(e.source, list);
-  });
-
-  const queue: { current: string; path: string[] }[] = [{ current: startId, path: [startId] }];
-  const visited = new Set<string>([startId]);
-
-  while (queue.length > 0) {
-    const { current, path } = queue.shift()!;
-    if (current === endId) return path;
-
-    for (const next of adj.get(current) || []) {
-      if (!visited.has(next)) {
-        visited.add(next);
-        queue.push({ current: next, path: [...path, next] });
-      }
-    }
-  }
-  return null;
+interface InvestigationWorkspaceProps {
+  initialNodes?: Node<EntityNodeData>[];
+  initialEdges?: Edge[];
 }
 
-export default function InvestigationWorkspace() {
+export default function InvestigationWorkspace({ initialNodes, initialEdges }: InvestigationWorkspaceProps = {}) {
   const navigate = useNavigate();
   const { id: paramCaseId } = useParams<{ id?: string }>();
   const caseId = paramCaseId || 'CYB-2026-1024';
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<EntityNodeData>>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<EntityNodeData>>(initialNodes || []);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges || []);
   const [selectedNode, setSelectedNode] = useState<Node<EntityNodeData> | null>(null);
 
   // Secure Action Modal
@@ -276,6 +255,10 @@ export default function InvestigationWorkspace() {
   };
 
   useEffect(() => {
+    if (initialNodes && initialNodes.length > 0) {
+      setIsLoading(false);
+      return;
+    }
     fetchGraphAndLogs(false);
 
     let intervalId: any = null;
@@ -288,7 +271,7 @@ export default function InvestigationWorkspace() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [layoutDirection, isLiveStreaming, caseId]);
+  }, [layoutDirection, isLiveStreaming, caseId, initialNodes]);
 
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -299,20 +282,25 @@ export default function InvestigationWorkspace() {
     setActiveChain(null);
     setActiveChainNodes([]);
     setNodes((nds) =>
-      nds.map((n) => ({
-        ...n,
-        data: {
-          ...n.data,
-          isInChain: false,
-          isDimmed: false
-        }
-      }))
+      nds.map((n) => {
+        const { border, boxShadow, opacity, ...restStyle } = (n.style || {}) as any;
+        return {
+          ...n,
+          className: '',
+          style: restStyle,
+          data: {
+            ...n.data,
+            isInChain: false,
+            isDimmed: false
+          }
+        };
+      })
     );
     setEdges((eds) =>
       eds.map((e) => ({
         ...e,
-        animated: true,
-        style: { ...e.style, opacity: 0.85, strokeWidth: 2 }
+        animated: false,
+        style: { ...e.style, stroke: '#b1b1b7', strokeWidth: 1 }
       }))
     );
   }, [setNodes, setEdges]);
@@ -323,47 +311,40 @@ export default function InvestigationWorkspace() {
       setSelectedNode(clickedNode);
       if (rightPanelTab !== 'inspection') setRightPanelTab('inspection');
 
-      // 1. Extract the evidence chain path from clicked node metadata or dynamically resolve path
-      let chain: string[] | undefined =
-        clickedNode.data?.metadata?.evidence_chain ||
-        (clickedNode.data?.evidence_chain as string[] | undefined);
+      // 1. Extract the evidence chain path from clicked node metadata
+      const chain = clickedNode.data?.metadata?.evidence_chain as string[] | undefined;
 
-      // If not predefined in metadata, find topological shortest path from victim root
       if (!chain || !Array.isArray(chain) || chain.length === 0) {
-        const victimNode = nodes.find((n) => n.data.type === 'VICTIM');
-        if (victimNode && victimNode.id !== clickedNode.id) {
-          const directPath = findTopologicalPath(victimNode.id, clickedNode.id, edges);
-          if (directPath) {
-            chain = directPath;
-          } else {
-            // Find path through intermediate mules to terminal cashout
-            const outgoingToAtm = edges.find((e) => e.source === clickedNode.id);
-            if (outgoingToAtm) {
-              const toAtmPath = findTopologicalPath(victimNode.id, outgoingToAtm.target, edges);
-              if (toAtmPath) chain = toAtmPath;
-            }
-          }
-        }
-      }
-
-      // Default fallback chain if none resolved
-      if (!chain || chain.length === 0) {
-        chain = [clickedNode.id];
+        // If no chain, reset highlighting
+        handleResetHighlighting();
+        return;
       }
 
       setActiveChain(chain);
 
-      // 2. Highlight Nodes in the chain with glowing red border and dim unrelated nodes
+      // 2. Highlight Nodes in the chain
       const chainNodeIds = new Set(chain);
       setNodes((nds) =>
         nds.map((node) => {
-          const isNodeInChain = chainNodeIds.has(node.id) || chainNodeIds.has(node.data.id);
+          if (chainNodeIds.has(node.id) || chainNodeIds.has(node.data?.id)) {
+            return {
+              ...node,
+              style: { ...node.style, border: '2px solid #ef4444', boxShadow: '0 0 15px rgba(239, 68, 68, 0.6)' },
+              data: {
+                ...node.data,
+                isInChain: true,
+                isDimmed: false
+              }
+            };
+          }
+          // Dim nodes not in the chain
           return {
             ...node,
+            style: { ...node.style, opacity: 0.3, border: 'none', boxShadow: 'none' },
             data: {
               ...node.data,
-              isInChain: isNodeInChain,
-              isDimmed: !isNodeInChain
+              isInChain: false,
+              isDimmed: true
             }
           };
         })
@@ -371,16 +352,16 @@ export default function InvestigationWorkspace() {
 
       // Populate evidence chain sequence for the left-hand panel
       const chainSequence = chain
-        .map((id) => nodes.find((n) => n.id === id || n.data.id === id))
+        .map((id) => nodes.find((n) => n.id === id || n.data?.id === id))
         .filter(Boolean) as Node<EntityNodeData>[];
       setActiveChainNodes(chainSequence);
 
-      // 3. Highlight Edges that connect the chain steps with flowing animated red strokes
+      // 3. Highlight Edges that connect the chain steps
       setEdges((eds) =>
         eds.map((edge) => {
-          const isEdgeInChain = chain!.some((nodeId, index) => {
-            if (index === chain!.length - 1) return false;
-            const nextNodeId = chain![index + 1];
+          const isEdgeInChain = chain.some((nodeId, index) => {
+            if (index === chain.length - 1) return false;
+            const nextNodeId = chain[index + 1];
             return (
               (edge.source === nodeId || edge.source === `node-${nodeId}`) &&
               (edge.target === nextNodeId || edge.target === `node-${nextNodeId}`)
@@ -391,7 +372,7 @@ export default function InvestigationWorkspace() {
             return {
               ...edge,
               animated: true,
-              style: { stroke: '#ef4444', strokeWidth: 3.5, opacity: 1 },
+              style: { stroke: '#ef4444', strokeWidth: 3 },
               markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' }
             };
           }
@@ -400,12 +381,12 @@ export default function InvestigationWorkspace() {
           return {
             ...edge,
             animated: false,
-            style: { stroke: '#64748b', strokeWidth: 1, opacity: 0.15 }
+            style: { stroke: '#e5e7eb', strokeWidth: 1, opacity: 0.2 }
           };
         })
       );
     },
-    [nodes, edges, setNodes, setEdges, rightPanelTab]
+    [nodes, edges, setNodes, setEdges, rightPanelTab, handleResetHighlighting]
   );
 
   // Successful Authorization & Receipt callback
