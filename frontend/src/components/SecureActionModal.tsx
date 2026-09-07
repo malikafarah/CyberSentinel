@@ -30,52 +30,32 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
     setError('');
 
     try {
-      const endpoints = [
-        'http://localhost:8001/api/action/freeze',
-        'http://localhost:8000/api/action/freeze',
-        '/api/v1/action/freeze',
-        '/api/action/freeze'
-      ];
+      const res = await fetch('/api/v1/action/freeze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target_account: accountId,
+          officer_pin: pin,
+          justification: reason
+        })
+      });
 
-      let response: Response | null = null;
-      let lastErrText = '';
-
-      for (const url of endpoints) {
+      if (!res.ok) {
+        let errMessage = 'Authorization failed. Invalid PIN or insufficient permissions.';
         try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              target_account: accountId,
-              node_id: accountId,
-              officer_pin: pin,
-              officer_id: `OFFICER_${pin || '409'}`,
-              justification: reason,
-              reason: reason
-            })
-          });
-
-          if (res.ok) {
-            response = res;
-            break;
-          } else {
-            const errData = await res.json().catch(() => ({}));
-            lastErrText = errData?.detail || errData?.message || `Server error (${res.status})`;
-          }
+          const errData = await res.json();
+          if (errData?.detail) errMessage = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
         } catch {
-          // try next
+          // non-json
         }
+        throw new Error(errMessage);
       }
 
-      if (!response || !response.ok) {
-        throw new Error(lastErrText || 'Authorization failed. Invalid PIN or insufficient permissions.');
-      }
-
-      const data = await response.json();
+      const data = await res.json();
       const rawReceipt = data.receipt || data.audit_receipt || {};
       const generatedReceipt: Receipt = {
         transaction_id: rawReceipt.transaction_id || `TXN-${(rawReceipt.transaction_hash || '000000').slice(0, 12).toUpperCase()}`,
-        block_hash: rawReceipt.block_hash || rawReceipt.transaction_hash || 'f81e18f34e8eb65c070f9180a0ac66a61cc5a8912ccdaa5c877b7fc1bcfe0612',
+        block_hash: rawReceipt.block_hash || rawReceipt.transaction_hash || '0xabc123...',
         canonical_json: typeof rawReceipt.canonical_json === 'string'
           ? rawReceipt.canonical_json
           : JSON.stringify(rawReceipt.canonical_json || rawReceipt, null, 2),
@@ -89,7 +69,7 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
         onSuccess(generatedReceipt);
       }
     } catch (err: any) {
-      setError(err.message || 'Interdiction signature authorization failed.');
+      setError(err.message || 'Authorization failed. Invalid PIN or insufficient permissions.');
     } finally {
       setIsSubmitting(false);
     }
@@ -168,7 +148,7 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 className="w-full bg-black/40 border border-white/15 p-2.5 rounded-lg font-mono tracking-widest text-base text-gray-100 focus:border-red-500 focus:outline-none"
-                placeholder="••••"
+                placeholder="****"
                 maxLength={6}
               />
               <p className="text-[10px] text-gray-500 mt-1 font-mono">
