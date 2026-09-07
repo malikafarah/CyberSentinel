@@ -408,3 +408,43 @@ async def log_access(payload: AuditLogAccessRequest, request: Request):
         "message": f"Access logged for entity {payload.entityId} under DPDP compliance.",
         "record_hash": access_entry["record_hash"]
     }
+
+class DispatchPatrolRequest(BaseModel):
+    atm_id: Optional[str] = "ATM_BENZ_1"
+    atm_name: Optional[str] = "Benz Circle SBI ATM"
+    zone_id: Optional[str] = "ZONE-BENZ-CIRCLE"
+    lat: Optional[float] = 16.4971
+    lng: Optional[float] = 80.6516
+    predicted_time: Optional[str] = "20:30 IST"
+
+@router.post("/dispatch-patrol")
+async def dispatch_patrol_unit(payload: DispatchPatrolRequest, request: Request):
+    """
+    Sub-Second Field Dispatch Alert endpoint.
+    Identifies nearest patrol unit to the flagged ATM and dispatches an encrypted alert.
+    """
+    try:
+        from app.actions.dispatch import dispatch_field_officer
+        db = get_db(request)
+        dispatch_col = db["dispatch_logs"]
+
+        atm_data = {
+            "id": payload.atm_id,
+            "name": payload.atm_name,
+            "lat": payload.lat,
+            "lng": payload.lng
+        }
+
+        dispatch_record = dispatch_field_officer(atm_data, predicted_cashout_time=payload.predicted_time)
+
+        # Save to database
+        await dispatch_col.insert_one(dict(dispatch_record))
+
+        return {
+            "status": "success",
+            "message": f"Sub-second dispatch alert transmitted to {dispatch_record['officer']}.",
+            "dispatch": dispatch_record
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
