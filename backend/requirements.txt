@@ -22,8 +22,10 @@ python-louvain>=0.16
 
 # ML & Numerical Computing
 numpy>=1.26.0
+pandas>=2.0.0
 scikit-learn>=1.4.0
 spacy>=3.7.0
+prophet>=1.1.5
 
 # Utility
 python-dotenv>=1.0.1

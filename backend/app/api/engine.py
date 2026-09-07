@@ -826,5 +826,27 @@ async def get_fraud_syndicates(request: Request):
         "syndicates": sorted_syndicates
     }
 
+@router.get("/forecast")
+async def get_forecast_zones(
+    hours_ahead: int = 12
+):
+    """
+    Spatiotemporal Cash-Out Forecasting for ATM Hotspots across Pan-India grids.
+    """
+    try:
+        from app.engine.forecasting import forecast_atm_hotspots
+        results = forecast_atm_hotspots(hours_ahead=hours_ahead)
+        return {
+            "status": "success",
+            "algorithm": "Facebook Prophet / Spatiotemporal Seasonality",
+            "forecast_horizon_hours": hours_ahead,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "forecasted_zones_count": len(results),
+            "zones": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 

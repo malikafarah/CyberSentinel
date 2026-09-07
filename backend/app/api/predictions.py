@@ -264,3 +264,25 @@ async def trigger_live_prediction(
          enriched_predictions.append(validated_prediction)
          
     return enriched_predictions
+
+@router.get("/forecast")
+async def get_atm_cashout_forecast(
+    hours_ahead: int = Query(default=12, ge=1, le=72, description="Forecasting horizon in hours (e.g. 12, 24, 48)")
+):
+    """
+    Spatiotemporal Time-Series Cash-Out Forecasting for ATM Hotspots.
+    Uses Prophet / Harmonic Seasonal Decomposition with payday & weekend calendar features.
+    """
+    try:
+        from app.engine.forecasting import forecast_atm_hotspots
+        results = forecast_atm_hotspots(hours_ahead=hours_ahead)
+        return {
+            "status": "success",
+            "algorithm": "Facebook Prophet / Spatiotemporal Seasonality",
+            "forecast_horizon_hours": hours_ahead,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "forecasted_zones_count": len(results),
+            "zones": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
