@@ -7,40 +7,55 @@ import { Alerts } from './pages/Alerts';
 import { PredictionDetail } from './pages/PredictionDetail';
 import { Investigation } from './pages/Investigation';
 import { Settings } from './pages/Settings';
-import { authService } from './services/services';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { Loading } from './components/ui';
 
 import InvestigationWorkspace from './components/InvestigationWorkspace';
 
+import { ComplaintsPage } from './pages/Complaints';
+
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  if (!authService.current()) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
   return <>{children}</>;
 }
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/"
-        element={
-          <RequireAuth>
-            <DashboardLayout />
-          </RequireAuth>
-        }
-      >
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="heatmap" element={<Heatmap />} />
-        <Route path="alerts" element={<Alerts />} />
-        <Route path="predictions/:id" element={<PredictionDetail />} />
-        <Route path="investigations/:id" element={<Investigation />} />
-        <Route path="investigations/:id/graph" element={<InvestigationWorkspace />} />
-        <Route path="graph" element={<InvestigationWorkspace />} />
-        <Route path="settings" element={<Settings />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <DashboardLayout />
+            </RequireAuth>
+          }
+        >
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="heatmap" element={<Heatmap />} />
+          <Route path="alerts" element={<Alerts />} />
+          <Route path="complaints" element={<ComplaintsPage />} />
+          <Route path="predictions/:id" element={<PredictionDetail />} />
+          <Route path="investigations/:id" element={<Investigation />} />
+          <Route path="investigations/:id/graph" element={<InvestigationWorkspace />} />
+          <Route path="graph" element={<InvestigationWorkspace />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </AuthProvider>
   );
-}
+}
+
+

@@ -6,7 +6,25 @@ export interface User {
   id?: string;
   name: string;
   email: string;
+  username?: string;
   role: Role;
+}
+
+export interface LocationItem {
+  id?: string;
+  location_id: string;
+  location_name: string;
+  region: string;
+  geometry: {
+    type: string;
+    coordinates: [number, number]; // [lng, lat]
+  };
+  latitude: number;
+  longitude: number;
+  risk_score: number; // 0-100
+  risk_level: RiskLevel | string;
+  predicted_window?: string;
+  location_metadata?: Record<string, any>;
 }
 
 export interface Prediction {
@@ -29,7 +47,26 @@ export interface Prediction {
   created_at?: string;
 }
 
+export interface Complaint {
+  id: string;
+  complaint_id?: string;
+  crime_category: string;
+  region: string;
+  account_number?: string;
+  amount: number;
+  timestamp: string;
+  reported_at?: string;
+  reported_by?: string;
+  text?: string;
+  extracted_entities?: {
+    upi_ids: string[];
+    phone_numbers: string[];
+    account_numbers: string[];
+  };
+}
+
 export interface Alert {
+
   id: string;
   prediction_id: string;
   severity: RiskLevel;
@@ -57,7 +94,13 @@ export interface DashboardSummary {
   highRiskZones: number;
   activeAlerts: number;
   atRiskAtms: number;
-  risk_level_breakdown?: Record<string, number>;
+  risk_level_breakdown?: {
+    CRITICAL: number;
+    HIGH: number;
+    MEDIUM: number;
+    LOW: number;
+    [key: string]: number;
+  };
 }
 
 export interface Filters {
@@ -66,3 +109,4 @@ export interface Filters {
   window: string;
   risk: string;
 }
+

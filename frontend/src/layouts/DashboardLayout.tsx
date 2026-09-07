@@ -1,24 +1,27 @@
 import { useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Bell, BriefcaseBusiness, LayoutDashboard, LogOut, Map, Settings, UserCircle } from 'lucide-react';
-import { authService } from '../services/services';
+import { Bell, BriefcaseBusiness, FileText, LayoutDashboard, LogOut, Map, Settings, UserCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const nav = [
   ['/dashboard', 'Dashboard', LayoutDashboard],
   ['/heatmap', 'Risk Heatmap', Map],
   ['/alerts', 'Alerts', Bell],
+  ['/complaints', 'Complaints Registry', FileText],
   ['/investigations/CYB-2026-1024', 'Investigations', BriefcaseBusiness],
   ['/settings', 'Profile & Settings', Settings],
 ] as const;
 
+
 export function DashboardLayout() {
-  const u = authService.current();
+  const { user: u, logout } = useAuth();
   const navigate = useNavigate();
   const accountMenu = useRef<HTMLDetailsElement>(null);
   const signOut = () => {
-    authService.logout();
+    logout();
     navigate('/login');
   };
+
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {

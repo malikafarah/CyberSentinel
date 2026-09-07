@@ -34,7 +34,7 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
     }
   }
 
-  const token = localStorage.getItem('cs-token');
+  const token = localStorage.getItem('cs-token') || localStorage.getItem('token');
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(headers as Record<string, string>),
@@ -52,7 +52,9 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
 
     if (res.status === 401) {
       localStorage.removeItem('cs-token');
+      localStorage.removeItem('token');
       localStorage.removeItem('cs-user');
+      localStorage.removeItem('user');
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }

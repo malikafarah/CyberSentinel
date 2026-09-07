@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Rectangle, Popup, Marker, CircleMarker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
+import { locationService } from '../services/services';
+
 
 // --- Types mapping to our Python FastAPI response ---
 interface BoundingBox {
@@ -106,7 +108,30 @@ export function Heatmap() {
   const [isPredicting, setIsPredicting] = useState<boolean>(false);
   const [dispatchStatus, setDispatchStatus] = useState<string | null>(null);
 
+  useEffect(() => {
+    // Initial fetch of live registered locations
+    locationService.list().then((locations) => {
+      if (locations && locations.length > 0) {
+        const seededNodes: GraphNode[] = locations.map((loc) => ({
+          id: loc.location_id || loc.id || 'ATM',
+          type: 'ATM',
+          riskScore: loc.risk_score || 85,
+          metadata: {
+            name: loc.location_name,
+            label: loc.location_name,
+            lat: loc.latitude,
+            lng: loc.longitude,
+            location_id: loc.location_id,
+            region: loc.region,
+          },
+        }));
+        setGraphNodes((prev) => (prev.length > 0 ? prev : seededNodes));
+      }
+    }).catch((e) => console.warn('Locations initial fetch:', e));
+  }, []);
+
   // Hit the FastAPI Intelligence Engine
+
   const runPrediction = async () => {
     setIsPredicting(true);
     setDispatchStatus(null);

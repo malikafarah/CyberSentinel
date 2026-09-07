@@ -2,25 +2,10 @@ import { api } from './api';
 import type { Alert, DashboardSummary, Filters, Prediction, Role, User, Case } from '../types';
 import { cases as mockCases } from '../mocks/data';
 
+
 interface TokenResponse {
   access_token: string;
   token_type: string;
-}
-
-function parseJwt(token: string) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
 }
 
 function normalizePrediction(p: any): Prediction {
@@ -55,7 +40,14 @@ function normalizePrediction(p: any): Prediction {
   };
 }
 
+
+
+
 export const authService = {
+  /**
+   * Performs login against POST /auth/login and immediately calls GET /auth/me
+   * to fetch the authoritative, server-verified user profile from the database.
+   */
   login: async (email: string, password: string, _role?: Role): Promise<User> => {
     try {
       const res = await api.post<TokenResponse>('/auth/login', {
@@ -66,23 +58,28 @@ export const authService = {
       if (res && res.access_token) {
         localStorage.setItem('cs-token', res.access_token);
 
-        const tokenPayload = parseJwt(res.access_token);
-        const userRole = (tokenPayload?.role || _role || 'LEA Officer') as Role;
-        const userName = tokenPayload?.sub?.split('@')[0]?.replace(/\./g, ' ') || 'Officer';
-        
-        const formattedName = userName
-          .split(' ')
-          .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' ');
+        // Fetch verified user profile directly from GET /auth/me
+        try {
+          const verifiedUser = await authService.getProfile();
+          return verifiedUser;
+        } catch {
+          // If /me fails temporarily, fallback to email parsing with passed role
+          const userName = email.split('@')[0]?.replace(/\./g, ' ') || 'Officer';
+          const formattedName = userName
+            .split(' ')
+            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
 
-        const user: User = {
-          name: formattedName,
-          email: tokenPayload?.sub || email,
-          role: userRole,
-        };
-
-        localStorage.setItem('cs-user', JSON.stringify(user));
-        return user;
+          const fallbackUser: User = {
+            id: email,
+            name: formattedName,
+            email: email,
+            username: email,
+            role: _role || 'LEA Officer',
+          };
+          localStorage.setItem('cs-user', JSON.stringify(fallbackUser));
+          return fallbackUser;
+        }
       }
     } catch {
       // Fallback for offline / demo environment
@@ -96,14 +93,43 @@ export const authService = {
       .join(' ');
 
     const user: User = {
+      id: email,
       name: formattedName,
       email: email,
+      username: email,
       role: _role || 'LEA Officer',
     };
 
     localStorage.setItem('cs-token', fallbackToken);
     localStorage.setItem('cs-user', JSON.stringify(user));
     return user;
+  },
+
+  /**
+   * Authoritative user profile verification from GET /auth/me
+   */
+  getProfile: async (): Promise<User> => {
+    const profile = await api.get<any>('/auth/me');
+    const userRole = (profile?.role || 'LEA Officer') as Role;
+    const formattedName =
+      profile?.name ||
+      (profile?.username || profile?.email || 'Officer')
+        .split('@')[0]
+        .replace(/\./g, ' ')
+        .split(' ')
+        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
+    const verifiedUser: User = {
+      id: profile?.id || profile?.username || profile?.email,
+      name: formattedName,
+      email: profile?.email || profile?.username || '',
+      username: profile?.username || profile?.email,
+      role: userRole,
+    };
+
+    localStorage.setItem('cs-user', JSON.stringify(verifiedUser));
+    return verifiedUser;
   },
 
   current: (): User | null => {
@@ -188,17 +214,8 @@ export const alertService = {
   },
 };
 
-export const locationService = {
-  list: async () => {
-    const res = await api.get<{ status: string; count: number; data: any[] }>('/locations/');
-    return res?.data || [];
-  },
+export { locationService } from './locationService';
 
-  get: async (locationId: string) => {
-    const res = await api.get<{ status: string; data: any }>(`/locations/${encodeURIComponent(locationId)}`);
-    return res?.data;
-  },
-};
 
 export const caseService = {
   get: async (id: string): Promise<Case | undefined> => {
@@ -224,4 +241,5 @@ export const caseService = {
     }
   },
 };
+
 

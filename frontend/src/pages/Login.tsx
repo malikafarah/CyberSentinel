@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/services';
+import { useAuth } from '../context/AuthContext';
 import type { Role } from '../types';
 
 export function Login() {
@@ -9,6 +9,7 @@ export function Login() {
   const [role, setRole] = useState<Role>('LEA Officer');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const nav = useNavigate();
 
   const submit = async (e: React.FormEvent) => {
@@ -20,7 +21,7 @@ export function Login() {
     setLoading(true);
     setError('');
     try {
-      await authService.login(email, password, role);
+      await login(email, password, role);
       nav('/dashboard');
     } catch (err: any) {
       setError(err?.message || 'Authentication failed. Please verify your credentials.');
@@ -28,6 +29,7 @@ export function Login() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="login">
