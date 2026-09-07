@@ -27,3 +27,7 @@ class PredictionResponse(PredictionBase):
 
     id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PredictLiveRequest(BaseModel):
+    candidates: Optional[List[dict]] = None
+    predicted_window: Optional[str] = "3h"

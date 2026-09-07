@@ -241,4 +241,66 @@ async def get_audit_logs(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+intervene_router = APIRouter(prefix="/intervene", tags=["Intervene Actions"])
 
+class InterveneFreezeRequest(BaseModel):
+    node_id: str
+    reason: str
+
+@intervene_router.post("/freeze")
+async def intervene_freeze_node(payload: InterveneFreezeRequest, request: Request):
+    """
+    POST /api/v1/intervene/freeze
+    Payload: { "node_id": "string", "reason": "string" }
+    Logic: Update MongoDB graph node to status = "FROZEN". Return a 200 OK success message.
+    """
+    db = get_db(request)
+    nodes_col = db["nodes"]
+    audit_col = db["audit_logs"]
+
+    # Flexible target query (by ObjectId or string _id or id)
+    if ObjectId.is_valid(payload.node_id):
+        target_query = {"$or": [{"_id": ObjectId(payload.node_id)}, {"_id": payload.node_id}, {"id": payload.node_id}]}
+    else:
+        target_query = {"$or": [{"_id": payload.node_id}, {"id": payload.node_id}]}
+
+    node = await nodes_col.find_one(target_query)
+    if not node:
+        # If node not present, initialize it as MULE with FROZEN status for resilience
+        seed_doc = {
+            "_id": payload.node_id,
+            "type": "MULE",
+            "status": "FROZEN",
+            "riskScore": 85,
+            "freeze_reason": payload.reason,
+            "frozen_at": datetime.now(timezone.utc).isoformat()
+        }
+        await nodes_col.insert_one(seed_doc)
+    else:
+        await nodes_col.update_one(
+            target_query,
+            {
+                "$set": {
+                    "status": "FROZEN",
+                    "freeze_reason": payload.reason,
+                    "frozen_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+
+    # Record in audit log
+    action_data = {
+        "action": "INTERVENE_FREEZE",
+        "node_id": payload.node_id,
+        "reason": payload.reason,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await audit_col.insert_one(action_data)
+
+    return {
+        "status": "success",
+        "message": f"Node '{payload.node_id}' successfully frozen.",
+        "node_id": payload.node_id,
+        "node_status": "FROZEN",
+        "reason": payload.reason
+    }

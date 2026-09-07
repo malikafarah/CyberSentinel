@@ -43,34 +43,35 @@ async def seed():
             "id": "u1",
             "username": "officer@cybersentinel.gov",
             "name": "Inspector Arjun Rao",
-            "role": "LEA Officer",
+            "role": "lea_officer",
             "password_hash": get_password_hash("officer123")
         },
         {
             "id": "u2",
-            "username": "analyst@cybersentinel.gov",
-            "name": "Nisha Verma",
-            "role": "I4C Analyst",
-            "password_hash": get_password_hash("analyst123")
-        },
-        {
-            "id": "u3",
             "username": "bank@cybersentinel.gov",
             "name": "Kiran Shah",
-            "role": "Bank/FI",
+            "role": "bank_officer",
             "password_hash": get_password_hash("bank123")
         },
         {
-            "id": "u4",
+            "id": "u3",
             "username": "admin@cybersentinel.gov",
             "name": "System Administrator",
-            "role": "Admin",
+            "role": "admin",
             "password_hash": get_password_hash("admin123")
-        },{
+        },
+        {
+            "id": "u4",
+            "username": "analyst@cybersentinel.gov",
+            "name": "Nisha Verma",
+            "role": "lea_officer",
+            "password_hash": get_password_hash("analyst123")
+        },
+        {
             "id": "u5",
             "username": "officer1@cybersentinel.gov",
             "name": "Inspector Pranjal Singh",
-            "role": "LEA Officer",
+            "role": "lea_officer",
             "password_hash": get_password_hash("officer123")
         }
     ])
