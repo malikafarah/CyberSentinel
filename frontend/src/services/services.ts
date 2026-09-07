@@ -216,6 +216,7 @@ export const alertService = {
 export { locationService } from './locationService';
 export { caseService } from './caseService';
 export { complaintService } from './complaintService';
+export { intakeService } from './intakeService';
 
 
 
