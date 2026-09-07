@@ -10,6 +10,7 @@ import json
 import time
 from sklearn.cluster import DBSCAN
 from app.db.mongo import get_database
+from app.engine.syndicate_detector import detect_fraud_syndicates
 
 router = APIRouter(prefix="/engine", tags=["Intelligence Engine"])
 
@@ -120,6 +121,18 @@ async def _pipeline_generator(db):
     for et, cnt in edge_types.items():
         yield _sse("DATA", f"  → {et:20s}: {cnt} edges (w={2.0 if et=='SHARED_KYC' else (0.8 if et=='CASH_WITHDRAWAL' else 1.0):.1f})")
         await asyncio.sleep(0.1)
+
+    # ── Louvain Syndicate Detection ──────────────────────────────────────────
+    try:
+        syndicate_metrics = detect_fraud_syndicates(G)
+        yield _sse("INFO", f"Louvain Community Detection identified {len(syndicate_metrics)} syndicate cluster(s)")
+        for sid, sinfo in syndicate_metrics.items():
+            if sinfo['node_count'] > 1 or sinfo['total_risk'] > 100:
+                yield _sse("DATA", f"  ★ Fraud Ring #{sid}: {sinfo['node_count']} nodes | Cumulative Risk: {sinfo['total_risk']:.1f}")
+                await asyncio.sleep(0.08)
+    except Exception as e:
+        yield _sse("WARN", f"Louvain community partition fallback: {e}")
+    await asyncio.sleep(0.2)
 
     # ── Step 3: BFS + Personalized PageRank ─────────────────────────────────
     yield _sse("STEP", "═══ STEP 3/5 ─ Propagating Risk Scores (PPR) ═══")
@@ -755,6 +768,63 @@ async def run_intelligence_pipeline(request: Request = None):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/syndicates")
+async def get_fraud_syndicates(request: Request):
+    """
+    Applies Louvain Community Detection to group nodes into fraud rings.
+    Identifies densely connected clusters sharing device IDs, KYC, or transaction loops.
+    """
+    db = get_db(request)
+    nodes = await db["nodes"].find({"status": {"$ne": "FROZEN"}}).to_list(length=500)
+    edges = await db["edges"].find().to_list(length=500)
+
+    if not nodes:
+        nodes = SEED_NODES
+        edges = SEED_EDGES
+
+    G = nx.DiGraph()
+    for node in nodes:
+        nid = str(node.get("_id") or node.get("id"))
+        G.add_node(
+            nid,
+            type=node.get("type", "UNKNOWN"),
+            riskScore=float(node.get("riskScore", 0)),
+            label=node.get("metadata", {}).get("name") or node.get("label") or nid,
+            metadata=node.get("metadata", {})
+        )
+
+    for edge in edges:
+        src = str(edge.get("source"))
+        tgt = str(edge.get("target"))
+        e_type = str(edge.get("type", "TRANSFER")).upper()
+        weight = 2.0 if e_type in ["SHARED_DEVICE", "SHARED_KYC", "SHARED_PAN"] else 1.0
+        if src in G.nodes and tgt in G.nodes:
+            G.add_edge(src, tgt, type=e_type, weight=weight)
+
+    syndicate_metrics = detect_fraud_syndicates(G)
+
+    sorted_syndicates = sorted(
+        [
+            {
+                "syndicate_id": sid,
+                "node_count": sinfo["node_count"],
+                "total_risk": round(sinfo["total_risk"], 2),
+                "avg_risk": round(sinfo["total_risk"] / max(sinfo["node_count"], 1), 2),
+                "nodes": sinfo["nodes"]
+            }
+            for sid, sinfo in syndicate_metrics.items()
+        ],
+        key=lambda s: s["total_risk"],
+        reverse=True
+    )
+
+    return {
+        "status": "success",
+        "algorithm": "Louvain Community Detection",
+        "syndicate_count": len(sorted_syndicates),
+        "syndicates": sorted_syndicates
+    }
 
 
 
