@@ -819,7 +819,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                         onClick={() => setIsSecureModalOpen(true)}
                         className="w-full py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-xs rounded-lg border border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all uppercase tracking-widest cursor-pointer flex items-center justify-center gap-2"
                       >
-                        <Lock size={13} /> Authorize & Sign Account Freeze
+                        <Lock size={13} /> Initiate CFCFRMS Lien-Marking
                       </button>
                     )}
                   </div>

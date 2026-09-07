@@ -33,7 +33,7 @@ describe('SecureActionModal', () => {
     await user.type(screen.getByPlaceholderText(/e\.g\., Account identified/i), 'Suspicious activity');
     await user.type(screen.getByPlaceholderText('****'), '1234');
     
-    await user.click(screen.getByRole('button', { name: /Sign & Execute Freeze/i }));
+    await user.click(screen.getByRole('button', { name: /Sign & Forward to Bank Nodal Officer/i }));
 
     // Verify error is displayed and we stay on the form
     expect(await screen.findByText(/Authorization failed/i)).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('SecureActionModal', () => {
     await user.type(screen.getByPlaceholderText('****'), '9999');
     
     // Submit
-    await user.click(screen.getByRole('button', { name: /Sign & Execute Freeze/i }));
+    await user.click(screen.getByRole('button', { name: /Sign & Forward to Bank Nodal Officer/i }));
 
     // Verify the payload sent to the backend
     expect((globalThis as any).fetch).toHaveBeenCalledWith('/api/v1/action/freeze', expect.objectContaining({

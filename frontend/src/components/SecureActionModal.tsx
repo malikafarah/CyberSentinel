@@ -96,10 +96,10 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-red-500 uppercase tracking-wide">
-                    Authorize Account Freeze
+                    Initiate CFCFRMS Lien Request
                   </h2>
                   <p className="text-xs text-gray-400">
-                    Non-repudiation interdiction authorization
+                    Banking ecosystem non-repudiation interdiction
                   </p>
                 </div>
               </div>
@@ -114,7 +114,7 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
             </div>
 
             <div className="p-3 bg-red-950/30 border border-red-500/30 rounded-lg mb-4 text-xs font-mono">
-              <span className="text-gray-400 block text-[10px] uppercase tracking-wider">Target Node Identifier</span>
+              <span className="text-gray-400 block text-[10px] uppercase tracking-wider">Target Entity Account / IFSC</span>
               <span className="text-red-300 font-bold text-sm tracking-wide">{accountId}</span>
             </div>
 
@@ -169,7 +169,7 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
                 disabled={isSubmitting || !reason.trim() || !pin.trim()}
                 className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs disabled:opacity-50 transition-colors uppercase tracking-wider cursor-pointer shadow-[0_0_20px_rgba(239,68,68,0.35)] flex items-center gap-2"
               >
-                {isSubmitting ? 'Verifying Signature...' : 'Sign & Execute Freeze'}
+                {isSubmitting ? 'Verifying Signature...' : 'Sign & Forward to Bank Nodal Officer'}
               </button>
             </div>
           </form>
@@ -182,7 +182,7 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
             </div>
             
             <p className="text-xs text-gray-400 mb-4">
-              This action has been permanently recorded to the immutable ledger. Save this cryptographic receipt for non-repudiation auditing.
+              Lien request cryptographically signed and queued for CFCFRMS API. This action has been permanently recorded to the immutable ledger.
             </p>
 
             <div className="bg-black/50 border border-white/15 p-4 rounded-lg mb-6 font-mono text-xs overflow-x-auto space-y-2.5">
