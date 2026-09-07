@@ -11,9 +11,11 @@ import {
   Database,
   RefreshCw,
   X,
-  Radio
+  Radio,
+  Lock
 } from 'lucide-react';
 import EntityNode, { type EntityNodeData } from './EntityNode';
+import SecureActionModal, { type Receipt } from './SecureActionModal';
 import { getLayoutedElements } from './layout';
 import { intakeService, type ExtractedEntities } from '../services/intakeService';
 
@@ -136,6 +138,9 @@ export default function InvestigationWorkspace() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<EntityNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNode, setSelectedNode] = useState<Node<EntityNodeData> | null>(null);
+
+  // Secure Action Modal
+  const [isSecureModalOpen, setIsSecureModalOpen] = useState(false);
 
   // Evidence Chain state
   const [activeChain, setActiveChain] = useState<string[] | null>(null);
@@ -312,7 +317,7 @@ export default function InvestigationWorkspace() {
     );
   }, [setNodes, setEdges]);
 
-  // Step 2.1: Intercept onNodeClick to visualize and highlight evidence chains
+  // Intercept onNodeClick to visualize and highlight evidence chains
   const onNodeClick = useCallback(
     (_: React.MouseEvent, clickedNode: Node<EntityNodeData>) => {
       setSelectedNode(clickedNode);
@@ -403,78 +408,36 @@ export default function InvestigationWorkspace() {
     [nodes, edges, setNodes, setEdges, rightPanelTab]
   );
 
-  // Freezing Account Action
-  const handleFreezeAccount = async () => {
+  // Successful Authorization & Receipt callback
+  const handleSecureFreezeSuccess = (receipt: Receipt) => {
     if (!selectedNode) return;
-    setIsFreezing(true);
+    const targetId = selectedNode.data.id || selectedNode.id;
 
-    try {
-      const endpoints = [
-        'http://localhost:8001/api/action/freeze',
-        'http://localhost:8000/api/action/freeze',
-        '/api/action/freeze'
-      ];
-
-      let responseReceipt: any = null;
-      const targetId = selectedNode.data.id || selectedNode.id;
-
-      for (const url of endpoints) {
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              node_id: targetId,
-              officer_id: 'OFFICER_409',
-              reason: 'Interdiction initiated via Investigation Workspace'
-            })
-          });
-
-          if (res.ok) {
-            responseReceipt = await res.json();
-            break;
-          }
-        } catch {
-          // try next
+    // Update local React Flow state
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === selectedNode.id || node.data.id === selectedNode.data.id) {
+          return {
+            ...node,
+            data: { ...node.data, status: 'FROZEN' }
+          };
         }
-      }
+        return node;
+      })
+    );
 
-      setNodes((nds) =>
-        nds.map((node) => {
-          if (node.id === selectedNode.id || node.data.id === selectedNode.data.id) {
-            return {
-              ...node,
-              data: { ...node.data, status: 'FROZEN' }
-            };
-          }
-          return node;
-        })
-      );
+    setSelectedNode((prev) => (prev ? { ...prev, data: { ...prev.data, status: 'FROZEN' } } : null));
 
-      setSelectedNode((prev) => (prev ? { ...prev, data: { ...prev.data, status: 'FROZEN' } } : null));
-
-      if (responseReceipt) {
-        const mockLog: TerminalLog = {
-          id: `log-${Date.now()}`,
-          action: 'FREEZE_INITIATED',
-          targetNodeId: selectedNode.data.id || selectedNode.id,
-          previousHash:
-            responseReceipt?.audit_receipt?.previous_hash ||
-            '26a8743668e9de0b702cba4777e9114a0cadfd14dcb81bc920bfd9718466af59',
-          currentHash:
-            responseReceipt?.audit_receipt?.transaction_hash ||
-            'f81e18f34e8eb65c070f9180a0ac66a61cc5a8912ccdaa5c877b7fc1bcfe0612',
-          timestamp: new Date().toISOString()
-        };
-        setAuditLogs((prev) => [mockLog, ...prev]);
-      } else {
-        fetchGraphAndLogs(true);
-      }
-    } catch (error) {
-      console.error('Interdiction failed:', error);
-    } finally {
-      setIsFreezing(false);
-    }
+    // Append cryptographic entry to audit log terminal
+    const mockLog: TerminalLog = {
+      id: `log-${Date.now()}`,
+      action: 'FREEZE_INITIATED',
+      targetNodeId: targetId,
+      previousHash: receipt.previous_hash || '26a8743668e9de0b702cba4777e9114a0cadfd14dcb81bc920bfd9718466af59',
+      currentHash: receipt.block_hash,
+      timestamp: receipt.timestamp
+    };
+    setAuditLogs((prev) => [mockLog, ...prev]);
   };
 
   const handleUnfreezeAccount = async () => {
@@ -872,11 +835,10 @@ export default function InvestigationWorkspace() {
                       </button>
                     ) : (
                       <button
-                        onClick={handleFreezeAccount}
-                        disabled={isFreezing}
-                        className="w-full py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-xs rounded-lg border border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all disabled:opacity-50 tracking-widest uppercase cursor-pointer"
+                        onClick={() => setIsSecureModalOpen(true)}
+                        className="w-full py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-xs rounded-lg border border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all uppercase tracking-widest cursor-pointer flex items-center justify-center gap-2"
                       >
-                        {isFreezing ? 'Executing...' : 'Initiate API Freeze'}
+                        <Lock size={13} /> Authorize & Sign Account Freeze
                       </button>
                     )}
                   </div>
@@ -1010,6 +972,15 @@ export default function InvestigationWorkspace() {
           <div ref={terminalEndRef} />
         </div>
       </div>
+
+      {/* 4. Secure Action Modal with Officer PIN & Cryptographic Receipt */}
+      {isSecureModalOpen && selectedNode && (
+        <SecureActionModal
+          accountId={selectedNode.data.id || selectedNode.id}
+          onClose={() => setIsSecureModalOpen(false)}
+          onSuccess={handleSecureFreezeSuccess}
+        />
+      )}
     </div>
   );
 }

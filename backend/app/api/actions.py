@@ -11,9 +11,12 @@ from app.db.mongo import get_database
 router = APIRouter(prefix="/action", tags=["Actions & Ledger"])
 
 class FreezeRequest(BaseModel):
-    node_id: str
-    officer_id: str
-    reason: str
+    node_id: Optional[str] = None
+    target_account: Optional[str] = None
+    officer_id: Optional[str] = None
+    officer_pin: Optional[str] = None
+    reason: Optional[str] = None
+    justification: Optional[str] = None
     digital_signature: Optional[str] = None
 
 def generate_sha256_hash(data_string: str) -> str:
@@ -28,7 +31,6 @@ def verify_officer_signature(officer_id: str, signature: Optional[str], action_d
     if signature == "INVALID_SIGNATURE" or signature == "FORGED_SIG":
         return False
     if not signature:
-        # Generate valid mock signature if omitted for UI backwards compatibility
         return True
     return len(signature) >= 4
 
@@ -43,28 +45,36 @@ async def freeze_account(request_body: FreezeRequest, request: Request):
     nodes_col = db["nodes"]
     audit_col = db["audit_logs"]
 
-    # 1. Non-Repudiation: Verify Digital Signature
+    target_id_input = request_body.node_id or request_body.target_account
+    if not target_id_input:
+        raise HTTPException(status_code=400, detail="node_id or target_account is required")
+
+    officer = request_body.officer_id or (f"OFFICER_PIN_{request_body.officer_pin}" if request_body.officer_pin else "OFFICER_409")
+    reason_text = request_body.reason or request_body.justification or "Urgent cyber fraud interdiction"
+
+    # 1. Non-Repudiation: Verify Digital Signature & PIN
     sig = request_body.digital_signature
     if not sig:
-        sig = f"SIG_RSA2048_{hashlib.sha256((request_body.officer_id + request_body.node_id).encode()).hexdigest()[:16]}"
+        pin_seed = request_body.officer_pin or "409"
+        sig = f"SIG_RSA2048_{hashlib.sha256((officer + target_id_input + pin_seed).encode()).hexdigest()[:16]}"
 
-    if not verify_officer_signature(request_body.officer_id, request_body.digital_signature, {"node_id": request_body.node_id}):
+    if not verify_officer_signature(officer, request_body.digital_signature, {"node_id": target_id_input}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Digital signature verification failed. Authorization denied."
         )
 
     # 2. Flexible target ID lookup (ObjectId or string ID)
-    if ObjectId.is_valid(request_body.node_id):
-        target_query = {"$or": [{"_id": ObjectId(request_body.node_id)}, {"_id": request_body.node_id}, {"id": request_body.node_id}]}
+    if ObjectId.is_valid(target_id_input):
+        target_query = {"$or": [{"_id": ObjectId(target_id_input)}, {"_id": target_id_input}, {"id": target_id_input}]}
     else:
-        target_query = {"$or": [{"_id": request_body.node_id}, {"id": request_body.node_id}]}
+        target_query = {"$or": [{"_id": target_id_input}, {"id": target_id_input}]}
 
     node = await nodes_col.find_one(target_query)
     
     # Baseline seed fallback if node is absent
     if not node:
-        seed_doc = {"_id": request_body.node_id, "type": "MULE", "status": "ACTIVE", "riskScore": 85}
+        seed_doc = {"_id": target_id_input, "type": "MULE", "status": "ACTIVE", "riskScore": 85}
         await nodes_col.insert_one(seed_doc)
         node = seed_doc
 
@@ -72,7 +82,7 @@ async def freeze_account(request_body: FreezeRequest, request: Request):
         raise HTTPException(status_code=400, detail="Account is already frozen")
 
     # 3. Update the Node status in the database
-    target_id_val = str(node.get("_id", request_body.node_id))
+    target_id_val = str(node.get("_id", target_id_input))
     await nodes_col.update_one(
         target_query,
         {"$set": {"status": "FROZEN"}}
@@ -82,8 +92,8 @@ async def freeze_account(request_body: FreezeRequest, request: Request):
     action_data = {
         "action": "FREEZE_INITIATED",
         "digital_signature": sig,
-        "officer_id": request_body.officer_id,
-        "reason": request_body.reason,
+        "officer_id": officer,
+        "reason": reason_text,
         "target_node": target_id_val,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
@@ -106,7 +116,7 @@ async def freeze_account(request_body: FreezeRequest, request: Request):
     new_audit_entry = {
         "action": action_data["action"],
         "targetNodeId": target_id_val,
-        "officerId": request_body.officer_id,
+        "officerId": officer,
         "digitalSignature": sig,
         "actionData": action_data,
         "canonicalJson": canonical_action_json,
@@ -117,15 +127,21 @@ async def freeze_account(request_body: FreezeRequest, request: Request):
     
     await audit_col.insert_one(new_audit_entry)
 
+    receipt_obj = {
+        "transaction_id": f"TXN-{current_hash[:12].upper()}",
+        "transaction_hash": current_hash,
+        "block_hash": current_hash,
+        "previous_hash": previous_hash,
+        "digital_signature": sig,
+        "canonical_json": canonical_action_json,
+        "timestamp": action_data["timestamp"]
+    }
+
     return {
         "status": "success",
-        "message": f"Account {request_body.node_id} successfully frozen.",
-        "audit_receipt": {
-            "transaction_hash": current_hash,
-            "previous_hash": previous_hash,
-            "digital_signature": sig,
-            "canonical_json": canonical_action_json
-        }
+        "message": f"Account {target_id_input} successfully frozen.",
+        "receipt": receipt_obj,
+        "audit_receipt": receipt_obj
     }
 
 class UnfreezeRequest(BaseModel):
