@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from bson import ObjectId
 from app.db.mongo import get_database
+from app.nlp.intake_parser import extract_entities_hybrid
 
 router = APIRouter(prefix="/intake", tags=["NCRP Cybercrime Intake"])
 
@@ -19,31 +20,36 @@ class SeedVictimsInput(BaseModel):
     accounts: Optional[List[str]] = None
     reported_by: Optional[str] = "Investigator"
 
-def extract_identifiers(text: str) -> Dict[str, List[str]]:
+def extract_identifiers(text: str) -> Dict[str, Any]:
     """
-    NLP Extractor using Regex to parse entities from NCRP complaint text:
-    - UPI IDs (e.g. victim@hdfc, scammer@paytm, 9876543210@ybl)
-    - Phone Numbers (10-digit Indian numbers with optional +91 prefix)
-    - Bank Account Numbers (9-18 digit numeric strings)
+    Hybrid NLP entity extractor combining regex, code-mixed Indic word normalization, and NER.
     """
-    upi_pattern = r'[a-zA-Z0-9.\-_]+@[a-zA-Z0-9]+'
-    phone_pattern = r'(?:\+91[\-\s]?)?[6-9]\d{9}'
-    account_pattern = r'\b\d{9,18}\b'
-
-    upis = list(set(re.findall(upi_pattern, text)))
-    phones = list(set(re.findall(phone_pattern, text)))
+    hybrid = extract_entities_hybrid(text)
     
-    raw_accounts = re.findall(account_pattern, text)
-    # Exclude numbers matched as phone numbers
-    accounts = list(set([acc for acc in raw_accounts if not any(acc in p for p in phones)]))
+    # Extract string lists for backward compatibility
+    acc_list = []
+    for item in hybrid.get("bank_accounts", []):
+        if isinstance(item, dict):
+            acc_list.append(item.get("entity", ""))
+        elif isinstance(item, str):
+            acc_list.append(item)
+    acc_list = [a for a in acc_list if a]
+
+    suspect_names = [
+        item.get("entity", "") if isinstance(item, dict) else str(item)
+        for item in hybrid.get("suspect_names", [])
+    ]
 
     return {
-        "upi_ids": upis,
-        "phone_numbers": phones,
-        "account_numbers": accounts,
-        "upis": upis,
-        "phones": phones,
-        "accounts": accounts,
+        "upi_ids": hybrid.get("upi_ids", []),
+        "phone_numbers": hybrid.get("phone_numbers", []),
+        "account_numbers": acc_list,
+        "upis": hybrid.get("upi_ids", []),
+        "phones": hybrid.get("phone_numbers", []),
+        "accounts": acc_list,
+        "suspect_names": suspect_names,
+        "confidence_metrics": hybrid.get("confidence_metrics", {}),
+        "hybrid_raw": hybrid
     }
 
 def get_db(request: Request):
@@ -54,17 +60,20 @@ def get_db(request: Request):
 @router.post("/extract")
 async def extract_ncrp_entities(complaint: ComplaintInput):
     """
-    NLP Entity Extraction endpoint without mutating database.
+    Hybrid NLP Entity Extraction endpoint without mutating database.
     """
     try:
         extracted = extract_identifiers(complaint.text)
         return {
             "status": "success",
+            "algorithm": "Hybrid Regex + NER Context Parser",
             "entities": {
                 "upis": extracted["upi_ids"],
                 "phones": extracted["phone_numbers"],
-                "accounts": extracted["account_numbers"]
+                "accounts": extracted["account_numbers"],
+                "suspect_names": extracted["suspect_names"]
             },
+            "confidence_metrics": extracted["confidence_metrics"],
             "extracted_identifiers": extracted
         }
     except Exception as e:
