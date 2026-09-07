@@ -7,12 +7,18 @@ export interface EntityNodeData extends Record<string, unknown> {
   type: 'VICTIM' | 'MULE' | 'ATM' | 'DEVICE';
   riskScore: number;
   status: 'ACTIVE' | 'FROZEN' | 'INVESTIGATING';
+  isInChain?: boolean;
+  isDimmed?: boolean;
+  metadata?: Record<string, any>;
+  evidence_chain?: string[];
 }
 
 export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
   const isFrozen = data.status === 'FROZEN';
   const score = Number(data.riskScore || 0);
   const nType = String(data.type || 'MULE').toUpperCase();
+  const isInChain = Boolean(data.isInChain);
+  const isDimmed = Boolean(data.isDimmed);
 
   // Node type-specific icons & colors
   const getTypeConfig = () => {
@@ -63,13 +69,25 @@ export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
   const config = getTypeConfig();
   const IconComponent = config.icon;
 
-  // Override border if account is FROZEN
-  const cardBorder = isFrozen
-    ? 'border-blue-500/80 shadow-[0_0_25px_rgba(59,130,246,0.35)] bg-[#0A121A]/95'
-    : config.cardBg;
+  // Override border & glow if account is in highlighted evidence chain or FROZEN
+  let cardBorder = config.cardBg;
+  if (isInChain) {
+    cardBorder = 'border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.7)] ring-2 ring-red-500/90 bg-[#1F0A0E]/95 scale-105';
+  } else if (isFrozen) {
+    cardBorder = 'border-blue-500/80 shadow-[0_0_25px_rgba(59,130,246,0.35)] bg-[#0A121A]/95';
+  }
+
+  const opacityClass = isDimmed ? 'opacity-25 filter blur-[0.3px]' : 'opacity-100';
 
   return (
-    <div className={`relative backdrop-blur-xl border rounded-xl p-4 w-[220px] text-gray-200 transition-all hover:scale-105 cursor-pointer ${cardBorder}`}>
+    <div className={`relative backdrop-blur-xl border rounded-xl p-4 w-[220px] text-gray-200 transition-all cursor-pointer ${cardBorder} ${opacityClass}`}>
+      {/* Evidence Chain Tag */}
+      {isInChain && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-full shadow-lg border border-red-400 tracking-wider">
+          Evidence Trail
+        </div>
+      )}
+
       {/* Target Connection Handles */}
       <Handle type="target" position={Position.Top} className="w-2.5 h-2.5 !bg-gray-400 border-2 border-black" />
       <Handle type="target" position={Position.Left} className="w-2.5 h-2.5 !bg-gray-400 border-2 border-black" />
@@ -77,7 +95,7 @@ export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-1.5">
-          <IconComponent size={14} style={{ color: isFrozen ? '#60a5fa' : config.accentColor }} />
+          <IconComponent size={14} style={{ color: isInChain ? '#ef4444' : isFrozen ? '#60a5fa' : config.accentColor }} />
           <span className="text-[9px] font-bold tracking-widest uppercase text-gray-300">
             {config.title}
           </span>
@@ -87,7 +105,7 @@ export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
             FROZEN
           </span>
         ) : (
-          <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 rounded border ${config.badgeBg}`}>
+          <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 rounded border ${isInChain ? 'bg-red-500/30 text-red-300 border-red-500/60' : config.badgeBg}`}>
             {score >= 80 ? 'CRITICAL' : score >= 50 ? 'HIGH' : 'ACTIVE'}
           </span>
         )}
@@ -104,7 +122,7 @@ export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
       {/* Threat Level Bar & Risk Score */}
       <div className="pt-2 border-t border-white/10 flex justify-between items-center">
         <span className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">Threat Level</span>
-        <span className="text-sm font-extrabold font-mono text-white">
+        <span className={`text-sm font-extrabold font-mono ${isInChain ? 'text-red-400' : 'text-white'}`}>
           {score.toFixed(1)}
           <span className="text-[9px] text-gray-400 font-bold ml-0.5">%</span>
         </span>

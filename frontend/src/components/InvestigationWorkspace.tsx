@@ -2,8 +2,20 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, BackgroundVariant, MarkerType, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import {
+  GitGraph,
+  Cpu,
+  Layers,
+  RotateCcw,
+  Sparkles,
+  Database,
+  RefreshCw,
+  X,
+  Radio
+} from 'lucide-react';
 import EntityNode, { type EntityNodeData } from './EntityNode';
-import { getLayoutedElements } from './layout'; 
+import { getLayoutedElements } from './layout';
+import { intakeService, type ExtractedEntities } from '../services/intakeService';
 
 const nodeTypes = { entity: EntityNode };
 
@@ -17,14 +29,66 @@ interface TerminalLog {
 }
 
 const DEFAULT_FALLBACK_NODES: Node<EntityNodeData>[] = [
-  { id: '1', type: 'entity', position: { x: 150, y: 50 }, data: { id: 'C102', label: 'Victim Acct (HDFC)', type: 'VICTIM', riskScore: 95, status: 'ACTIVE' } },
-  { id: '2', type: 'entity', position: { x: 350, y: 220 }, data: { id: 'M883', label: 'Mule Acct 101 (SBI)', type: 'MULE', riskScore: 92, status: 'ACTIVE' } },
-  { id: '3', type: 'entity', position: { x: 600, y: 400 }, data: { id: 'A441', label: 'ATM - Benz Circle', type: 'ATM', riskScore: 78, status: 'ACTIVE' } }
+  {
+    id: '1',
+    type: 'entity',
+    position: { x: 150, y: 50 },
+    data: {
+      id: 'C102',
+      label: 'Victim Acct (HDFC)',
+      type: 'VICTIM',
+      riskScore: 95,
+      status: 'ACTIVE',
+      metadata: { evidence_chain: ['1', '2', '3'] }
+    }
+  },
+  {
+    id: '2',
+    type: 'entity',
+    position: { x: 350, y: 220 },
+    data: {
+      id: 'M883',
+      label: 'Mule Acct 101 (SBI)',
+      type: 'MULE',
+      riskScore: 92,
+      status: 'ACTIVE',
+      metadata: { evidence_chain: ['1', '2', '3'] }
+    }
+  },
+  {
+    id: '3',
+    type: 'entity',
+    position: { x: 600, y: 400 },
+    data: {
+      id: 'A441',
+      label: 'ATM - Benz Circle',
+      type: 'ATM',
+      riskScore: 78,
+      status: 'ACTIVE',
+      metadata: { evidence_chain: ['1', '2', '3'] }
+    }
+  }
 ];
 
 const DEFAULT_FALLBACK_EDGES: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2', animated: true, label: 'TRANSFER (₹50,000)', style: { stroke: '#ef4444', strokeWidth: 2, opacity: 0.8 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' } },
-  { id: 'e2-3', source: '2', target: '3', animated: true, label: 'CASH WITHDRAWAL', style: { stroke: '#ef4444', strokeWidth: 2, opacity: 0.8 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' } }
+  {
+    id: 'e1-2',
+    source: '1',
+    target: '2',
+    animated: true,
+    label: 'TRANSFER (₹50,000)',
+    style: { stroke: '#ef4444', strokeWidth: 2, opacity: 0.8 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' }
+  },
+  {
+    id: 'e2-3',
+    source: '2',
+    target: '3',
+    animated: true,
+    label: 'CASH WITHDRAWAL',
+    style: { stroke: '#ef4444', strokeWidth: 2, opacity: 0.8 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' }
+  }
 ];
 
 const DEFAULT_FALLBACK_LOGS: TerminalLog[] = [
@@ -38,6 +102,32 @@ const DEFAULT_FALLBACK_LOGS: TerminalLog[] = [
   }
 ];
 
+// Helper: BFS path finder between source victim node and target node
+function findTopologicalPath(startId: string, endId: string, edges: Edge[]): string[] | null {
+  const adj = new Map<string, string[]>();
+  edges.forEach((e) => {
+    const list = adj.get(e.source) || [];
+    list.push(e.target);
+    adj.set(e.source, list);
+  });
+
+  const queue: { current: string; path: string[] }[] = [{ current: startId, path: [startId] }];
+  const visited = new Set<string>([startId]);
+
+  while (queue.length > 0) {
+    const { current, path } = queue.shift()!;
+    if (current === endId) return path;
+
+    for (const next of adj.get(current) || []) {
+      if (!visited.has(next)) {
+        visited.add(next);
+        queue.push({ current: next, path: [...path, next] });
+      }
+    }
+  }
+  return null;
+}
+
 export default function InvestigationWorkspace() {
   const navigate = useNavigate();
   const { id: paramCaseId } = useParams<{ id?: string }>();
@@ -46,20 +136,63 @@ export default function InvestigationWorkspace() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<EntityNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNode, setSelectedNode] = useState<Node<EntityNodeData> | null>(null);
-  
+
+  // Evidence Chain state
+  const [activeChain, setActiveChain] = useState<string[] | null>(null);
+  const [activeChainNodes, setActiveChainNodes] = useState<Node<EntityNodeData>[]>([]);
+
+  // Right Side Panel: 'inspection' | 'intake'
+  const [rightPanelTab, setRightPanelTab] = useState<'inspection' | 'intake'>('inspection');
+
+  // Intake State
+  const [intakeText, setIntakeText] = useState('');
+  const [extractedData, setExtractedData] = useState<ExtractedEntities | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [intakeMessage, setIntakeMessage] = useState<string | null>(null);
+
   const [isFreezing, setIsFreezing] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   const [auditLogs, setAuditLogs] = useState<TerminalLog[]>([]);
-  
-  const terminalEndRef = useRef<HTMLDivElement>(null);
 
+  const terminalEndRef = useRef<HTMLDivElement>(null);
   const [isLiveStreaming, setIsLiveStreaming] = useState<boolean>(true);
+
+  // Base styled edges generator
+  const getBaseStyledEdges = (rawEdges: Edge[], rawNodes: Node<EntityNodeData>[]) => {
+    const nodeMap = new Map<string, number>();
+    rawNodes.forEach((n: any) => {
+      const nid = String(n.id || n.data?.id);
+      nodeMap.set(nid, Number(n.data?.riskScore || 0));
+    });
+
+    return rawEdges.map((e: any) => {
+      const srcRisk = nodeMap.get(e.source) || 85;
+      const eType = String(e.type || 'TRANSFER').toUpperCase();
+
+      let stroke = '#48D878';
+      if (eType === 'SHARED_KYC') stroke = '#a855f7';
+      else if (srcRisk >= 80) stroke = '#ef4444';
+      else if (srcRisk >= 50) stroke = '#f97316';
+
+      return {
+        ...e,
+        type: 'smoothstep',
+        animated: true,
+        label: eType.replace('_', ' '),
+        labelStyle: { fill: '#9ca3af', fontSize: 10, fontWeight: 600 },
+        labelBgStyle: { fill: '#0F1210', fillOpacity: 0.8 },
+        style: { stroke, strokeWidth: 2, opacity: 0.85 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: stroke }
+      };
+    });
+  };
 
   const fetchGraphAndLogs = async (silent: boolean = false) => {
     try {
       if (!silent) setIsLoading(true);
-      
+
       let graphRes: Response | null = null;
       const graphUrls = [
         `http://localhost:8001/api/engine/case/${encodeURIComponent(caseId)}`,
@@ -67,7 +200,6 @@ export default function InvestigationWorkspace() {
         `/api/v1/engine/case/${encodeURIComponent(caseId)}`,
         `/api/engine/case/${encodeURIComponent(caseId)}`
       ];
-
 
       for (const url of graphUrls) {
         try {
@@ -87,39 +219,12 @@ export default function InvestigationWorkspace() {
         const rawEdges = (data.edges || []) as Edge[];
 
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements<Node<EntityNodeData>>(
-          rawNodes, 
-          rawEdges, 
+          rawNodes,
+          rawEdges,
           layoutDirection
         );
 
-        // Apply risk score color coding & arrowheads to edges
-        const nodeMap = new Map<string, number>();
-        rawNodes.forEach((n: any) => {
-          const nid = String(n.id || n.data?.id);
-          nodeMap.set(nid, Number(n.data?.riskScore || 0));
-        });
-
-        const styledEdges = (layoutedEdges || []).map((e: any) => {
-          const srcRisk = nodeMap.get(e.source) || 85;
-          const eType = String(e.type || 'TRANSFER').toUpperCase();
-          
-          let stroke = '#48D878';
-          if (eType === 'SHARED_KYC') stroke = '#a855f7';
-          else if (srcRisk >= 80) stroke = '#ef4444';
-          else if (srcRisk >= 50) stroke = '#f97316';
-
-          return {
-            ...e,
-            type: 'smoothstep',
-            animated: true,
-            label: eType.replace('_', ' '),
-            labelStyle: { fill: '#9ca3af', fontSize: 10, fontWeight: 600 },
-            labelBgStyle: { fill: '#0F1210', fillOpacity: 0.8 },
-            style: { stroke, strokeWidth: 2, opacity: 0.85 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: stroke }
-          };
-        });
-
+        const styledEdges = getBaseStyledEdges(layoutedEdges, layoutedNodes);
         setNodes(layoutedNodes);
         setEdges(styledEdges);
       } else {
@@ -154,7 +259,7 @@ export default function InvestigationWorkspace() {
         setAuditLogs(DEFAULT_FALLBACK_LOGS);
       }
     } catch (error) {
-      console.error("Telemetry fetch failed", error);
+      console.error('Telemetry fetch failed', error);
       if (!silent) {
         setNodes(DEFAULT_FALLBACK_NODES);
         setEdges(DEFAULT_FALLBACK_EDGES);
@@ -178,16 +283,127 @@ export default function InvestigationWorkspace() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [layoutDirection, isLiveStreaming]);
+  }, [layoutDirection, isLiveStreaming, caseId]);
 
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [auditLogs]);
 
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node<EntityNodeData>) => {
-    setSelectedNode(node);
-  }, []);
+  // Reset any active evidence chain highlighting
+  const handleResetHighlighting = useCallback(() => {
+    setActiveChain(null);
+    setActiveChainNodes([]);
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          isInChain: false,
+          isDimmed: false
+        }
+      }))
+    );
+    setEdges((eds) =>
+      eds.map((e) => ({
+        ...e,
+        animated: true,
+        style: { ...e.style, opacity: 0.85, strokeWidth: 2 }
+      }))
+    );
+  }, [setNodes, setEdges]);
 
+  // Step 2.1: Intercept onNodeClick to visualize and highlight evidence chains
+  const onNodeClick = useCallback(
+    (_: React.MouseEvent, clickedNode: Node<EntityNodeData>) => {
+      setSelectedNode(clickedNode);
+      if (rightPanelTab !== 'inspection') setRightPanelTab('inspection');
+
+      // 1. Extract the evidence chain path from clicked node metadata or dynamically resolve path
+      let chain: string[] | undefined =
+        clickedNode.data?.metadata?.evidence_chain ||
+        (clickedNode.data?.evidence_chain as string[] | undefined);
+
+      // If not predefined in metadata, find topological shortest path from victim root
+      if (!chain || !Array.isArray(chain) || chain.length === 0) {
+        const victimNode = nodes.find((n) => n.data.type === 'VICTIM');
+        if (victimNode && victimNode.id !== clickedNode.id) {
+          const directPath = findTopologicalPath(victimNode.id, clickedNode.id, edges);
+          if (directPath) {
+            chain = directPath;
+          } else {
+            // Find path through intermediate mules to terminal cashout
+            const outgoingToAtm = edges.find((e) => e.source === clickedNode.id);
+            if (outgoingToAtm) {
+              const toAtmPath = findTopologicalPath(victimNode.id, outgoingToAtm.target, edges);
+              if (toAtmPath) chain = toAtmPath;
+            }
+          }
+        }
+      }
+
+      // Default fallback chain if none resolved
+      if (!chain || chain.length === 0) {
+        chain = [clickedNode.id];
+      }
+
+      setActiveChain(chain);
+
+      // 2. Highlight Nodes in the chain with glowing red border and dim unrelated nodes
+      const chainNodeIds = new Set(chain);
+      setNodes((nds) =>
+        nds.map((node) => {
+          const isNodeInChain = chainNodeIds.has(node.id) || chainNodeIds.has(node.data.id);
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              isInChain: isNodeInChain,
+              isDimmed: !isNodeInChain
+            }
+          };
+        })
+      );
+
+      // Populate evidence chain sequence for the left-hand panel
+      const chainSequence = chain
+        .map((id) => nodes.find((n) => n.id === id || n.data.id === id))
+        .filter(Boolean) as Node<EntityNodeData>[];
+      setActiveChainNodes(chainSequence);
+
+      // 3. Highlight Edges that connect the chain steps with flowing animated red strokes
+      setEdges((eds) =>
+        eds.map((edge) => {
+          const isEdgeInChain = chain!.some((nodeId, index) => {
+            if (index === chain!.length - 1) return false;
+            const nextNodeId = chain![index + 1];
+            return (
+              (edge.source === nodeId || edge.source === `node-${nodeId}`) &&
+              (edge.target === nextNodeId || edge.target === `node-${nextNodeId}`)
+            );
+          });
+
+          if (isEdgeInChain) {
+            return {
+              ...edge,
+              animated: true,
+              style: { stroke: '#ef4444', strokeWidth: 3.5, opacity: 1 },
+              markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' }
+            };
+          }
+
+          // Dim edges not in the chain
+          return {
+            ...edge,
+            animated: false,
+            style: { stroke: '#64748b', strokeWidth: 1, opacity: 0.15 }
+          };
+        })
+      );
+    },
+    [nodes, edges, setNodes, setEdges, rightPanelTab]
+  );
+
+  // Freezing Account Action
   const handleFreezeAccount = async () => {
     if (!selectedNode) return;
     setIsFreezing(true);
@@ -235,20 +451,24 @@ export default function InvestigationWorkspace() {
         })
       );
 
-      setSelectedNode((prev) => prev ? { ...prev, data: { ...prev.data, status: 'FROZEN' } } : null);
+      setSelectedNode((prev) => (prev ? { ...prev, data: { ...prev.data, status: 'FROZEN' } } : null));
 
       if (responseReceipt) {
         const mockLog: TerminalLog = {
           id: `log-${Date.now()}`,
           action: 'FREEZE_INITIATED',
           targetNodeId: selectedNode.data.id || selectedNode.id,
-          previousHash: responseReceipt?.audit_receipt?.previous_hash || '26a8743668e9de0b702cba4777e9114a0cadfd14dcb81bc920bfd9718466af59',
-          currentHash: responseReceipt?.audit_receipt?.transaction_hash || 'f81e18f34e8eb65c070f9180a0ac66a61cc5a8912ccdaa5c877b7fc1bcfe0612',
+          previousHash:
+            responseReceipt?.audit_receipt?.previous_hash ||
+            '26a8743668e9de0b702cba4777e9114a0cadfd14dcb81bc920bfd9718466af59',
+          currentHash:
+            responseReceipt?.audit_receipt?.transaction_hash ||
+            'f81e18f34e8eb65c070f9180a0ac66a61cc5a8912ccdaa5c877b7fc1bcfe0612',
           timestamp: new Date().toISOString()
         };
         setAuditLogs((prev) => [mockLog, ...prev]);
       } else {
-        fetchGraphAndLogs();
+        fetchGraphAndLogs(true);
       }
     } catch (error) {
       console.error('Interdiction failed:', error);
@@ -279,7 +499,7 @@ export default function InvestigationWorkspace() {
             body: JSON.stringify({
               node_id: targetId,
               officer_id: 'OFFICER_409',
-              reason: 'Account cleared & unfrozen via Investigation Workspace'
+              reason: 'Unfreeze authorized by Lead Investigator'
             })
           });
 
@@ -304,20 +524,24 @@ export default function InvestigationWorkspace() {
         })
       );
 
-      setSelectedNode((prev) => prev ? { ...prev, data: { ...prev.data, status: 'ACTIVE' } } : null);
+      setSelectedNode((prev) => (prev ? { ...prev, data: { ...prev.data, status: 'ACTIVE' } } : null));
 
       if (responseReceipt) {
         const mockLog: TerminalLog = {
           id: `log-${Date.now()}`,
           action: 'UNFREEZE_INITIATED',
           targetNodeId: selectedNode.data.id || selectedNode.id,
-          previousHash: responseReceipt?.audit_receipt?.previous_hash || '26a8743668e9de0b702cba4777e9114a0cadfd14dcb81bc920bfd9718466af59',
-          currentHash: responseReceipt?.audit_receipt?.transaction_hash || 'f81e18f34e8eb65c070f9180a0ac66a61cc5a8912ccdaa5c877b7fc1bcfe0612',
+          previousHash:
+            responseReceipt?.audit_receipt?.previous_hash ||
+            '26a8743668e9de0b702cba4777e9114a0cadfd14dcb81bc920bfd9718466af59',
+          currentHash:
+            responseReceipt?.audit_receipt?.transaction_hash ||
+            'f81e18f34e8eb65c070f9180a0ac66a61cc5a8912ccdaa5c877b7fc1bcfe0612',
           timestamp: new Date().toISOString()
         };
         setAuditLogs((prev) => [mockLog, ...prev]);
       } else {
-        fetchGraphAndLogs();
+        fetchGraphAndLogs(true);
       }
     } catch (error) {
       console.error('Unfreeze failed:', error);
@@ -326,19 +550,78 @@ export default function InvestigationWorkspace() {
     }
   };
 
+  // Right Side Intake Handler: Extract NLP Entities
+  const handleRunIntakeExtraction = async () => {
+    if (!intakeText.trim()) return;
+    setIsExtracting(true);
+    setIntakeMessage(null);
+    try {
+      const data = await intakeService.extractComplaint(intakeText);
+      setExtractedData(data);
+    } catch (err: any) {
+      setIntakeMessage(err?.message || 'Extraction failed');
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  // Right Side Intake Handler: Seed Graph Database
+  const handleConfirmGraphSeeding = async () => {
+    if (!extractedData) return;
+    setIsSeeding(true);
+    setIntakeMessage(null);
+    try {
+      await intakeService.seedVictimNodes(extractedData);
+      setIntakeMessage('Root victim nodes successfully seeded into graph (Risk Score 100).');
+      // Refresh the graph live to reflect newly seeded nodes!
+      await fetchGraphAndLogs(false);
+    } catch (err: any) {
+      setIntakeMessage(`Seeding failed: ${err?.message || 'Server error'}`);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#0F1210] text-gray-200 font-sans overflow-hidden">
-      
       {/* 1. Workspace Header */}
       <header className="px-6 py-3 border-b border-white/10 bg-white/[0.02] flex justify-between items-center z-20 shrink-0">
         <div className="flex items-center gap-4">
-          <h1 className="text-sm font-semibold tracking-wide text-white uppercase">CASE #{caseId}</h1>
-          <span className="text-[9px] font-bold bg-[#48D878]/20 text-[#48D878] px-2 py-1 rounded border border-[#48D878]/30 uppercase tracking-widest">
-            Live Telemetry
+          <div className="flex items-center gap-2">
+            <GitGraph size={18} className="text-[#48D878]" />
+            <h1 className="text-sm font-semibold tracking-wide text-white uppercase">CASE #{caseId}</h1>
+          </div>
+          <span className="text-[9px] font-bold bg-[#48D878]/20 text-[#48D878] px-2 py-1 rounded border border-[#48D878]/30 uppercase tracking-widest flex items-center gap-1.5">
+            <Radio size={10} className="animate-pulse" /> Live Telemetry
           </span>
+          {activeChain && activeChain.length > 0 && (
+            <span className="text-[9px] font-bold bg-red-500/20 text-red-400 px-2 py-1 rounded border border-red-500/40 uppercase tracking-widest flex items-center gap-1.5 animate-pulse">
+              <Sparkles size={10} /> Trail Active: {activeChain.length} Hops
+            </span>
+          )}
         </div>
-        
+
         <div className="flex items-center gap-3">
+          {activeChain && (
+            <button
+              onClick={handleResetHighlighting}
+              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-mono text-xs font-bold rounded-md border border-red-500/40 transition-all uppercase tracking-widest cursor-pointer flex items-center gap-1.5"
+            >
+              <RotateCcw size={12} /> Reset Trail Highlight
+            </button>
+          )}
+
+          <button
+            onClick={() => setRightPanelTab((prev) => (prev === 'intake' ? 'inspection' : 'intake'))}
+            className={`px-3.5 py-2 font-mono text-xs font-bold rounded-md border transition-all uppercase tracking-widest cursor-pointer flex items-center gap-2 ${
+              rightPanelTab === 'intake'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
+                : 'bg-white/5 hover:bg-white/10 text-gray-300 border-white/10'
+            }`}
+          >
+            <Cpu size={13} /> {rightPanelTab === 'intake' ? 'Viewing NCRP Intake' : 'NCRP Complaint Intake'}
+          </button>
+
           <button
             onClick={() => setIsLiveStreaming((prev) => !prev)}
             className={`px-3.5 py-2 font-mono text-xs font-bold rounded-md border transition-all uppercase tracking-widest cursor-pointer flex items-center gap-2 ${
@@ -350,12 +633,14 @@ export default function InvestigationWorkspace() {
             <span className={`w-2 h-2 rounded-full ${isLiveStreaming ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`} />
             {isLiveStreaming ? 'STREAM: LIVE 🟢' : 'STREAM: PAUSED ⏸'}
           </button>
+
           <button
-            onClick={() => setLayoutDirection((prev) => prev === 'TB' ? 'LR' : 'TB')}
+            onClick={() => setLayoutDirection((prev) => (prev === 'TB' ? 'LR' : 'TB'))}
             className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-gray-300 font-mono text-xs font-bold rounded-md border border-white/15 transition-all uppercase tracking-widest cursor-pointer"
           >
             LAYOUT: {layoutDirection === 'TB' ? 'TOP-DOWN ⬇' : 'LEFT-RIGHT ➡'}
           </button>
+
           <button
             onClick={() => navigate('/heatmap')}
             className="px-4 py-2 bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 font-mono text-xs font-bold rounded-md border border-blue-500/60 shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all uppercase tracking-widest cursor-pointer"
@@ -366,19 +651,119 @@ export default function InvestigationWorkspace() {
       </header>
 
       {/* 2. Main Intelligence Area (75% height) */}
-      <div className="flex flex-grow relative h-[75vh]">
-        {/* The Visualizer */}
+      <div className="flex flex-grow relative h-[75vh] overflow-hidden">
+        {/* FAR LEFT: Dedicated Evidence Chain Panel */}
+        <aside className="w-80 border-r border-white/10 bg-[#0C100E]/95 backdrop-blur-3xl p-4 flex flex-col z-20 shrink-0 overflow-y-auto">
+          <div className="flex justify-between items-center pb-3 border-b border-white/10 mb-4">
+            <div className="flex items-center gap-2">
+              <Layers size={14} className="text-red-400" />
+              <h2 className="text-[11px] font-bold text-gray-200 tracking-wider uppercase">Evidence Trail</h2>
+            </div>
+            {activeChain && (
+              <button
+                onClick={handleResetHighlighting}
+                className="text-[9px] text-gray-400 hover:text-white uppercase font-mono tracking-wider flex items-center gap-1"
+              >
+                <X size={10} /> Clear
+              </button>
+            )}
+          </div>
+
+          {activeChain && activeChainNodes.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              <div className="text-[10px] text-gray-400 font-mono leading-relaxed bg-red-950/30 p-2.5 rounded border border-red-500/30">
+                <span className="text-red-400 font-bold block mb-1 uppercase tracking-wider">Topological Shortest Path</span>
+                Flowing money trail from origin victim to downstream cashout nodes.
+              </div>
+
+              {/* Sequential Steps List */}
+              <div className="flex flex-col gap-2 relative mt-2">
+                {activeChainNodes.map((n, idx) => {
+                  const isSelected = selectedNode?.id === n.id;
+                  const isFirst = idx === 0;
+                  const isLast = idx === activeChainNodes.length - 1;
+
+                  return (
+                    <div key={n.id} className="relative">
+                      {/* Trail Connector Line */}
+                      {!isLast && (
+                        <div className="absolute left-[17px] top-9 bottom-[-10px] w-0.5 bg-red-500/50 z-0 animate-pulse" />
+                      )}
+
+                      <div
+                        onClick={() => setSelectedNode(n)}
+                        className={`p-3 rounded-lg border transition-all cursor-pointer relative z-10 flex items-start gap-3 ${
+                          isSelected
+                            ? 'bg-red-950/60 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]'
+                            : 'bg-white/[0.02] border-white/10 hover:border-red-500/40 hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <div
+                          className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center font-mono font-bold text-[10px] border ${
+                            isFirst
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                              : isLast
+                              ? 'bg-red-500/30 text-red-300 border-red-500/70'
+                              : 'bg-orange-500/20 text-orange-300 border-orange-500/50'
+                          }`}
+                        >
+                          {idx + 1}
+                        </div>
+
+                        <div className="flex-grow min-w-0">
+                          <div className="flex justify-between items-center mb-1">
+                            <span
+                              className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+                                n.data.type === 'VICTIM'
+                                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                                  : n.data.type === 'ATM'
+                                  ? 'bg-red-500/20 text-red-400 border-red-500/40'
+                                  : 'bg-orange-500/20 text-orange-400 border-orange-500/40'
+                              }`}
+                            >
+                              {n.data.type}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-red-400">
+                              {Number(n.data.riskScore).toFixed(0)}% Risk
+                            </span>
+                          </div>
+
+                          <div className="text-xs font-semibold text-white truncate" title={n.data.label}>
+                            {n.data.label}
+                          </div>
+                          <div className="text-[9px] font-mono text-gray-400 truncate">ID: {n.data.id}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 text-center p-4 text-gray-500">
+              <Layers size={28} className="mb-2 text-gray-600" />
+              <p className="text-xs font-semibold text-gray-400">No Trail Selected</p>
+              <p className="text-[10px] text-gray-500 mt-1">
+                Click on any intermediate mule node or terminal ATM to highlight the shortest topological evidence trail.
+              </p>
+            </div>
+          )}
+        </aside>
+
+        {/* CENTER: The Visualizer Canvas */}
         <div className="flex-grow relative">
           {isLoading && (
-             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0F1210]/80">
-                <div className="text-[11px] text-[#48D878] tracking-widest uppercase font-mono animate-pulse">Syncing Network Graph...</div>
-             </div>
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0F1210]/80">
+              <div className="text-[11px] text-[#48D878] tracking-widest uppercase font-mono animate-pulse">
+                Syncing Network Graph...
+              </div>
+            </div>
           )}
-          
-          <ReactFlow 
-            nodes={nodes} 
-            edges={edges} 
-            onNodesChange={onNodesChange} 
+
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
@@ -390,7 +775,7 @@ export default function InvestigationWorkspace() {
           </ReactFlow>
 
           {/* Graph Legend Overlay */}
-          <div className="absolute bottom-4 left-4 z-10 bg-[#0F1210]/90 backdrop-blur-md p-3 rounded-lg border border-white/10 text-[9px] font-mono space-y-1.5">
+          <div className="absolute bottom-4 left-4 z-10 bg-[#0F1210]/90 backdrop-blur-md p-3 rounded-lg border border-white/10 text-[9px] font-mono space-y-1.5 shadow-xl">
             <div className="text-gray-400 font-bold uppercase tracking-widest mb-1">Graph Legend</div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 border border-emerald-400" />
@@ -411,59 +796,189 @@ export default function InvestigationWorkspace() {
           </div>
         </div>
 
-        {/* The Action Panel */}
-        <aside className="w-96 border-l border-white/10 bg-white/[0.01] backdrop-blur-3xl p-6 flex flex-col z-20 shrink-0 overflow-y-auto">
-          <h2 className="text-[10px] font-semibold text-gray-500 tracking-widest uppercase mb-4">Entity Inspection</h2>
-          
-          {selectedNode ? (
-            <div className="space-y-5">
-              <div className="p-4 bg-white/[0.03] rounded border border-white/5">
-                <div className="text-base font-medium text-gray-100 mb-2">{selectedNode.data.label}</div>
-                <div className="flex justify-between items-center py-1 border-b border-white/5">
-                  <span className="text-xs text-gray-500">Node ID</span>
-                  <span className="text-xs font-mono text-gray-400">{selectedNode.data.id}</span>
-                </div>
-                <div className="flex justify-between items-center py-1 border-b border-white/5 mt-1">
-                  <span className="text-xs text-gray-500">Classification</span>
-                  <span className="text-xs font-semibold text-gray-300">{selectedNode.data.type}</span>
-                </div>
-                <div className="flex justify-between items-center py-1 border-b border-white/5 mt-1">
-                  <span className="text-xs text-gray-500">Status</span>
-                  <span className={`text-xs font-bold ${selectedNode.data.status === 'FROZEN' ? 'text-blue-400' : 'text-emerald-400'}`}>
-                    {selectedNode.data.status || 'ACTIVE'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1 mt-1">
-                  <span className="text-xs text-gray-500">Threat Level</span>
-                  <span className={`text-xs font-bold ${selectedNode.data.riskScore > 80 ? 'text-red-500' : 'text-[#48D878]'}`}>
-                    {Number(selectedNode.data.riskScore).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
+        {/* FAR RIGHT: Entity Inspection or NCRP Complaint Intake Panel */}
+        <aside className="w-96 border-l border-white/10 bg-[#0B0F0D]/95 backdrop-blur-3xl p-5 flex flex-col z-20 shrink-0 overflow-y-auto">
+          {/* Panel Selector Tabs */}
+          <div className="flex border-b border-white/10 mb-4 pb-2 justify-between items-center">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setRightPanelTab('inspection')}
+                className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded transition-colors ${
+                  rightPanelTab === 'inspection'
+                    ? 'bg-white/10 text-white border border-white/20'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Inspection
+              </button>
+              <button
+                onClick={() => setRightPanelTab('intake')}
+                className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
+                  rightPanelTab === 'intake'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <Cpu size={12} /> NCRP Intake
+              </button>
+            </div>
+          </div>
 
-              <div className="pt-2 flex flex-col gap-3">
-                {selectedNode.data.status === 'FROZEN' ? (
-                  <button 
-                    onClick={handleUnfreezeAccount}
-                    disabled={isFreezing}
-                    className="w-full py-3 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all disabled:opacity-50 tracking-widest uppercase cursor-pointer"
-                  >
-                    {isFreezing ? 'Executing...' : 'Unfreeze Node Account'}
-                  </button>
-                ) : (
-                  <button 
-                    onClick={handleFreezeAccount}
-                    disabled={isFreezing}
-                    className="w-full py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-xs rounded border border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all disabled:opacity-50 tracking-widest uppercase cursor-pointer"
-                  >
-                    {isFreezing ? 'Executing...' : 'Initiate API Freeze'}
-                  </button>
-                )}
-              </div>
+          {/* TAB 1: Inspection & Interdiction Action */}
+          {rightPanelTab === 'inspection' ? (
+            <div>
+              {selectedNode ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-white/[0.03] rounded-lg border border-white/10">
+                    <div className="text-sm font-semibold text-gray-100 mb-2 truncate">{selectedNode.data.label}</div>
+                    <div className="flex justify-between items-center py-1 border-b border-white/5">
+                      <span className="text-xs text-gray-500">Node ID</span>
+                      <span className="text-xs font-mono text-gray-300">{selectedNode.data.id}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-white/5 mt-1">
+                      <span className="text-xs text-gray-500">Classification</span>
+                      <span className="text-xs font-semibold text-gray-300">{selectedNode.data.type}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1 border-b border-white/5 mt-1">
+                      <span className="text-xs text-gray-500">Status</span>
+                      <span
+                        className={`text-xs font-bold ${
+                          selectedNode.data.status === 'FROZEN' ? 'text-blue-400' : 'text-emerald-400'
+                        }`}
+                      >
+                        {selectedNode.data.status || 'ACTIVE'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1 mt-1">
+                      <span className="text-xs text-gray-500">Threat Level</span>
+                      <span
+                        className={`text-xs font-bold ${
+                          selectedNode.data.riskScore > 80 ? 'text-red-500' : 'text-[#48D878]'
+                        }`}
+                      >
+                        {Number(selectedNode.data.riskScore).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex flex-col gap-3">
+                    {selectedNode.data.status === 'FROZEN' ? (
+                      <button
+                        onClick={handleUnfreezeAccount}
+                        disabled={isFreezing}
+                        className="w-full py-3 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all disabled:opacity-50 tracking-widest uppercase cursor-pointer"
+                      >
+                        {isFreezing ? 'Executing...' : 'Unfreeze Node Account'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleFreezeAccount}
+                        disabled={isFreezing}
+                        className="w-full py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-xs rounded-lg border border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all disabled:opacity-50 tracking-widest uppercase cursor-pointer"
+                      >
+                        {isFreezing ? 'Executing...' : 'Initiate API Freeze'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-[11px] text-gray-500 text-center mt-12 uppercase tracking-widest">
+                  Select any graph node to inspect details or trigger evidence chains
+                </div>
+              )}
             </div>
           ) : (
-            <div className="text-[11px] text-gray-500 text-center mt-10 uppercase tracking-widest">
-              Select any graph node to inspect details
+            /* TAB 2: NCRP Complaint Intake Panel */
+            <div className="flex flex-col gap-3">
+              <div>
+                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">
+                  Unstructured Complaint Text
+                </p>
+                <textarea
+                  className="w-full h-28 p-2.5 text-xs font-mono bg-black/40 border border-white/15 rounded-lg text-gray-200 focus:border-emerald-500 focus:outline-none resize-none leading-relaxed"
+                  placeholder="Paste unstructured NCRP complaint narrative here..."
+                  value={intakeText}
+                  onChange={(e) => setIntakeText(e.target.value)}
+                />
+              </div>
+
+              {/* Sample Loader */}
+              <div className="flex justify-between items-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIntakeText(
+                      'Victim duped of Rs 85,000 via fake KYC link. Transferred from victim account 98765432101234 to UPI scammer88@paytm and 9876543210@ybl. Caller contacted from +919876543210.'
+                    )
+                  }
+                  className="text-[9px] text-emerald-400/80 hover:text-emerald-300 underline font-mono"
+                >
+                  Load Sample Scam
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRunIntakeExtraction}
+                  disabled={isExtracting || !intakeText.trim()}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded border border-blue-400 disabled:opacity-50 transition-colors uppercase tracking-wider flex items-center gap-1.5"
+                >
+                  {isExtracting ? <RefreshCw size={12} className="spin" /> : <Cpu size={12} />} Extract Entities
+                </button>
+              </div>
+
+              {/* Extracted Entities List */}
+              {extractedData && (
+                <div className="p-3 bg-white/[0.02] border border-white/10 rounded-lg space-y-2.5">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex justify-between">
+                    <span>Parsed Identifiers</span>
+                    <span>
+                      {(extractedData.upis?.length || 0) +
+                        (extractedData.phones?.length || 0) +
+                        (extractedData.accounts?.length || 0)}{' '}
+                      Found
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-[11px] font-mono">
+                    {extractedData.upis && extractedData.upis.length > 0 && (
+                      <div className="bg-black/30 p-2 rounded border border-white/5">
+                        <span className="text-[9px] text-emerald-400 block uppercase font-bold">UPI IDs:</span>
+                        <div className="text-gray-300 truncate">{extractedData.upis.join(', ')}</div>
+                      </div>
+                    )}
+
+                    {extractedData.phones && extractedData.phones.length > 0 && (
+                      <div className="bg-black/30 p-2 rounded border border-white/5">
+                        <span className="text-[9px] text-blue-400 block uppercase font-bold">Phones (+91):</span>
+                        <div className="text-gray-300 truncate">{extractedData.phones.join(', ')}</div>
+                      </div>
+                    )}
+
+                    {extractedData.accounts && extractedData.accounts.length > 0 && (
+                      <div className="bg-black/30 p-2 rounded border border-white/5">
+                        <span className="text-[9px] text-amber-400 block uppercase font-bold">Bank Accounts:</span>
+                        <div className="text-gray-300 truncate">{extractedData.accounts.join(', ')}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Seed Button */}
+                  <button
+                    type="button"
+                    onClick={handleConfirmGraphSeeding}
+                    disabled={isSeeding}
+                    className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold text-xs rounded border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2"
+                  >
+                    {isSeeding ? <RefreshCw size={13} className="spin" /> : <Database size={13} />} Confirm Seeding into Graph
+                  </button>
+                </div>
+              )}
+
+              {intakeMessage && (
+                <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/30 rounded text-emerald-300 text-[10px] font-mono">
+                  {intakeMessage}
+                </div>
+              )}
             </div>
           )}
         </aside>
@@ -475,22 +990,26 @@ export default function InvestigationWorkspace() {
           <div className="w-2 h-2 rounded-full bg-[#48D878] animate-pulse" />
           <span className="text-gray-400 uppercase tracking-widest font-semibold">Cryptographic Ledger Stream</span>
         </div>
-        
+
         <div className="flex-grow overflow-y-auto p-4 space-y-2">
-          {auditLogs.slice().reverse().map((log) => (
-            <div key={log.id} className="flex gap-4 items-start text-gray-500 hover:text-gray-300 transition-colors">
-              <span className="text-gray-600 shrink-0">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-              <span className="text-blue-400 shrink-0 w-24">{log.action}</span>
-              <div className="flex flex-col gap-1 min-w-0">
-                <span className="truncate">TARGET: <span className="text-gray-300">{log.targetNodeId}</span></span>
-                <span className="truncate text-emerald-500/70">HASH: {log.currentHash}</span>
+          {auditLogs
+            .slice()
+            .reverse()
+            .map((log) => (
+              <div key={log.id} className="flex gap-4 items-start text-gray-500 hover:text-gray-300 transition-colors">
+                <span className="text-gray-600 shrink-0">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                <span className="text-blue-400 shrink-0 w-24">{log.action}</span>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="truncate">
+                    TARGET: <span className="text-gray-300">{log.targetNodeId}</span>
+                  </span>
+                  <span className="truncate text-emerald-500/70">HASH: {log.currentHash}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           <div ref={terminalEndRef} />
         </div>
       </div>
-
     </div>
   );
 }
