@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Bell, BriefcaseBusiness, FileText, LayoutDashboard, LogOut, Map, Settings, UserCircle } from 'lucide-react';
+import { Bell, BriefcaseBusiness, FileText, LayoutDashboard, LogOut, Map, Settings, UserCircle, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { TrafficSimulator } from '../components/TrafficSimulator';
 
 const nav = [
   ['/dashboard', 'Dashboard', LayoutDashboard],
@@ -13,16 +14,16 @@ const nav = [
 ] as const;
 
 
-
 export function DashboardLayout() {
   const { user: u, logout } = useAuth();
   const navigate = useNavigate();
   const accountMenu = useRef<HTMLDetailsElement>(null);
+  const [simulatorOpen, setSimulatorOpen] = useState(false);
+
   const signOut = () => {
     logout();
     navigate('/login');
   };
-
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -54,7 +55,7 @@ export function DashboardLayout() {
           {nav.map(([to, label, Icon]) => (
             <NavLink key={to} to={to}>
               <Icon size={18} />
-              {label}
+              <span>{label}</span>
             </NavLink>
           ))}
         </nav>
@@ -78,15 +79,31 @@ export function DashboardLayout() {
       </aside>
       <main className="main-content">
         <div className="topbar">
-          <span className="live">
-            <span className="live-dot" aria-hidden="true" />
-            LIVE THREAT TELEMETRY
-          </span>
-          <button className="topbar-signout" onClick={signOut}>
-            <LogOut size={15} /> Sign Out
-          </button>
+          <div className="topbar-left">
+            <span className="live">
+              <span className="live-dot" aria-hidden="true" />
+              LIVE THREAT TELEMETRY
+            </span>
+            <span className="classification-badge">LAW ENFORCEMENT SENSITIVE — OFFICIAL USE ONLY</span>
+          </div>
+          <div className="topbar-right">
+            <button className="topbar-btn accent" onClick={() => navigate('/heatmap')}>
+              <Map size={14} />
+              Predictive Heatmap
+            </button>
+            <button className="topbar-btn simulate" onClick={() => setSimulatorOpen(true)}>
+              <Zap size={14} />
+              Simulate Traffic
+            </button>
+            <button className="topbar-signout" onClick={signOut}>
+              <LogOut size={15} /> Sign Out
+            </button>
+          </div>
         </div>
         <Outlet />
+        {simulatorOpen && (
+          <TrafficSimulator onClose={() => setSimulatorOpen(false)} />
+        )}
       </main>
     </div>
   );

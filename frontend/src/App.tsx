@@ -13,6 +13,7 @@ import { Loading } from './components/ui';
 import InvestigationWorkspace from './components/InvestigationWorkspace';
 import { ComplaintsPage } from './pages/Complaints';
 import CasesPage from './pages/CasesPage';
+import CyberBackground from './components/CyberBackground';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,6 +32,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <AuthProvider>
+      <CyberBackground />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route

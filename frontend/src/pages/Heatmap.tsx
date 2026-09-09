@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { MapContainer, TileLayer, Rectangle, Popup, Marker, CircleMarker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 import { locationService } from '../services/services';
 import { TrendingUp, Clock, Sparkles, Send, Compass } from 'lucide-react';
 
@@ -173,29 +174,16 @@ export function Heatmap() {
   const fetchForecast = async (hours: number) => {
     setIsPredicting(true);
     try {
-      const endpoints = [
-        `/api/v1/predictions/forecast?hours_ahead=${hours}`,
-        `/api/v1/engine/forecast?hours_ahead=${hours}`,
-        `http://localhost:8000/api/v1/predictions/forecast?hours_ahead=${hours}`
-      ];
-
-      let res: Response | null = null;
-      for (const url of endpoints) {
-        try {
-          const r = await fetch(url);
-          if (r.ok) {
-            res = r;
-            break;
-          }
-        } catch {
-          // try next
-        }
-      }
-
-      if (res && res.ok) {
-        const data = await res.json();
-        setForecastZones(data.zones || []);
-      }
+      // Use authenticated api.get — /forecast is now declared before /{prediction_id}
+      // so it won't be shadowed and won't require auth (but the token is sent anyway)
+      const data = await api.get<{ zones?: ForecastZone[] }>(
+        '/predictions/forecast',
+        { hours_ahead: hours }
+      ).catch(() =>
+        // Fallback to engine forecast endpoint
+        api.get<{ zones?: ForecastZone[] }>('/engine/forecast', { hours_ahead: hours })
+      );
+      setForecastZones(data.zones || []);
     } catch (err) {
       console.warn('Failed to fetch forecast:', err);
     } finally {
@@ -220,23 +208,16 @@ export function Heatmap() {
     setIsPredicting(true);
     setDispatchStatus(null);
     try {
-      let res: Response | null = null;
-      try {
-        const r = await fetch('/api/v1/engine/run-intelligence', { method: 'POST' });
-        if (r.ok) res = r;
-      } catch {
-        // network error
-      }
-
-      if (res && res.ok) {
-        const data = await res.json();
-        setZones(data.interdiction_zones || []);
-        if (data.graph && Array.isArray(data.graph.nodes)) {
-          setGraphNodes(data.graph.nodes);
-        }
+      const data = await api.post<{
+        interdiction_zones?: InterdictionZone[];
+        graph?: { nodes: GraphNode[] };
+      }>('/engine/run-intelligence');
+      setZones(data.interdiction_zones || []);
+      if (data.graph && Array.isArray(data.graph.nodes)) {
+        setGraphNodes(data.graph.nodes);
       }
     } catch (error) {
-      console.error("Failed to run prediction pipeline:", error);
+      console.error('Failed to run prediction pipeline:', error);
     } finally {
       setIsPredicting(false);
     }
@@ -245,12 +226,10 @@ export function Heatmap() {
   const dispatchPatrol = async (zoneId: string) => {
     setDispatchStatus(`TRANSMITTING SECURE COORDINATES FOR ${zoneId}...`);
     try {
-      const res = await fetch('/api/v1/action/dispatch-patrol', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ zone_id: zoneId, officer: 'AUTO-DISPATCH', station: 'NEAREST' })
-      });
-      const data = res.ok ? await res.json() : null;
+      const data = await api.post<{ eta?: string; officer?: string }>(
+        '/action/dispatch-patrol',
+        { zone_id: zoneId, officer: 'AUTO-DISPATCH', station: 'NEAREST' }
+      );
       const eta = data?.eta ?? '4 mins';
       const officer = data?.officer ?? 'nearest patrol unit';
       setDispatchStatus(`SUCCESS: Predictive coordinates pushed to ${officer} for ${zoneId}. ETA: ${eta}.`);
@@ -259,6 +238,7 @@ export function Heatmap() {
     }
     setTimeout(() => setDispatchStatus(null), 4000);
   };
+
 
   const getNodeCoordinates = (node: GraphNode): [number, number] | null => {
     if (node.metadata?.lat && node.metadata?.lng) {

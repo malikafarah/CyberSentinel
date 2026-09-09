@@ -12,6 +12,31 @@ from app.schemas.auth import TokenData
 
 router = APIRouter(prefix="/predictions", tags=["Predictions"])
 
+
+@router.get("/forecast")
+async def get_atm_cashout_forecast(
+    hours_ahead: int = Query(default=12, ge=1, le=72, description="Forecasting horizon in hours (e.g. 12, 24, 48)")
+):
+    """
+    Spatiotemporal Time-Series Cash-Out Forecasting for ATM Hotspots.
+    Uses Prophet / Harmonic Seasonal Decomposition with payday & weekend calendar features.
+    NOTE: Must be declared BEFORE /{prediction_id} to avoid FastAPI route shadowing (401).
+    """
+    try:
+        from app.engine.forecasting import forecast_atm_hotspots
+        results = forecast_atm_hotspots(hours_ahead=hours_ahead)
+        return {
+            "status": "success",
+            "algorithm": "Facebook Prophet / Spatiotemporal Seasonality",
+            "forecast_horizon_hours": hours_ahead,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "forecasted_zones_count": len(results),
+            "zones": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/", response_model=List[PredictionResponse])
 async def get_predictions(
     region: Optional[str] = Query(default=None, description="Filter by geographic region"),
@@ -265,24 +290,4 @@ async def trigger_live_prediction(
          
     return enriched_predictions
 
-@router.get("/forecast")
-async def get_atm_cashout_forecast(
-    hours_ahead: int = Query(default=12, ge=1, le=72, description="Forecasting horizon in hours (e.g. 12, 24, 48)")
-):
-    """
-    Spatiotemporal Time-Series Cash-Out Forecasting for ATM Hotspots.
-    Uses Prophet / Harmonic Seasonal Decomposition with payday & weekend calendar features.
-    """
-    try:
-        from app.engine.forecasting import forecast_atm_hotspots
-        results = forecast_atm_hotspots(hours_ahead=hours_ahead)
-        return {
-            "status": "success",
-            "algorithm": "Facebook Prophet / Spatiotemporal Seasonality",
-            "forecast_horizon_hours": hours_ahead,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "forecasted_zones_count": len(results),
-            "zones": results
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+

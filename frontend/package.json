@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "CyberSentinel",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,16 +10,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
     "@tailwindcss/vite": "^4.3.3",
     "@xyflow/react": "^12.11.5",
+    "framer-motion": "^13.2.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.35.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-is": "^19.2.8",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "three": "^0.186.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
@@ -29,6 +34,7 @@
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^6.1.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "oxlint": "^1.79.0",

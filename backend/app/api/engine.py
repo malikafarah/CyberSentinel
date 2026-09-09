@@ -896,6 +896,217 @@ async def get_active_hyperparams():
     }
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Live Transaction Traffic Simulation Endpoints
+# Injects realistic fraud transfer / ATM withdrawal edges into MongoDB Atlas.
+# Used by the frontend TrafficSimulator control panel for live telemetry.
+# ─────────────────────────────────────────────────────────────────────────────
+
+import random
+import hashlib
+
+ATTACK_PATTERNS = {
+    "mule_layering": {
+        "description": "Rapid layering through multiple mule accounts",
+        "min_amount": 8000,
+        "max_amount": 45000,
+        "edge_types": ["TRANSFER", "TRANSFER", "SHARED_KYC"],
+    },
+    "atm_cashout": {
+        "description": "Coordinated ATM cash-out from mule terminals",
+        "min_amount": 15000,
+        "max_amount": 75000,
+        "edge_types": ["TRANSFER", "WITHDRAWAL"],
+    },
+    "rapid_bustout": {
+        "description": "High-value rapid bust-out via multiple mules",
+        "min_amount": 50000,
+        "max_amount": 200000,
+        "edge_types": ["TRANSFER", "TRANSFER", "WITHDRAWAL"],
+    },
+}
+
+SYNTHETIC_VICTIMS = [
+    {"_id": "n_victim_1", "type": "VICTIM", "riskScore": 95, "label": "Victim Acct A (HDFC)", "metadata": {}},
+    {"_id": "n_victim_2", "type": "VICTIM", "riskScore": 91, "label": "Victim Acct B (SBI)", "metadata": {}},
+    {"_id": "n_victim_3", "type": "VICTIM", "riskScore": 88, "label": "Victim Acct C (Axis)", "metadata": {}},
+]
+
+SYNTHETIC_MULES = [
+    {"_id": "n_mule_1", "type": "MULE", "riskScore": 92, "label": "Mule Acct 101 (SBI)", "metadata": {}},
+    {"_id": "n_mule_2", "type": "MULE", "riskScore": 88, "label": "Mule Acct 102 (PNB)", "metadata": {}},
+    {"_id": "M883", "type": "MULE", "riskScore": 90, "label": "Mule Acct (SBI)", "metadata": {}},
+    {"_id": "n_mule_4", "type": "MULE", "riskScore": 85, "label": "Mule Acct 104 (Canara)", "metadata": {}},
+]
+
+SYNTHETIC_ATMS = [
+    {"_id": "n_atm_104", "type": "ATM", "riskScore": 85.7, "label": "ATM MG Road (HDFC)", "metadata": {"lat": 16.5062, "lng": 80.6480, "location_id": "ATM-104"}},
+    {"_id": "n_atm_221", "type": "ATM", "riskScore": 85.7, "label": "ATM Benz Circle (SBI)", "metadata": {"lat": 16.5044, "lng": 80.6558, "location_id": "ATM-221"}},
+    {"_id": "n_atm_087", "type": "ATM", "riskScore": 78.0, "label": "ATM KPHB Colony (ICICI)", "metadata": {"lat": 17.4933, "lng": 78.3914, "location_id": "ATM-087"}},
+]
+
+class SimulateTrafficRequest(BaseModel):
+    count: Optional[int] = 1
+    pattern: Optional[str] = "mule_layering"
+    min_amount: Optional[float] = None
+    max_amount: Optional[float] = None
+
+@router.post("/simulate-traffic")
+async def simulate_fraud_traffic(payload: SimulateTrafficRequest, request: Request):
+    """
+    POST /api/v1/engine/simulate-traffic
+    Injects realistic fraud transfer and ATM withdrawal edges into MongoDB Atlas.
+    Used by the frontend TrafficSimulator control panel for live telemetry demonstration.
+    Generates Victim → Mule → ATM transaction chains with realistic INR amounts.
+    """
+    db = get_db(request)
+
+    count = max(1, min(payload.count or 1, 10))
+    pattern = payload.pattern or "mule_layering"
+    pat_config = ATTACK_PATTERNS.get(pattern, ATTACK_PATTERNS["mule_layering"])
+
+    min_amt = payload.min_amount or pat_config["min_amount"]
+    max_amt = payload.max_amount or pat_config["max_amount"]
+
+    # Fetch real nodes from DB; fall back to synthetic if collection is empty
+    try:
+        db_victims = await db["nodes"].find({"type": "VICTIM"}).to_list(length=20)
+        db_mules = await db["nodes"].find({"type": "MULE"}).to_list(length=20)
+        db_atms = await db["nodes"].find({"type": "ATM"}).to_list(length=20)
+    except Exception:
+        db_victims, db_mules, db_atms = [], [], []
+
+    victims = db_victims if db_victims else SYNTHETIC_VICTIMS
+    mules = db_mules if db_mules else SYNTHETIC_MULES
+    atms = db_atms if db_atms else SYNTHETIC_ATMS
+
+    # Seed base nodes if DB is empty
+    if not db_victims and not db_mules:
+        try:
+            await db["nodes"].insert_many([*SYNTHETIC_VICTIMS, *SYNTHETIC_MULES, *SYNTHETIC_ATMS])
+        except Exception:
+            pass
+
+    generated_transactions = []
+
+    for i in range(count):
+        victim = random.choice(victims)
+        mule = random.choice(mules)
+        atm = random.choice(atms)
+
+        amount = round(random.uniform(min_amt, max_amt), 2)
+        edge_types = pat_config["edge_types"]
+        ts = datetime.now(timezone.utc)
+
+        victim_id = str(victim.get("_id") or victim.get("id"))
+        mule_id = str(mule.get("_id") or mule.get("id"))
+        atm_id = str(atm.get("_id") or atm.get("id"))
+
+        victim_label = victim.get("label") or victim.get("metadata", {}).get("name") or victim_id
+        mule_label = mule.get("label") or mule.get("metadata", {}).get("name") or mule_id
+        atm_label = atm.get("label") or atm.get("metadata", {}).get("name") or atm_id
+
+        # Compute fraud probability based on amount and pattern
+        base_prob = {"mule_layering": 0.82, "atm_cashout": 0.91, "rapid_bustout": 0.97}.get(pattern, 0.80)
+        amount_factor = min(1.0, amount / 100000.0) * 0.12
+        fraud_probability = round(min(0.99, base_prob + amount_factor), 3)
+
+        # TX hash for ledger integrity
+        tx_hash = hashlib.sha256(f"{victim_id}{mule_id}{amount}{ts.isoformat()}".encode()).hexdigest()[:16].upper()
+
+        # Edge 1: Victim → Mule (TRANSFER)
+        transfer_edge = {
+            "source": victim_id,
+            "target": mule_id,
+            "type": edge_types[0],
+            "weight": amount,
+            "currency": "INR",
+            "pattern": pattern,
+            "fraud_probability": fraud_probability,
+            "tx_hash": tx_hash,
+            "simulated": True,
+            "timestamp": ts,
+        }
+        try:
+            await db["edges"].insert_one(transfer_edge)
+        except Exception:
+            pass
+
+        # Edge 2: Mule → ATM (WITHDRAWAL) if pattern includes it
+        withdrawal_edge = None
+        if len(edge_types) > 1 and edge_types[-1] in ("WITHDRAWAL", "CASH_WITHDRAWAL"):
+            withdrawal_amount = round(amount * random.uniform(0.85, 0.98), 2)
+            withdrawal_edge = {
+                "source": mule_id,
+                "target": atm_id,
+                "type": "WITHDRAWAL",
+                "weight": withdrawal_amount,
+                "currency": "INR",
+                "pattern": pattern,
+                "fraud_probability": fraud_probability,
+                "tx_hash": tx_hash + "_W",
+                "simulated": True,
+                "timestamp": ts,
+            }
+            try:
+                await db["edges"].insert_one(withdrawal_edge)
+            except Exception:
+                pass
+
+        # Bump mule risk score in DB
+        try:
+            await db["nodes"].update_one(
+                {"$or": [{"_id": mule_id}, {"id": mule_id}]},
+                {"$set": {"riskScore": min(99.0, float(mule.get("riskScore", 85)) + random.uniform(0.5, 2.0))}},
+            )
+        except Exception:
+            pass
+
+        tx_record = {
+            "tx_hash": tx_hash,
+            "pattern": pattern,
+            "pattern_description": pat_config["description"],
+            "victim_id": victim_id,
+            "victim_label": victim_label,
+            "mule_id": mule_id,
+            "mule_label": mule_label,
+            "atm_id": atm_id,
+            "atm_label": atm_label,
+            "amount_inr": amount,
+            "fraud_probability": fraud_probability,
+            "timestamp": ts.isoformat(),
+            "simulated": True,
+        }
+
+        # Store in simulated_transactions collection for telemetry feed
+        try:
+            await db["simulated_transactions"].insert_one({**tx_record, "timestamp_dt": ts})
+        except Exception:
+            pass
+
+        generated_transactions.append(tx_record)
+
+    return {
+        "status": "success",
+        "message": f"{len(generated_transactions)} synthetic fraud transaction(s) injected into MongoDB Atlas.",
+        "pattern": pattern,
+        "pattern_description": pat_config["description"],
+        "transactions": generated_transactions,
+    }
 
 
+@router.get("/simulated-transactions")
+async def get_simulated_transactions(request: Request, limit: int = 25):
+    """
+    GET /api/v1/engine/simulated-transactions
+    Returns the most recent simulated fraud transactions for the live frontend telemetry ticker.
+    """
+    db = get_db(request)
+    try:
+        docs = await db["simulated_transactions"].find(
+            {}, {"_id": 0, "timestamp_dt": 0}
+        ).sort("_id", -1).to_list(length=min(limit, 100))
+        return {"status": "success", "count": len(docs), "transactions": docs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 

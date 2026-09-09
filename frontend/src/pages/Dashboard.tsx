@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Banknote, MapPinned, MessageSquare, RefreshCw, ShieldAlert, Radio, Terminal } from 'lucide-react';
+import { AlertTriangle, Banknote, Map, MapPinned, MessageSquare, RefreshCw, ShieldAlert, Radio, Terminal } from 'lucide-react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, Legend } from 'recharts';
 import { dashboardService, predictionService, alertService, locationService } from '../services/services';
 import type { Alert, DashboardSummary, Prediction, LocationItem } from '../types';
@@ -102,7 +102,7 @@ export function Dashboard() {
             <RefreshCw size={14} /> Refresh
           </button>
           <button className="btn" onClick={() => nav('/heatmap')}>
-            Open full GIS heatmap
+            <Map size={14} /> Launch Predictive Heatmap
           </button>
         </div>
       </PageHeader>
