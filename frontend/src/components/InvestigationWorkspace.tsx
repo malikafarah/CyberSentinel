@@ -178,23 +178,11 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
       if (!silent) setIsLoading(true);
 
       let graphRes: Response | null = null;
-      const graphUrls = [
-        `http://localhost:8001/api/engine/case/${encodeURIComponent(caseId)}`,
-        `http://localhost:8000/api/engine/case/${encodeURIComponent(caseId)}`,
-        `/api/v1/engine/case/${encodeURIComponent(caseId)}`,
-        `/api/engine/case/${encodeURIComponent(caseId)}`
-      ];
-
-      for (const url of graphUrls) {
-        try {
-          const res = await fetch(url);
-          if (res.ok) {
-            graphRes = res;
-            break;
-          }
-        } catch {
-          // try next
-        }
+      try {
+        const res = await fetch(`/api/v1/engine/case/${encodeURIComponent(caseId)}`);
+        if (res.ok) graphRes = res;
+      } catch {
+        // network error — fall through to defaults
       }
 
       if (graphRes && graphRes.ok) {
@@ -218,22 +206,11 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
       // Fetch Terminal Logs
       let logsRes: Response | null = null;
-      const logsUrls = [
-        'http://localhost:8001/api/action/audit-logs',
-        'http://localhost:8000/api/action/audit-logs',
-        '/api/action/audit-logs'
-      ];
-
-      for (const url of logsUrls) {
-        try {
-          const res = await fetch(url);
-          if (res.ok) {
-            logsRes = res;
-            break;
-          }
-        } catch {
-          // try next
-        }
+      try {
+        const res = await fetch('/api/v1/action/audit-logs');
+        if (res.ok) logsRes = res;
+      } catch {
+        // network error — fall through
       }
 
       if (logsRes && logsRes.ok) {
@@ -426,34 +403,22 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
     setIsFreezing(true);
 
     try {
-      const endpoints = [
-        'http://localhost:8001/api/action/unfreeze',
-        'http://localhost:8000/api/action/unfreeze',
-        '/api/action/unfreeze'
-      ];
-
       let responseReceipt: any = null;
       const targetId = selectedNode.data.id || selectedNode.id;
 
-      for (const url of endpoints) {
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              node_id: targetId,
-              officer_id: 'OFFICER_409',
-              reason: 'Unfreeze authorized by Lead Investigator'
-            })
-          });
-
-          if (res.ok) {
-            responseReceipt = await res.json();
-            break;
-          }
-        } catch {
-          // try next
-        }
+      try {
+        const res = await fetch('/api/v1/action/unfreeze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            node_id: targetId,
+            officer_id: 'OFFICER_409',
+            reason: 'Unfreeze authorized by Lead Investigator'
+          })
+        });
+        if (res.ok) responseReceipt = await res.json();
+      } catch {
+        // network error — fall through
       }
 
       setNodes((nds) =>

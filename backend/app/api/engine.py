@@ -531,28 +531,14 @@ async def get_case_graph(case_id: str, request: Request):
 @router.post("/run-intelligence")
 async def run_intelligence_pipeline(request: Request = None):
     try:
-        db = None
-        if request:
-            try:
-                db = get_db(request)
-            except Exception:
-                pass
+        db = get_db(request)
 
-        if db is None:
-            MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-            client = MongoClient(MONGO_URI)
-            db_sync = client["cybersentinel"]
-            nodes_col = db_sync["nodes"]
-            edges_col = db_sync["edges"]
-            active_nodes = list(nodes_col.find({"status": {"$ne": "FROZEN"}}))
-            all_edges = list(edges_col.find())
-        else:
-            nodes_count = await db["nodes"].count_documents({"status": {"$ne": "FROZEN"}})
-            if nodes_count == 0:
-                await db["nodes"].insert_many(SEED_NODES)
-                await db["edges"].insert_many(SEED_EDGES)
-            active_nodes = await db["nodes"].find({"status": {"$ne": "FROZEN"}}).to_list(length=500)
-            all_edges = await db["edges"].find().to_list(length=500)
+        nodes_count = await db["nodes"].count_documents({"status": {"$ne": "FROZEN"}})
+        if nodes_count == 0:
+            await db["nodes"].insert_many(SEED_NODES)
+            await db["edges"].insert_many(SEED_EDGES)
+        active_nodes = await db["nodes"].find({"status": {"$ne": "FROZEN"}}).to_list(length=500)
+        all_edges = await db["edges"].find().to_list(length=500)
 
         if not active_nodes:
             return {"status": "error", "message": "No active nodes found in database."}

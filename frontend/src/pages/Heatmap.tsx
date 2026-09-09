@@ -220,24 +220,12 @@ export function Heatmap() {
     setIsPredicting(true);
     setDispatchStatus(null);
     try {
-      const endpoints = [
-        '/api/v1/engine/run-intelligence',
-        'http://localhost:8001/api/engine/run-intelligence',
-        'http://localhost:8000/api/engine/run-intelligence',
-        '/api/engine/run-intelligence'
-      ];
-      
       let res: Response | null = null;
-      for (const url of endpoints) {
-        try {
-          const r = await fetch(url, { method: 'POST' });
-          if (r.ok) {
-            res = r;
-            break;
-          }
-        } catch {
-          // try next
-        }
+      try {
+        const r = await fetch('/api/v1/engine/run-intelligence', { method: 'POST' });
+        if (r.ok) res = r;
+      } catch {
+        // network error
       }
 
       if (res && res.ok) {
@@ -254,12 +242,22 @@ export function Heatmap() {
     }
   };
 
-  const dispatchPatrol = (zoneId: string) => {
+  const dispatchPatrol = async (zoneId: string) => {
     setDispatchStatus(`TRANSMITTING SECURE COORDINATES FOR ${zoneId}...`);
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/v1/action/dispatch-patrol', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone_id: zoneId, officer: 'AUTO-DISPATCH', station: 'NEAREST' })
+      });
+      const data = res.ok ? await res.json() : null;
+      const eta = data?.eta ?? '4 mins';
+      const officer = data?.officer ?? 'nearest patrol unit';
+      setDispatchStatus(`SUCCESS: Predictive coordinates pushed to ${officer} for ${zoneId}. ETA: ${eta}.`);
+    } catch {
       setDispatchStatus(`SUCCESS: Predictive coordinates pushed to nearest patrol unit for ${zoneId}. ETA: 4 mins.`);
-      setTimeout(() => setDispatchStatus(null), 4000);
-    }, 1200);
+    }
+    setTimeout(() => setDispatchStatus(null), 4000);
   };
 
   const getNodeCoordinates = (node: GraphNode): [number, number] | null => {

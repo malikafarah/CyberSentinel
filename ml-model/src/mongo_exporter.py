@@ -36,8 +36,8 @@ def extract_and_merge_mongodb_data(
     # 2a. Attempt Direct MongoDB Query via PyMongo
     try:
         from pymongo import MongoClient
-        uri = os.getenv("MONGO_URI", mongo_uri)
-        dbname = os.getenv("MONGO_DB_NAME", db_name)
+        uri = os.getenv("MONGODB_CONNECTION_STRING", mongo_uri)
+        dbname = os.getenv("MONGODB_DB_NAME", db_name)
         print(f"  [INFO] Attempting MongoDB connection: {uri} ({dbname})...")
         
         client = MongoClient(uri, serverSelectionTimeoutMS=2000)

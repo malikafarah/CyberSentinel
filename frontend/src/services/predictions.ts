@@ -1,1 +1,0 @@
-export { predictionService } from './services';

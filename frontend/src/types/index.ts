@@ -104,6 +104,7 @@ export interface DashboardSummary {
     LOW: number;
     [key: string]: number;
   };
+  weekly_trend?: { day: string; risk: number }[];
 }
 
 export interface Filters {

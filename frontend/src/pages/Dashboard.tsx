@@ -4,7 +4,6 @@ import { AlertTriangle, Banknote, MapPinned, MessageSquare, RefreshCw, ShieldAle
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, Legend } from 'recharts';
 import { dashboardService, predictionService, alertService, locationService } from '../services/services';
 import type { Alert, DashboardSummary, Prediction, LocationItem } from '../types';
-import { trend } from '../mocks/data';
 import { MapView } from '../components/MapView';
 import MlPipelineConsole from '../components/MlPipelineConsole';
 import { Loading, PageHeader, RiskBadge, StatusBadge, ErrorState } from '../components/ui';
@@ -258,7 +257,7 @@ export function Dashboard() {
           </div>
           <div className="chart">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trend}>
+              <LineChart data={summary.weekly_trend ?? []}>
                 <XAxis dataKey="day" stroke="#6F7772" tick={{ fill: '#A6ADA8', fontSize: 11 }} />
                 <YAxis domain={[0, 100]} stroke="#6F7772" tick={{ fill: '#A6ADA8', fontSize: 11 }} />
                 <Tooltip contentStyle={{ background: '#191C1A', border: '1px solid #292D2A', borderRadius: '6px' }} labelStyle={{ color: '#F1F3F1' }} itemStyle={{ color: '#48D878' }} />

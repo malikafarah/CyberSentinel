@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import random
@@ -9,10 +8,16 @@ from datetime import datetime, timezone
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-# Connect to MongoDB
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-client = MongoClient(MONGO_URI)
-db = client["cybersentinel"]
+# Use canonical settings so we always connect to Atlas via the .env URI
+from app.config import settings
+
+try:
+    import certifi
+    client = MongoClient(settings.mongodb_connection_string, tlsCAFile=certifi.where())
+except Exception:
+    client = MongoClient(settings.mongodb_connection_string, tls=True, tlsAllowInvalidCertificates=True)
+
+db = client[settings.mongodb_db_name]
 nodes_col = db["nodes"]
 edges_col = db["edges"]
 
