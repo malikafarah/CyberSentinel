@@ -14,8 +14,8 @@ try:
     from src.mongo_exporter import extract_and_merge_mongodb_data
     from src.train import train_and_evaluate_model
 except ImportError:
-    from mongo_exporter import extract_and_merge_mongodb_data
-    from train import train_and_evaluate_model
+    from src.mongo_exporter import extract_and_merge_mongodb_data
+    from src.train import train_and_evaluate_model
 
 # ==========================================
 # Task 1 & 4: Strict API Output Contract Schemas

@@ -11,6 +11,7 @@ import time
 from sklearn.cluster import DBSCAN
 from app.db.mongo import get_database
 from app.engine.syndicate_detector import detect_fraud_syndicates
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/engine", tags=["Intelligence Engine"])
 

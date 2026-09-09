@@ -6,8 +6,8 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import classification_report, confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score, average_precision_score
 
-from features import load_feature_splits
-from preprocessing import preprocess_pipeline
+from src.features import load_feature_splits
+from src.preprocessing import preprocess_pipeline
 try:
     from src.mongo_exporter import extract_and_merge_mongodb_data
 except ImportError:
@@ -201,4 +201,4 @@ def train_and_evaluate_model(force_reprocess: bool = False, contamination: float
 
 
 if __name__ == '__main__':
-    train_and_evaluate_model(force_reprocess=False, contamination=0.02)
+    train_and_evaluate_model(force_reprocess=False, contamination=0.02)
