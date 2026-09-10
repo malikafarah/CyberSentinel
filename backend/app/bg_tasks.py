@@ -30,12 +30,18 @@ INDIAN_CRIMES = [
 
 async def generate_alerts_periodically():
     """Background task for Natural Alert Generation (Plan 4).
-    Generates realistic Indian-context alerts every 15–30 seconds."""
+    Generates realistic Indian-context alerts at a controlled rate (every 60–120 seconds).
+    Caps unacknowledged/new alerts in the collection to prevent alert flooding."""
     while True:
-        await asyncio.sleep(random.randint(15, 30))
+        await asyncio.sleep(random.randint(60, 120))
         try:
             db = get_database()
             if db is not None:
+                # Don't flood the queue: limit active "NEW" alerts to max 12
+                active_new_count = await db["alerts"].count_documents({"status": "NEW"})
+                if active_new_count >= 12:
+                    continue
+
                 risk_score = random.uniform(60, 99)
                 severity = (
                     "CRITICAL" if risk_score >= 90

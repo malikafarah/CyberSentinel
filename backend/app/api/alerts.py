@@ -33,10 +33,10 @@ async def seed_alerts_if_empty(db):
         await db["alerts"].insert_many(SEED_ALERTS)
 
 @router.get("/")
-async def get_alerts(request: Request):
+async def get_alerts(request: Request, limit: int = 25):
     db = get_db(request)
     await seed_alerts_if_empty(db)
-    alerts = await db["alerts"].find().to_list(length=100)
+    alerts = await db["alerts"].find().sort("created_at", -1).to_list(length=min(limit, 50))
     for a in alerts:
         if "_id" in a:
             a["_id"] = str(a["_id"])

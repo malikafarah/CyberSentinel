@@ -48,7 +48,7 @@ export function Alerts() {
 
   useEffect(() => {
     load();
-    const interval = setInterval(() => load(true), 15000);
+    const interval = setInterval(() => load(true), 45000);
     return () => clearInterval(interval);
   }, []);
 
