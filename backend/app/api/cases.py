@@ -14,14 +14,17 @@ SEED_CASES = [
         "risk_level": "CRITICAL",
         "complaints": ["C102", "C183", "C201", "C244"],
         "hotspot_ids": ["p104", "p221"],
+        "nodes": ["n_victim_1", "n_mule_1", "n_mule_2", "M883", "n_atm_104", "n_atm_221"],
+        "state": "Andhra Pradesh",
+        "district": "Krishna",
         "notes": [
-            "Patrol coordination requested for the 18:00–23:00 window.",
-            "Bank fraud desk notified; preserve terminal audit logs."
+            "Patrol coordination requested for the 18:00–23:00 window by Insp. Reddy.",
+            "SBI fraud desk notified (Ref: CFCFRMS-2918); preserve terminal audit logs for ATM-104."
         ],
         "timeline": [
-            {"time": "14:05", "event": "Complaint C102 linked to repeated withdrawal pattern", "location": "MG Road ATM Cluster"},
-            {"time": "15:10", "event": "Prediction model elevated hotspot risk", "location": "Vijayawada"},
-            {"time": "15:42", "event": "Operational alert issued to LEA desk", "location": "ATM-104"}
+            {"time": "14:05", "event": "Complaint C102 linked to repeated withdrawal pattern", "location": "MG Road ATM Cluster (HDFC)"},
+            {"time": "15:10", "event": "Prediction model elevated hotspot risk", "location": "Vijayawada Grid"},
+            {"time": "15:42", "event": "Operational alert issued to AP Cyber Police desk", "location": "ATM-104"}
         ]
     },
     {
@@ -31,9 +34,12 @@ SEED_CASES = [
         "risk_level": "HIGH",
         "complaints": ["C325", "C388", "C401"],
         "hotspot_ids": ["p087", "p176"],
-        "notes": ["Review affected account freeze requests."],
+        "nodes": ["n_victim_2", "n_mule_3", "n_atm_087"],
+        "state": "Telangana",
+        "district": "Hyderabad",
+        "notes": ["Review affected PNB account freeze requests under Sec 91 CrPC."],
         "timeline": [
-            {"time": "11:30", "event": "Complaint cluster received", "location": "KPHB Metro ATM"}
+            {"time": "11:30", "event": "Complaint cluster received by Telangana Cyber Command", "location": "KPHB Metro ATM"}
         ]
     }
 ]

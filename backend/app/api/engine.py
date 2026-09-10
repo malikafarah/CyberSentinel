@@ -16,12 +16,12 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/engine", tags=["Intelligence Engine"])
 
 SEED_NODES = [
-    {"_id": "n_victim_1", "type": "VICTIM", "riskScore": 95, "status": "ACTIVE", "metadata": {"name": "Victim Account A"}},
-    {"_id": "n_mule_1", "type": "MULE", "riskScore": 92, "status": "ACTIVE", "metadata": {"name": "Mule Account 101"}},
-    {"_id": "n_mule_2", "type": "MULE", "riskScore": 88, "status": "ACTIVE", "metadata": {"name": "Mule Account 102"}},
-    {"_id": "M883", "type": "MULE", "riskScore": 90, "status": "ACTIVE", "metadata": {"name": "Mule Account (SBI)"}},
-    {"_id": "n_atm_104", "type": "ATM", "riskScore": 85.7, "status": "ACTIVE", "metadata": {"lat": 16.5062, "lng": 80.6480, "location_id": "ATM-104"}},
-    {"_id": "n_atm_221", "type": "ATM", "riskScore": 85.7, "status": "ACTIVE", "metadata": {"lat": 16.5044, "lng": 80.6558, "location_id": "ATM-221"}},
+    {"_id": "n_victim_1", "type": "VICTIM", "riskScore": 95, "status": "ACTIVE", "label": "Victim Acct A — HDFC (Mumbai)", "metadata": {"name": "Victim Acct A", "bank": "HDFC", "ifsc": "HDFC0001234", "account": "3194****1029"}},
+    {"_id": "n_mule_1", "type": "MULE", "riskScore": 92, "status": "ACTIVE", "label": "Mule Acct 101 — SBI (Vijayawada)", "metadata": {"name": "Mule Account 101", "bank": "SBI", "ifsc": "SBIN0001234", "account": "3194****5572"}},
+    {"_id": "n_mule_2", "type": "MULE", "riskScore": 88, "status": "ACTIVE", "label": "Mule Acct 102 — PNB (Hyderabad)", "metadata": {"name": "Mule Account 102", "bank": "PNB", "ifsc": "PUNB0012345", "account": "6281****0033"}},
+    {"_id": "M883", "type": "MULE", "riskScore": 90, "status": "ACTIVE", "label": "Mule Acct M883 — SBI (Vijayawada)", "metadata": {"name": "Mule Account (SBI)", "bank": "SBI", "ifsc": "SBIN0005678", "account": "M883****2281"}},
+    {"_id": "n_atm_104", "type": "ATM", "riskScore": 85.7, "status": "ACTIVE", "label": "ATM-104 — MG Road, Vijayawada (HDFC)", "metadata": {"lat": 16.5062, "lng": 80.6480, "location_id": "ATM-104", "bank": "HDFC", "city": "Vijayawada"}},
+    {"_id": "n_atm_221", "type": "ATM", "riskScore": 85.7, "status": "ACTIVE", "label": "ATM-221 — Benz Circle, Vijayawada (SBI)", "metadata": {"lat": 16.5044, "lng": 80.6558, "location_id": "ATM-221", "bank": "SBI", "city": "Vijayawada"}},
 ]
 
 SEED_EDGES = [
@@ -445,13 +445,27 @@ async def propagate_risk_and_find_hotspots(request: Request):
 @router.get("/api/engine/case/{case_id}")
 async def get_case_graph(case_id: str, request: Request):
     db = get_db(request)
-    nodes = await db["nodes"].find({"status": {"$ne": "DELETED"}}).to_list(length=100)
-    edges = await db["edges"].find().to_list(length=100)
 
-    if not nodes:
-        nodes = SEED_NODES
-    if not edges:
-        edges = SEED_EDGES
+    # 1. Look up the case to understand its scope
+    case_doc = await db["cases"].find_one({"$or": [{"id": case_id}, {"_id": case_id}]})
+
+    # 2. Try to fetch case-specific nodes and edges first
+    nodes = await db["nodes"].find({"$or": [{"case_id": case_id}, {"status": {"$ne": "DELETED"}}]}).to_list(length=100)
+    edges = await db["edges"].find({"$or": [{"case_id": case_id}, {}]}).to_list(length=100)
+
+    # Filter to case-specific if available, otherwise use global
+    case_nodes = [n for n in nodes if n.get("case_id") == case_id]
+    case_edges = [e for e in edges if e.get("case_id") == case_id]
+
+    if case_nodes:
+        nodes = case_nodes
+        edges = case_edges if case_edges else edges
+    else:
+        # Fallback: use all nodes but log it
+        if not nodes:
+            nodes = SEED_NODES
+        if not edges:
+            edges = SEED_EDGES
 
     # Ensure all MULE nodes are connected by checking for orphan nodes
     connected_targets = {str(e.get("target")) for e in edges}
@@ -503,7 +517,7 @@ async def get_case_graph(case_id: str, request: Request):
         src = str(e.get("source"))
         tgt = str(e.get("target"))
         src_risk, src_type = node_risk_map.get(src, (85, "VICTIM"))
-        
+
         # Color edges based on source node risk score / malicious flow
         if src_type == "VICTIM" or src_risk >= 80:
             stroke_color = "#ef4444" # Red for high risk / dirty money
@@ -523,6 +537,8 @@ async def get_case_graph(case_id: str, request: Request):
     return {
         "status": "success",
         "case_id": case_id,
+        "case_title": case_doc.get("summary", "") if case_doc else "",
+        "is_case_specific": bool(case_nodes),
         "nodes": formatted_nodes,
         "edges": formatted_edges
     }
@@ -815,17 +831,109 @@ async def get_fraud_syndicates(request: Request):
 
 @router.get("/forecast")
 async def get_forecast_zones(
-    hours_ahead: int = 12
+    hours_ahead: int = 12,
+    request: Request = None
 ):
     """
-    Spatiotemporal Cash-Out Forecasting for ATM Hotspots across Pan-India grids.
+    Spatiotemporal Cash-Out Forecasting for ATM Hotspots.
+    Dynamically enriches zone data from real DB ATM nodes before running Prophet.
     """
     try:
-        from app.engine.forecasting import forecast_atm_hotspots
-        results = forecast_atm_hotspots(hours_ahead=hours_ahead)
+        from app.engine.forecasting import forecast_atm_hotspots, generate_synthetic_historical_withdrawals
+        import pandas as pd
+
+        # ── Pull real ATM locations from DB ──────────────────────────────────
+        db_atm_zones = []
+        if request:
+            db = get_db(request)
+            try:
+                db_atms = await db["nodes"].find({"type": "ATM"}).to_list(length=100)
+                db_locations = await db["locations"].find({}).to_list(length=100)
+
+                # Build zones from real ATM nodes in DB
+                for atm in db_atms:
+                    meta = atm.get("metadata", {}) or {}
+                    lat = meta.get("lat") or meta.get("latitude")
+                    lng = meta.get("lng") or meta.get("longitude")
+                    if lat and lng:
+                        atm_id = str(atm.get("_id") or atm.get("id"))
+                        db_atm_zones.append({
+                            "zone_id": f"ZONE-DB-{atm_id}",
+                            "zone_name": atm.get("label") or meta.get("name") or f"ATM Terminal {atm_id}",
+                            "base_volume": max(15, int(float(atm.get("riskScore", 80)) / 3)),
+                            "center": {"lat": float(lat), "lng": float(lng)},
+                            "lat_bounds": (float(lat) - 0.01, float(lat) + 0.01),
+                            "lng_bounds": (float(lng) - 0.01, float(lng) + 0.01),
+                            "atms": [atm_id]
+                        })
+
+                # Also enrich from locations collection
+                for loc in db_locations:
+                    geom = loc.get("geometry", {})
+                    coords = geom.get("coordinates", [])
+                    if len(coords) == 2:
+                        lng_val, lat_val = float(coords[0]), float(coords[1])
+                        loc_id = loc.get("location_id", str(loc.get("_id", "")))
+                        # Deduplicate zones by proximity
+                        already_covered = any(
+                            abs(z["center"]["lat"] - lat_val) < 0.005 and
+                            abs(z["center"]["lng"] - lng_val) < 0.005
+                            for z in db_atm_zones
+                        )
+                        if not already_covered:
+                            db_atm_zones.append({
+                                "zone_id": f"ZONE-LOC-{loc_id}",
+                                "zone_name": loc.get("location_name") or loc_id,
+                                "base_volume": max(20, int(float(loc.get("risk_score", 0.5)) * 60)),
+                                "center": {"lat": lat_val, "lng": lng_val},
+                                "lat_bounds": (lat_val - 0.01, lat_val + 0.01),
+                                "lng_bounds": (lng_val - 0.01, lng_val + 0.01),
+                                "atms": [loc_id]
+                            })
+            except Exception as db_err:
+                print(f"[Forecast] DB enrichment error (using synthetic fallback): {db_err}")
+
+        # ── Build historical data from real zones or use synthetic fallback ──
+        if db_atm_zones:
+            # Generate synthetic history shaped around the real DB zones
+            from datetime import datetime as dt, timezone as tz, timedelta
+            import numpy as np
+            now = dt.now(tz.utc).replace(minute=0, second=0, microsecond=0)
+            records = []
+            for h in range(168, 0, -1):
+                ts = now - timedelta(hours=h)
+                hour_of_day = ts.hour
+                day_of_week = ts.weekday()
+                dom = ts.day
+                diurnal_mult = 1.9 if 18 <= hour_of_day <= 22 else (1.3 if 11 <= hour_of_day <= 17 else (0.25 if hour_of_day <= 5 else 0.9))
+                weekend_mult = 1.45 if day_of_week in [4, 5, 6] else 1.0
+                payday_mult = 1.6 if (1 <= dom <= 5 or dom >= 28) else 1.0
+                for z in db_atm_zones:
+                    noise = np.random.normal(0, 3)
+                    y = max(1.0, z["base_volume"] * diurnal_mult * weekend_mult * payday_mult + noise)
+                    records.append({
+                        "ds": ts.strftime('%Y-%m-%d %H:%M:%S'),
+                        "y": round(y, 2),
+                        "zone_id": z["zone_id"],
+                        "zone_name": z["zone_name"],
+                        "lat": z["center"]["lat"],
+                        "lng": z["center"]["lng"],
+                        "lat_min": z["lat_bounds"][0],
+                        "lat_max": z["lat_bounds"][1],
+                        "lng_min": z["lng_bounds"][0],
+                        "lng_max": z["lng_bounds"][1],
+                        "atms": z["atms"]
+                    })
+            historical_data = pd.DataFrame(records)
+        else:
+            historical_data = generate_synthetic_historical_withdrawals(hours_back=168)
+
+        results = forecast_atm_hotspots(historical_data=historical_data, hours_ahead=hours_ahead)
         return {
             "status": "success",
             "algorithm": "Facebook Prophet / Spatiotemporal Seasonality",
+            "data_source": "db_enriched" if db_atm_zones else "synthetic_fallback",
+            "zone_count_from_db": len(db_atm_zones),
             "forecast_horizon_hours": hours_ahead,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "forecasted_zones_count": len(results),
@@ -833,6 +941,7 @@ async def get_forecast_zones(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 class SingleFeedback(BaseModel):
     node_id: str
@@ -894,6 +1003,21 @@ async def get_active_hyperparams():
         "status": "success",
         "hyperparameters": dict(_RUNTIME_HYPERPARAMS)
     }
+
+@router.get("/retrain-status")
+async def get_retrain_status(request: Request):
+    """Returns the latest model retraining status from the background task."""
+    db = get_db(request)
+    try:
+        latest_log = await db["retrain_log"].find_one(sort=[("timestamp", -1)])
+        if latest_log:
+            if "_id" in latest_log:
+                latest_log["_id"] = str(latest_log["_id"])
+            return {"status": "success", "data": latest_log}
+        else:
+            return {"status": "success", "data": {"message": "No retrain cycles logged yet."}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─────────────────────────────────────────────────────────────────────────────

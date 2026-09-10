@@ -334,6 +334,15 @@ export function Heatmap() {
         </div>
       </div>
 
+      {isPredicting && isPredictiveMode && (
+        <div className="absolute inset-0 z-[999] flex items-center justify-center bg-black/40 pointer-events-none">
+          <div className="bg-[#0B0F0D]/90 border border-purple-500/50 rounded-xl px-6 py-4 flex items-center gap-3 shadow-2xl">
+            <div className="w-4 h-4 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin" />
+            <span className="text-purple-300 font-mono text-xs font-bold uppercase tracking-widest">Running Prophet Forecast...</span>
+          </div>
+        </div>
+      )}
+
       {/* 2. GIS Map Canvas */}
       <MapContainer 
         center={[16.5062, 80.6480]} // Vijayawada epicenter

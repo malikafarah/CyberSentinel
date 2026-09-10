@@ -14,14 +14,24 @@ from app.api.engine import router as engine_router
 from app.api.actions import router as actions_router, intervene_router, audit_router
 from app.api.intake import router as intake_router
 from app.api.fusion import router as fusion_router
+from app.bg_tasks import generate_alerts_periodically, retrain_model_periodically
+import asyncio
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Connect to MongoDB Atlas
     await connect_to_mongo()
     app.state.mongodb = get_database()
+    
+    # Start background tasks
+    app.state.bg_tasks = []
+    app.state.bg_tasks.append(asyncio.create_task(generate_alerts_periodically()))
+    app.state.bg_tasks.append(asyncio.create_task(retrain_model_periodically()))
+    
     yield
     # Shutdown: Close MongoDB connection
+    for task in app.state.bg_tasks:
+        task.cancel()
     await close_mongo_connection()
 
 app = FastAPI(

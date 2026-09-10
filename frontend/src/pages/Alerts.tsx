@@ -14,28 +14,48 @@ export function Alerts() {
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [newAlertsCount, setNewAlertsCount] = useState(0);
   const nav = useNavigate();
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
+    if (!silent) setError(null);
     try {
       const [alertList, predList] = await Promise.all([
         alertService.list(),
         predictionService.list(),
       ]);
-      setAlerts(alertList);
+      
+      if (silent) {
+        // Compute newly arrived alerts that aren't in current state
+        setAlerts(prev => {
+          const newOnes = alertList.filter(a => !prev.find(old => old.id === a.id));
+          if (newOnes.length > 0) {
+            setNewAlertsCount(count => count + newOnes.length);
+          }
+          return alertList;
+        });
+      } else {
+        setAlerts(alertList);
+      }
       setP(predList);
     } catch (err: any) {
-      setError(err?.message || 'Failed to load alerts from server.');
+      if (!silent) setError(err?.message || 'Failed to load alerts from server.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     load();
+    const interval = setInterval(() => load(true), 15000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Reset new alerts counter when changing tabs
+  useEffect(() => {
+    setNewAlertsCount(0);
+  }, [tab]);
 
   if (loading) return <Loading />;
   if (error) {
@@ -68,7 +88,14 @@ export function Alerts() {
 
   return (
     <div className="page">
-      <PageHeader eyebrow="OPERATIONAL RESPONSE" title="Alerts queue" />
+      <PageHeader eyebrow="OPERATIONAL RESPONSE" title="Alerts queue">
+        {newAlertsCount > 0 && (
+          <span className="ml-2 px-2.5 py-1 bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] font-mono font-bold rounded-full animate-pulse uppercase tracking-widest flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+            {newAlertsCount} New
+          </span>
+        )}
+      </PageHeader>
       <div className="tabs">
         {tabs.map((t) => (
           <button

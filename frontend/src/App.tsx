@@ -14,6 +14,7 @@ import InvestigationWorkspace from './components/InvestigationWorkspace';
 import { ComplaintsPage } from './pages/Complaints';
 import CasesPage from './pages/CasesPage';
 import CyberBackground from './components/CyberBackground';
+import { ThreatFusion } from './pages/ThreatFusion';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="investigations/:id" element={<Investigation />} />
           <Route path="investigations/:id/graph" element={<InvestigationWorkspace />} />
           <Route path="graph" element={<InvestigationWorkspace />} />
+          <Route path="threat-fusion" element={<ThreatFusion />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

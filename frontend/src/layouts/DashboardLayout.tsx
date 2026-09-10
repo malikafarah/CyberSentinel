@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Bell, BriefcaseBusiness, FileText, LayoutDashboard, LogOut, Map, Settings, UserCircle, Zap } from 'lucide-react';
+import { Bell, BriefcaseBusiness, FileText, LayoutDashboard, LogOut, Map, Settings, UserCircle, Zap, Radio } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { TrafficSimulator } from '../components/TrafficSimulator';
 
@@ -10,6 +10,7 @@ const nav = [
   ['/alerts', 'Alerts', Bell],
   ['/complaints', 'Complaints Registry', FileText],
   ['/cases', 'Investigation Cases', BriefcaseBusiness],
+  ['/threat-fusion', 'Threat Fusion', Radio],
   ['/settings', 'Profile & Settings', Settings],
 ] as const;
 
