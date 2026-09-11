@@ -5,12 +5,10 @@ import '@xyflow/react/dist/style.css';
 import {
   GitGraph,
   Cpu,
-  Layers,
   RotateCcw,
   Sparkles,
   Database,
   RefreshCw,
-  X,
   Radio
 } from 'lucide-react';
 import EntityNode, { type EntityNodeData } from './EntityNode';
@@ -123,7 +121,6 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
   // Evidence Chain state
   const [activeChain, setActiveChain] = useState<string[] | null>(null);
-  const [activeChainNodes, setActiveChainNodes] = useState<Node<EntityNodeData>[]>([]);
 
   // Right Side Panel: 'inspection' | 'intake'
   const [rightPanelTab, setRightPanelTab] = useState<'inspection' | 'intake'>('inspection');
@@ -257,7 +254,6 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
   // Reset any active evidence chain highlighting
   const handleResetHighlighting = useCallback(() => {
     setActiveChain(null);
-    setActiveChainNodes([]);
     setNodes((nds) =>
       nds.map((n) => {
         const { border, boxShadow, opacity, ...restStyle } = (n.style || {}) as any;
@@ -326,12 +322,6 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
           };
         })
       );
-
-      // Populate evidence chain sequence for the left-hand panel
-      const chainSequence = chain
-        .map((id) => nodes.find((n) => n.id === id || n.data?.id === id))
-        .filter(Boolean) as Node<EntityNodeData>[];
-      setActiveChainNodes(chainSequence);
 
       // 3. Highlight Edges that connect the chain steps
       setEdges((eds) =>
@@ -576,104 +566,6 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
       {/* 2. Main Intelligence Area (75% height) */}
       <div className="flex flex-grow relative h-[75vh] overflow-hidden">
-        {/* FAR LEFT: Dedicated Evidence Chain Panel */}
-        <aside className="w-80 border-r border-white/10 bg-[#0C100E]/95 backdrop-blur-3xl p-4 flex flex-col z-20 shrink-0 overflow-y-auto">
-          <div className="flex justify-between items-center pb-3 border-b border-white/10 mb-4">
-            <div className="flex items-center gap-2">
-              <Layers size={14} className="text-red-400" />
-              <h2 className="text-[11px] font-bold text-gray-200 tracking-wider uppercase">Evidence Trail</h2>
-            </div>
-            {activeChain && (
-              <button
-                onClick={handleResetHighlighting}
-                className="text-[9px] text-gray-400 hover:text-white uppercase font-mono tracking-wider flex items-center gap-1"
-              >
-                <X size={10} /> Clear
-              </button>
-            )}
-          </div>
-
-          {activeChain && activeChainNodes.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              <div className="text-[10px] text-gray-400 font-mono leading-relaxed bg-red-950/30 p-2.5 rounded border border-red-500/30">
-                <span className="text-red-400 font-bold block mb-1 uppercase tracking-wider">Topological Shortest Path</span>
-                Flowing money trail from origin victim to downstream cashout nodes.
-              </div>
-
-              {/* Sequential Steps List */}
-              <div className="flex flex-col gap-2 relative mt-2">
-                {activeChainNodes.map((n, idx) => {
-                  const isSelected = selectedNode?.id === n.id;
-                  const isFirst = idx === 0;
-                  const isLast = idx === activeChainNodes.length - 1;
-
-                  return (
-                    <div key={n.id} className="relative">
-                      {/* Trail Connector Line */}
-                      {!isLast && (
-                        <div className="absolute left-[17px] top-9 bottom-[-10px] w-0.5 bg-red-500/50 z-0 animate-pulse" />
-                      )}
-
-                      <div
-                        onClick={() => setSelectedNode(n)}
-                        className={`p-3 rounded-lg border transition-all cursor-pointer relative z-10 flex items-start gap-3 ${
-                          isSelected
-                            ? 'bg-red-950/60 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]'
-                            : 'bg-white/[0.02] border-white/10 hover:border-red-500/40 hover:bg-white/[0.04]'
-                        }`}
-                      >
-                        <div
-                          className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center font-mono font-bold text-[10px] border ${
-                            isFirst
-                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
-                              : isLast
-                              ? 'bg-red-500/30 text-red-300 border-red-500/70'
-                              : 'bg-orange-500/20 text-orange-300 border-orange-500/50'
-                          }`}
-                        >
-                          {idx + 1}
-                        </div>
-
-                        <div className="flex-grow min-w-0">
-                          <div className="flex justify-between items-center mb-1">
-                            <span
-                              className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${
-                                n.data.type === 'VICTIM'
-                                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                                  : n.data.type === 'ATM'
-                                  ? 'bg-red-500/20 text-red-400 border-red-500/40'
-                                  : 'bg-orange-500/20 text-orange-400 border-orange-500/40'
-                              }`}
-                            >
-                              {n.data.type}
-                            </span>
-                            <span className="text-[10px] font-mono font-bold text-red-400">
-                              {Number(n.data.riskScore).toFixed(0)}% Risk
-                            </span>
-                          </div>
-
-                          <div className="text-xs font-semibold text-white truncate" title={n.data.label}>
-                            {n.data.label}
-                          </div>
-                          <div className="text-[9px] font-mono text-gray-400 truncate">ID: {n.data.id}</div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-center p-4 text-gray-500">
-              <Layers size={28} className="mb-2 text-gray-600" />
-              <p className="text-xs font-semibold text-gray-400">No Trail Selected</p>
-              <p className="text-[10px] text-gray-500 mt-1">
-                Click on any intermediate mule node or terminal ATM to highlight the shortest topological evidence trail.
-              </p>
-            </div>
-          )}
-        </aside>
-
         {/* CENTER: The Visualizer Canvas */}
         <div className="flex-grow relative">
           {isLoading && (
