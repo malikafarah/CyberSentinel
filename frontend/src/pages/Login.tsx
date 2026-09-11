@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { Role } from '../types';
+import CyberBackground from '../components/CyberBackground';
 
 export function Login() {
   const [email, setEmail] = useState('officer@cybersentinel.gov');
@@ -33,6 +34,7 @@ export function Login() {
 
   return (
     <div className="login">
+      <CyberBackground />
       <section className="login-intro">
         <div className="brand">
           <span>
