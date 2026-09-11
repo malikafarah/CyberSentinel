@@ -122,7 +122,7 @@ export default function MlPipelineConsole({ onComplete, className = '' }: MlPipe
               status === 'RUNNING'
                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 animate-pulse'
                 : status === 'COMPLETED'
-                ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                 : status === 'ERROR'
                 ? 'bg-red-500/20 text-red-400 border-red-500/40'
                 : 'bg-white/5 text-gray-400 border-white/10'
@@ -197,7 +197,7 @@ export default function MlPipelineConsole({ onComplete, className = '' }: MlPipe
             let colorClass = 'text-gray-300';
             if (isSuccess) colorClass = 'text-[#48D878] font-bold';
             else if (isError) colorClass = 'text-red-400 font-bold';
-            else if (isSystem) colorClass = 'text-blue-400 font-semibold';
+            else if (isSystem) colorClass = 'text-emerald-400 font-semibold';
             else if (isInfo) colorClass = 'text-emerald-300/90';
 
             return (

@@ -557,7 +557,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
           <button
             onClick={() => navigate('/heatmap')}
-            className="px-4 py-2 bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 font-mono text-xs font-bold rounded-md border border-blue-500/60 shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all uppercase tracking-widest cursor-pointer"
+            className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-mono text-xs font-bold rounded-md border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase tracking-widest cursor-pointer"
           >
             OPEN GIS HEATMAP
           </button>
@@ -683,7 +683,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                       <span className="text-xs text-gray-500">Status</span>
                       <span
                         className={`text-xs font-bold ${
-                          selectedNode.data.status === 'FROZEN' ? 'text-blue-400' : 'text-emerald-400'
+                          selectedNode.data.status === 'FROZEN' ? 'text-teal-400' : 'text-emerald-400'
                         }`}
                       >
                         {selectedNode.data.status || 'ACTIVE'}
@@ -745,13 +745,13 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
                   <div className="pt-2 flex flex-col gap-3">
                     {selectedNode.data.status === 'FROZEN' ? (
-                      <div className="bg-blue-950/40 p-4 border border-blue-500/40 rounded-lg text-gray-200">
+                      <div className="bg-emerald-950/40 p-4 border border-emerald-500/40 rounded-lg text-gray-200">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="badge bg-blue-600 text-white text-xs px-2.5 py-1 rounded font-bold font-mono tracking-wider uppercase">
+                          <span className="badge bg-emerald-600 text-black text-xs px-2.5 py-1 rounded font-bold font-mono tracking-wider uppercase">
                             ACCOUNT FROZEN / LIEN ACTIVE
                           </span>
                         </div>
-                        <p className="text-xs text-blue-300 mt-2">
+                        <p className="text-xs text-emerald-300 mt-2">
                           Lien active on node. Officers can unfreeze or process appeals off-ramp.
                         </p>
                         <button
@@ -815,7 +815,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                   type="button"
                   onClick={handleRunIntakeExtraction}
                   disabled={isExtracting || !intakeText.trim()}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded border border-blue-400 disabled:opacity-50 transition-colors uppercase tracking-wider flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-bold text-xs rounded border border-emerald-400 disabled:opacity-50 transition-colors uppercase tracking-wider flex items-center gap-1.5"
                 >
                   {isExtracting ? <RefreshCw size={12} className="spin" /> : <Cpu size={12} />} Extract Entities
                 </button>
@@ -844,7 +844,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
                     {extractedData.phones && extractedData.phones.length > 0 && (
                       <div className="bg-black/30 p-2 rounded border border-white/5">
-                        <span className="text-[9px] text-blue-400 block uppercase font-bold">Phones (+91):</span>
+                        <span className="text-[9px] text-emerald-400 block uppercase font-bold">Phones (+91):</span>
                         <div className="text-gray-300 truncate">{extractedData.phones.join(', ')}</div>
                       </div>
                     )}
@@ -893,7 +893,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
             .map((log) => (
               <div key={log.id} className="flex gap-4 items-start text-gray-500 hover:text-gray-300 transition-colors">
                 <span className="text-gray-600 shrink-0">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                <span className="text-blue-400 shrink-0 w-24">{log.action}</span>
+                <span className="text-emerald-400 font-semibold shrink-0 w-24">{log.action}</span>
                 <div className="flex flex-col gap-1 min-w-0">
                   <span className="truncate">
                     TARGET: <span className="text-gray-300">{log.targetNodeId}</span>

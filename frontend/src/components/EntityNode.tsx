@@ -75,7 +75,7 @@ export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
   if (isInChain) {
     cardBorder = 'border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.7)] ring-2 ring-red-500/90 bg-[#1F0A0E]/95 scale-105';
   } else if (isFrozen) {
-    cardBorder = 'border-blue-500/80 shadow-[0_0_25px_rgba(59,130,246,0.35)] bg-[#0A121A]/95';
+    cardBorder = 'border-emerald-500/80 shadow-[0_0_25px_rgba(16,185,129,0.35)] bg-[#041209]/95';
   }
 
   const opacityClass = isDimmed ? 'opacity-25 filter blur-[0.3px]' : 'opacity-100';
@@ -96,13 +96,13 @@ export default function EntityNode({ data }: NodeProps<Node<EntityNodeData>>) {
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-1.5">
-          <IconComponent size={14} style={{ color: isInChain ? '#ef4444' : isFrozen ? '#60a5fa' : config.accentColor }} />
+          <IconComponent size={14} style={{ color: isInChain ? '#ef4444' : isFrozen ? '#34d399' : config.accentColor }} />
           <span className="text-[9px] font-bold tracking-widest uppercase text-gray-300">
             {config.title}
           </span>
         </div>
         {isFrozen ? (
-          <span className="text-[9px] font-extrabold bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded border border-blue-400/50 uppercase tracking-wider">
+          <span className="text-[9px] font-extrabold bg-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded border border-emerald-400/50 uppercase tracking-wider">
             FROZEN
           </span>
         ) : (

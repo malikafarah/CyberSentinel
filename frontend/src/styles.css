@@ -10,11 +10,11 @@
   /* Core palette — glassmorphism for 3D background */
   --bg-page:        transparent;
   --bg-shell:       transparent;
-  --bg-sidebar:     rgba(9, 9, 12, 0.4);
-  --surface:        rgba(14, 16, 23, 0.45);
-  --surface-raised: rgba(19, 22, 31, 0.55);
-  --surface-muted:  rgba(11, 13, 18, 0.4);
-  --surface-overlay:rgba(22, 25, 34, 0.5);
+  --bg-sidebar:     rgba(5, 7, 5, 0.65);
+  --surface:        rgba(10, 14, 11, 0.55);
+  --surface-raised: rgba(14, 20, 15, 0.65);
+  --surface-muted:  rgba(7, 10, 8, 0.5);
+  --surface-overlay:rgba(16, 24, 18, 0.6);
 
   /* Borders — hairline precision */
   --border:         rgba(255,255,255,0.07);
@@ -22,12 +22,12 @@
   --border-hover:   rgba(255,255,255,0.18);
   --subtle-border:  rgba(255,255,255,0.05);
 
-  /* Accent — Tactical Steel Blue (not neon, not gaming) */
-  --accent:         #3B82F6;
-  --accent-strong:  #2563EB;
-  --accent-bright:  #60A5FA;
-  --accent-soft:    rgba(59,130,246,0.10);
-  --accent-glow:    rgba(59,130,246,0.06);
+  /* Accent — Cyber Tactical Green */
+  --accent:         #10B981;
+  --accent-strong:  #059669;
+  --accent-bright:  #34D399;
+  --accent-soft:    rgba(16,185,129,0.12);
+  --accent-glow:    rgba(16,185,129,0.06);
 
   /* Semantic risk colours */
   --danger:         #EF4444;
@@ -163,7 +163,7 @@ a { color: inherit; text-decoration: none; }
 .sidebar a.active {
   background: var(--accent-soft);
   color: var(--accent-bright);
-  border-color: rgba(59,130,246,0.2);
+  border-color: rgba(16,185,129,0.2);
 }
 .sidebar a.active::before { background: var(--accent); }
 
@@ -185,7 +185,7 @@ a { color: inherit; text-decoration: none; }
 .account-menu[open] .user-card, .user-card:hover { border-color: var(--border-strong); }
 
 .avatar {
-  background: #1E3A5F;
+  background: #064E3B;
   color: var(--accent-bright);
   width: 32px;
   height: 32px;
@@ -244,7 +244,7 @@ a { color: inherit; text-decoration: none; }
   top: 0;
   z-index: 100;
   height: 50px;
-  background: rgba(9,9,12,0.92);
+  background: rgba(5,7,5,0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -311,7 +311,7 @@ a { color: inherit; text-decoration: none; }
 }
 .topbar-btn.accent {
   background: var(--accent-soft);
-  border-color: rgba(59,130,246,0.25);
+  border-color: rgba(16,185,129,0.25);
   color: var(--accent-bright);
 }
 .topbar-btn.accent:hover {
@@ -541,7 +541,7 @@ a { color: inherit; text-decoration: none; }
 .risk-high     { color: #FDBA74; background: rgba(249,115,22,0.14); border: 1px solid rgba(249,115,22,0.22); }
 .risk-medium   { color: #FDE68A; background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.22); }
 .risk-low      { color: #6EE7B7; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2); }
-.status.new    { color: #93C5FD; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.2); }
+.status.new    { color: #6EE7B7; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); }
 .status.ack    { color: #6EE7B7; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2); }
 
 /* ── Chart area ───────────────────────────────────────────────────────────── */
@@ -567,7 +567,7 @@ a { color: inherit; text-decoration: none; }
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 30% 30%, rgba(59,130,246,0.07) 0%, transparent 70%);
+  background: radial-gradient(ellipse 70% 60% at 30% 30%, rgba(16,185,129,0.08) 0%, transparent 70%);
   pointer-events: none;
 }
 .login h1 {
@@ -623,7 +623,7 @@ a { color: inherit; text-decoration: none; }
 input:focus, select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
 }
 .login-btn { width: 100%; justify-content: center; margin-top: 8px; }
 .form-error { color: var(--danger); font-size: 12px; margin-top: 6px; }
@@ -679,7 +679,7 @@ input:focus, select:focus {
   z-index: 500;
   bottom: 16px;
   left: 16px;
-  background: rgba(9,9,12,0.92);
+  background: rgba(5,7,5,0.94);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
@@ -876,7 +876,7 @@ input:focus, select:focus {
 .map-popup dt { color: var(--text-dim); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; }
 .map-popup dd { margin: 2px 0 0; font-weight: 700; font-size: 11px; }
 .leaflet-control-zoom a { background: var(--surface-raised) !important; color: var(--text-primary) !important; border-color: var(--border) !important; }
-.leaflet-control-attribution { background: rgba(9,9,12,0.8) !important; color: var(--text-dim) !important; }
+.leaflet-control-attribution { background: rgba(5,7,5,0.85) !important; color: var(--text-dim) !important; }
 .leaflet-control-attribution a { color: var(--accent) !important; }
 .tactical-popup .leaflet-popup-content-wrapper {
   background: var(--surface-raised);

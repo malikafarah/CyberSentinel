@@ -196,7 +196,7 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
               </div>
               <div className="border-b border-white/5 pb-1.5">
                 <span className="text-gray-500 text-[10px] uppercase font-bold block mb-0.5">SHA-256 HASH:</span>
-                <span className="text-blue-400 break-all text-[11px] block">{receipt.block_hash}</span>
+                <span className="text-emerald-400 break-all text-[11px] block">{receipt.block_hash}</span>
               </div>
               <div className="pt-1">
                 <span className="text-gray-500 text-[10px] uppercase font-bold mb-1 flex items-center gap-1.5">

@@ -300,12 +300,12 @@ export default function NcrpIntake() {
                 }}
               >
                 <span>Phone Numbers (+91)</span>
-                <span style={{ color: '#60a5fa' }}>{extractedData.phones?.length || 0}</span>
+                <span style={{ color: '#34D399' }}>{extractedData.phones?.length || 0}</span>
               </h4>
               <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {extractedData.phones && extractedData.phones.length > 0 ? (
                   extractedData.phones.map((ph: string) => (
-                    <li key={ph} style={{ fontFamily: 'JetBrains Mono, monospace', color: '#93c5fd' }}>
+                    <li key={ph} style={{ fontFamily: 'JetBrains Mono, monospace', color: '#6EE7B7' }}>
                       {ph}
                     </li>
                   ))

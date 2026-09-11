@@ -312,7 +312,7 @@ export function Heatmap() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/graph')}
-            className="px-4 py-2 bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 font-mono text-xs font-bold rounded-lg border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all uppercase tracking-widest cursor-pointer"
+            className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-mono text-xs font-bold rounded-lg border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase tracking-widest cursor-pointer"
           >
             Graph Workspace
           </button>
@@ -465,7 +465,7 @@ export function Heatmap() {
                   </div>
                   <button 
                     onClick={() => dispatchPatrol(zone.zone_id)}
-                    className="w-full py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-bold text-[10px] uppercase tracking-widest rounded border border-blue-500/40 transition-colors cursor-pointer"
+                    className="w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-[10px] uppercase tracking-widest rounded border border-emerald-500/40 transition-colors cursor-pointer"
                   >
                     Push to Patrol Unit
                   </button>

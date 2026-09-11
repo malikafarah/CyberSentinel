@@ -14,7 +14,7 @@ interface FusionSignal {
 }
 
 const SOURCE_META: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  NPCI_eFRM: { icon: <Shield size={14} />, color: 'text-blue-400 border-blue-500/40 bg-blue-500/10', label: 'NPCI eFRM' },
+  NPCI_eFRM: { icon: <Shield size={14} />, color: 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10', label: 'NPCI eFRM' },
   DoT_Chakshu: { icon: <Smartphone size={14} />, color: 'text-purple-400 border-purple-500/40 bg-purple-500/10', label: 'DoT Chakshu' },
   NCRP: { icon: <AlertTriangle size={14} />, color: 'text-amber-400 border-amber-500/40 bg-amber-500/10', label: 'NCRP 1930' },
 };

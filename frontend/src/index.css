@@ -21,7 +21,7 @@ html, body, #root {
 body {
   min-width: 320px;
   /* Colour is set by --bg-page in styles.css; this is a safe fallback */
-  background: #07080A;
+  background: #030503;
   color: #F1F5F9;
 }
 

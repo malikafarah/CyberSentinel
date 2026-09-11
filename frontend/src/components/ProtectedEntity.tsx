@@ -55,7 +55,7 @@ export function ProtectedEntity({
           type="button"
           onClick={handleUnmask}
           disabled={loading}
-          className="text-xs text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+          className="text-xs text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
           title="Unmask PII (Requires DPDP Act Justification)"
         >
           {showIcon && <Eye size={12} />}
