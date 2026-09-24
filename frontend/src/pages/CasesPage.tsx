@@ -199,7 +199,7 @@ export default function CasesPage() {
                     <span style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px' }}>
                       #{c.id}
                     </span>
-                    <h3 style={{ margin: '4px 0 0', fontSize: '16px', fontWeight: 700, color: '#F1F3F1' }}>
+                    <h3 style={{ margin: '4px 0 0', fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>
                       {c.title || c.summary}
                     </h3>
                   </div>
@@ -215,10 +215,10 @@ export default function CasesPage() {
                     <span>Status:</span> <StatusBadge status={c.status as any} />
                   </div>
                   <div>
-                    <span>Complaints:</span> <b style={{ color: '#F1F3F1', fontFamily: 'JetBrains Mono' }}>{c.complaints?.length || 0}</b>
+                    <span>Complaints:</span> <b style={{ color: 'var(--text-primary)', fontFamily: 'JetBrains Mono' }}>{c.complaints?.length || 0}</b>
                   </div>
                   <div>
-                    <span>Hotspots:</span> <b style={{ color: '#F1F3F1', fontFamily: 'JetBrains Mono' }}>{c.hotspot_ids?.length || 0}</b>
+                    <span>Hotspots:</span> <b style={{ color: 'var(--text-primary)', fontFamily: 'JetBrains Mono' }}>{c.hotspot_ids?.length || 0}</b>
                   </div>
                 </div>
               </div>

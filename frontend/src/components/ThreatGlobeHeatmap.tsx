@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useMemo, useImperativeHandle, forwardRef } from 'react';
 import Globe, { type GlobeMethods } from 'react-globe.gl';
+import { useTheme } from '../context/ThemeContext';
 
 export interface GlobePoint {
   lat: number;
@@ -83,6 +84,7 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
   autoRotate = false,
   onPointClick,
 }, ref) => {
+  const { theme } = useTheme();
   const globeEl = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
@@ -178,10 +180,12 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
     return () => clearTimeout(timer);
   }, [autoRotate]);
 
+  const isLight = theme === 'light';
+
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full bg-[#0a0b0e] overflow-hidden flex items-center justify-center select-none"
+      className="relative w-full h-full bg-slate-100 dark:bg-[#0a0b0e] overflow-hidden flex items-center justify-center select-none transition-colors duration-300"
       style={{
         width: '100%',
         height: typeof height === 'number' ? `${height}px` : height,
@@ -193,7 +197,7 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
         ref={globeEl}
         width={dimensions.width}
         height={dimensions.height}
-        backgroundColor="#0a0b0e"
+        backgroundColor={isLight ? '#F1F5F9' : '#0a0b0e'}
         
         // 1. Satellite vs Dark Earth Texture
         globeImageUrl={
@@ -206,7 +210,7 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
         bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
         
         // 3. Atmosphere Glow
-        atmosphereColor={textureMode === 'satellite' ? '#38bdf8' : '#00d664'}
+        atmosphereColor={isLight ? (textureMode === 'satellite' ? '#0284c7' : '#059669') : (textureMode === 'satellite' ? '#38bdf8' : '#00d664')}
         atmosphereAltitude={textureMode === 'satellite' ? 0.2 : 0.16}
         
         // 4. Hexagonal Binning Heatmap
@@ -234,30 +238,30 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
         pointAltitude={0.04}
         pointRadius={(d: any) => (d.weight > 80 ? 0.65 : 0.4)}
         pointLabel={(d: any) => `
-          <div style="background: rgba(10,11,14,0.95); border: 1px solid #333; padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 11px; color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.6);">
+          <div style="background: ${isLight ? 'rgba(255,255,255,0.96)' : 'rgba(10,11,14,0.95)'}; border: 1px solid ${isLight ? '#cbd5e1' : '#333'}; padding: 6px 10px; border-radius: 6px; font-family: monospace; font-size: 11px; color: ${isLight ? '#0f172a' : '#fff'}; box-shadow: 0 4px 14px rgba(0,0,0,${isLight ? '0.1' : '0.6'});">
             <div style="font-weight: bold; color: ${weightToColor(d.weight)}">${d.label || 'Node Point'}</div>
-            <div style="color: #9ca3af; margin-top: 2px;">Risk Weight: ${Math.round(d.weight)}%</div>
+            <div style="color: ${isLight ? '#64748b' : '#9ca3af'}; margin-top: 2px;">Risk Weight: ${Math.round(d.weight)}%</div>
           </div>
         `}
       />
 
       {/* Bottom Floating Legend Bar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4 px-4 py-2 rounded-xl bg-[#0a0b0e]/92 backdrop-blur-md border border-gray-800 text-[11px] font-mono shadow-xl">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4 px-4 py-2 rounded-xl bg-white/95 dark:bg-[#0a0b0e]/92 backdrop-blur-md border border-gray-200 dark:border-gray-800 text-[11px] font-mono shadow-xl text-slate-800 dark:text-gray-200">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-[#FF2222] shadow-[0_0_8px_#FF2222]" />
-          <span className="text-gray-200 font-semibold">Critical (&gt;80%)</span>
+          <span className="font-semibold">Critical (&gt;80%)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-[#FFB300] shadow-[0_0_8px_#FFB300]" />
-          <span className="text-gray-200 font-semibold">High (&gt;50%)</span>
+          <span className="font-semibold">High (&gt;50%)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-[#00E5FF] shadow-[0_0_8px_#00E5FF]" />
-          <span className="text-gray-200 font-semibold">Moderate</span>
+          <span className="font-semibold">Moderate</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-[#00FF66] shadow-[0_0_8px_#00FF66]" />
-          <span className="text-gray-200 font-semibold">Normal</span>
+          <span className="font-semibold">Normal</span>
         </div>
       </div>
     </div>

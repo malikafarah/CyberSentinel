@@ -208,7 +208,7 @@ export default function ComplaintsPage() {
                         <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>
                           {new Date(c.timestamp).toLocaleDateString()} <small style={{ color: 'var(--text-subtle)' }}>{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
                         </td>
-                        <td style={{ padding: '14px 16px', fontWeight: 600, color: '#F1F3F1' }}>
+                        <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>
                           {c.crime_category}
                         </td>
                         <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>
@@ -219,7 +219,7 @@ export default function ComplaintsPage() {
                         <td style={{ padding: '14px 16px', fontFamily: 'JetBrains Mono', color: 'var(--text-muted)' }}>
                           {c.account_number || '—'}
                         </td>
-                        <td style={{ padding: '14px 16px', fontFamily: 'JetBrains Mono', fontWeight: 700, color: '#F1F3F1' }}>
+                        <td style={{ padding: '14px 16px', fontFamily: 'JetBrains Mono', fontWeight: 700, color: 'var(--text-primary)' }}>
                           ₹{Number(c.amount).toLocaleString('en-IN')}
                         </td>
                         <td style={{ padding: '14px 16px', textAlign: 'right' }}>

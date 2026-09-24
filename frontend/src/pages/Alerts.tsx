@@ -157,8 +157,8 @@ export function Alerts() {
                     <div className="flex items-center gap-3 min-w-0">
                       <RiskBadge level={a.severity} />
                       <div className="alert-primary min-w-0">
-                        <b className="truncate block text-gray-100">{x ? x.location_id : a.prediction_id}</b>
-                        <span className="truncate block text-gray-500 text-xs">
+                        <b className="truncate block text-slate-900 dark:text-gray-100">{x ? x.location_id : a.prediction_id}</b>
+                        <span className="truncate block text-slate-500 dark:text-gray-500 text-xs">
                           {x ? `${x.location_name} · ${x.region}` : `Alert ID: ${a.id}`}
                         </span>
                       </div>
@@ -170,7 +170,7 @@ export function Alerts() {
                     </div>
 
                     {/* Forecast Column */}
-                    <div className="font-mono text-sm text-gray-300">
+                    <div className="font-mono text-sm text-slate-800 dark:text-gray-300">
                       {x ? x.predicted_window : 'Active'}
                     </div>
 
@@ -179,12 +179,12 @@ export function Alerts() {
                       {a.status === 'NEW' || a.status === 'ACTIVE' ? (
                         <>
                           <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
-                          <span className="text-xs font-semibold text-emerald-400 tracking-wider">NEW</span>
+                          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 tracking-wider">NEW</span>
                         </>
                       ) : (
                         <>
-                          <span className="w-2 h-2 rounded-full bg-gray-600" />
-                          <span className="text-xs font-medium text-gray-500 tracking-wider">ACKNOWLEDGED</span>
+                          <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600" />
+                          <span className="text-xs font-medium text-slate-500 dark:text-gray-400 tracking-wider">ACKNOWLEDGED</span>
                         </>
                       )}
                     </div>
@@ -193,7 +193,7 @@ export function Alerts() {
                     <div className="flex items-center justify-end gap-2">
                       {x && (
                         <button
-                          className="p-1.5 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-xs"
+                          className="p-1.5 text-slate-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-xs"
                           onClick={() => nav(`/predictions/${x.id}`)}
                           title={`View Prediction Details (${x.id})`}
                         >
@@ -203,7 +203,7 @@ export function Alerts() {
                       )}
                       {x?.case_id && (
                         <button
-                          className="p-1.5 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-xs"
+                          className="p-1.5 text-slate-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-xs"
                           onClick={() => nav(`/investigations/${x.case_id}`)}
                           title={`View Investigation Case (${x.case_id})`}
                         >
@@ -213,7 +213,7 @@ export function Alerts() {
                       )}
                       {(a.status === 'NEW' || a.status === 'ACTIVE') ? (
                         <button
-                          className="px-2.5 py-1 text-xs font-medium text-emerald-400 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 hover:border-emerald-500/60 rounded flex items-center gap-1.5 transition-all shadow-[0_0_10px_rgba(16,185,129,0.08)]"
+                          className="px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 hover:border-emerald-500/60 rounded flex items-center gap-1.5 transition-all shadow-[0_0_10px_rgba(16,185,129,0.08)] cursor-pointer"
                           onClick={() => setTarget(a.id)}
                           title="Acknowledge Alert"
                         >
@@ -221,7 +221,7 @@ export function Alerts() {
                           <span>Acknowledge</span>
                         </button>
                       ) : (
-                        <span className="text-[11px] text-gray-600 px-2 py-1 font-mono">Archived</span>
+                        <span className="text-[11px] text-slate-400 dark:text-gray-600 px-2 py-1 font-mono">Archived</span>
                       )}
                     </div>
                   </article>

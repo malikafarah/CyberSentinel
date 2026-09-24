@@ -66,12 +66,12 @@ const createCustomPin = (color: string, label: string) => {
         display: flex;
         align-items: center;
         gap: 6px;
-        background: #0F1210;
+        background: var(--surface-raised, #0F1210);
         border: 1px solid ${color};
         padding: 4px 8px;
         border-radius: 6px;
         box-shadow: 0 0 12px ${color}66;
-        color: #FFFFFF;
+        color: var(--text-primary, #FFFFFF);
         font-family: monospace;
         font-size: 10px;
         font-weight: bold;
@@ -313,27 +313,27 @@ export function Heatmap() {
   }, [graphNodes, forecastZones, zones]);
 
   return (
-    <div className="relative w-full h-[calc(100vh-58px)] bg-[#0B0C10] font-sans overflow-hidden text-gray-200">
+    <div className="relative w-full h-[calc(100vh-58px)] bg-slate-100 dark:bg-[#0B0C10] font-sans overflow-hidden text-slate-900 dark:text-gray-200">
       
       {/* 1. Single Unified Parent Container with whitespace-nowrap and shrink-0 */}
-      <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-7xl h-16 px-4 bg-[#121318]/90 backdrop-blur-md rounded-xl border border-gray-800 shadow-lg overflow-x-auto scrollbar-hide whitespace-nowrap flex items-center justify-between gap-4">
+      <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-7xl h-16 px-4 bg-white/95 dark:bg-[#121318]/90 backdrop-blur-md rounded-xl border border-slate-200 dark:border-gray-800 shadow-md overflow-x-auto scrollbar-hide whitespace-nowrap flex items-center justify-between gap-4">
         
         {/* LEFT: Node Status & Map Toggle */}
         <div className="flex items-center gap-4 shrink-0">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0a0b0e] rounded-full border border-gray-800">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-[#0a0b0e] rounded-full border border-slate-200 dark:border-gray-800">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-            <span className="text-[10px] font-mono tracking-widest text-gray-300 uppercase">
+            <span className="text-[10px] font-mono tracking-widest text-slate-700 dark:text-gray-300 uppercase font-semibold">
               Mesh • {viewMode === '3d' ? globePoints.length : graphNodes.length} Nodes
             </span>
           </div>
 
-          <div className="flex bg-[#0a0b0e] p-1 rounded-lg border border-gray-800">
+          <div className="flex bg-slate-100 dark:bg-[#0a0b0e] p-1 rounded-lg border border-slate-200 dark:border-gray-800">
             <button
               onClick={() => setViewMode('3d')}
               className={`px-3 py-1 text-xs font-semibold rounded cursor-pointer transition-all ${
                 viewMode === '3d'
-                  ? 'text-black bg-[#00d664] shadow'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'text-black bg-[#00d664] shadow font-bold'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               3D Globe
@@ -342,8 +342,8 @@ export function Heatmap() {
               onClick={() => setViewMode('2d')}
               className={`px-3 py-1 text-xs font-semibold rounded cursor-pointer transition-all ${
                 viewMode === '2d'
-                  ? 'text-black bg-[#00d664] shadow'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'text-black bg-[#00d664] shadow font-bold'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               2D Map
@@ -352,11 +352,11 @@ export function Heatmap() {
         </div>
 
         {/* CENTER: Engine Status & Actions (Using gap and border-x to prevent overlap) */}
-        <div className="flex items-center gap-4 px-4 border-x border-gray-800/50 shrink-0">
+        <div className="flex items-center gap-4 px-4 border-x border-slate-200 dark:border-gray-800/50 shrink-0">
           {/* Fixed Text Wrapping */}
           <div className="flex flex-col justify-center">
-            <span className="text-[9px] text-gray-500 uppercase tracking-widest">Analysis Engine</span>
-            <span className={`text-xs font-bold flex items-center gap-1.5 ${isPredictiveMode ? 'text-purple-400' : 'text-emerald-500'}`}>
+            <span className="text-[9px] text-slate-500 dark:text-gray-500 uppercase tracking-widest font-semibold">Analysis Engine</span>
+            <span className={`text-xs font-bold flex items-center gap-1.5 ${isPredictiveMode ? 'text-purple-700 dark:text-purple-400' : 'text-emerald-700 dark:text-emerald-500'}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${isPredictiveMode ? 'bg-purple-500' : 'bg-emerald-500'}`}></span>
               {isPredictiveMode ? 'PROPHET FORECAST (+12H)' : 'LIVE GRAPH & DBSCAN'}
             </span>
@@ -365,14 +365,14 @@ export function Heatmap() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/graph')}
-              className="px-3 py-1 text-xs text-emerald-500 border border-emerald-500/30 rounded hover:bg-emerald-500/10 transition-all cursor-pointer"
+              className="px-3 py-1 text-xs text-emerald-700 dark:text-emerald-500 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 rounded transition-all cursor-pointer font-semibold"
             >
               Graph
             </button>
             <button
               onClick={runPrediction}
               disabled={isPredicting}
-              className="px-3 py-1 text-xs text-emerald-500 border border-emerald-500/30 rounded hover:bg-emerald-500/10 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              className="px-3 py-1 text-xs text-emerald-700 dark:text-emerald-500 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 rounded transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5 font-semibold"
             >
               {isPredicting ? (
                 <>
@@ -392,26 +392,26 @@ export function Heatmap() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleTogglePredictiveMode}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-lg border transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-lg border transition-all cursor-pointer font-semibold ${
                 isPredictiveMode
-                  ? 'text-purple-300 bg-purple-900/20 border-purple-500/40 shadow-[0_0_12px_rgba(168,85,247,0.25)]'
-                  : 'text-gray-300 bg-[#1a1c23] border-gray-700 hover:bg-gray-800'
+                  ? 'text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-500/40 shadow-sm'
+                  : 'text-slate-700 dark:text-gray-300 bg-slate-100 dark:bg-[#1a1c23] border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-800'
               }`}
             >
-              <Sparkles size={13} className="text-purple-400" />
+              <Sparkles size={13} className="text-purple-600 dark:text-purple-400" />
               <span>Predictive Mode</span>
             </button>
 
             {isPredictiveMode && (
-              <div className="flex bg-[#0a0b0e] p-1 rounded-lg border border-gray-800 text-[10px]">
+              <div className="flex bg-slate-100 dark:bg-[#0a0b0e] p-1 rounded-lg border border-slate-200 dark:border-gray-800 text-[10px]">
                 {[6, 12, 24].map((hrs) => (
                   <button
                     key={hrs}
                     onClick={() => handleHorizonChange(hrs)}
                     className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
                       forecastHorizon === hrs
-                        ? 'text-black bg-purple-500 shadow'
-                        : 'text-gray-400 hover:text-white'
+                        ? 'text-white dark:text-black bg-purple-600 dark:bg-purple-500 shadow font-bold'
+                        : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     +{hrs}H
@@ -423,35 +423,35 @@ export function Heatmap() {
 
           {/* Layer Controls (Safely inside the unified background container) */}
           {viewMode === '3d' && (
-            <div className="flex items-center gap-2 pl-4 border-l border-gray-800/50">
+            <div className="flex items-center gap-2 pl-4 border-l border-slate-200 dark:border-gray-800/50">
               <button
                 onClick={() => setTextureMode((prev) => (prev === 'satellite' ? 'dark' : 'satellite'))}
-                className={`px-3 py-1 text-xs rounded border transition-all cursor-pointer ${
+                className={`px-3 py-1 text-xs font-semibold rounded border transition-all cursor-pointer ${
                   textureMode === 'satellite'
-                    ? 'text-blue-400 border-blue-500/30 bg-blue-500/10'
-                    : 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10'
+                    ? 'text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10'
+                    : 'text-emerald-700 dark:text-emerald-500 border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10'
                 }`}
               >
                 {textureMode === 'satellite' ? 'Satellite' : 'Dark'}
               </button>
               <button
                 onClick={() => setActiveLayers((prev) => (prev === 'hex' ? 'both' : prev === 'both' ? 'points' : 'hex'))}
-                className="px-3 py-1 text-xs text-emerald-500 border border-emerald-500/30 rounded hover:bg-emerald-500/10 transition-all cursor-pointer capitalize"
+                className="px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-500 border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded transition-all cursor-pointer capitalize"
               >
                 {activeLayers}
               </button>
-              <div className="flex items-center gap-2 text-gray-400 ml-1">
+              <div className="flex items-center gap-2 text-slate-500 dark:text-gray-400 ml-1">
                 <button
                   onClick={() => setHexResolution((prev) => (prev === 4 ? 3 : prev === 3 ? 5 : 4))}
-                  className="p-1 hover:text-orange-400 transition-colors cursor-pointer"
+                  className="p-1 hover:text-orange-500 dark:hover:text-orange-400 transition-colors cursor-pointer"
                   title={`Hex Resolution: Level ${hexResolution}`}
                 >
-                  <Flame size={14} className={hexResolution === 5 ? 'text-orange-400' : ''} />
+                  <Flame size={14} className={hexResolution === 5 ? 'text-orange-500 dark:text-orange-400' : ''} />
                 </button>
                 <button
                   onClick={() => setAutoRotate((prev) => !prev)}
                   className={`p-1 transition-colors cursor-pointer ${
-                    autoRotate ? 'text-emerald-400' : 'hover:text-white'
+                    autoRotate ? 'text-emerald-600 dark:text-emerald-400' : 'hover:text-slate-900 dark:hover:text-white'
                   }`}
                   title={autoRotate ? 'Pause Rotation' : 'Auto-Rotate Globe'}
                 >
@@ -459,7 +459,7 @@ export function Heatmap() {
                 </button>
                 <button
                   onClick={() => globeHeatmapRef.current?.resetView()}
-                  className="p-1 hover:text-white transition-colors cursor-pointer"
+                  className="p-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                   title="Reset Perspective"
                 >
                   <Maximize2 size={14} />
@@ -536,34 +536,34 @@ export function Heatmap() {
               }}
             >
               <Popup className="tactical-popup">
-                <div className="relative bg-[#0B0C10] p-5 w-80 text-gray-200">
+                <div className="relative bg-white dark:bg-[#0B0C10] p-5 w-80 text-slate-800 dark:text-gray-200">
                   <div className="flex justify-between items-center mb-1.5 pr-6">
-                    <span className="text-[11px] font-bold text-purple-400 tracking-widest uppercase flex items-center gap-1 font-mono">
+                    <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 tracking-widest uppercase flex items-center gap-1 font-mono">
                       <Sparkles size={12} /> HOTSPOT (+{forecastHorizon}H)
                     </span>
                     <span className={`text-[10px] px-2 py-0.5 font-mono font-bold rounded uppercase ${
-                      isCritical ? 'bg-red-500/15 text-red-400 border border-red-500/40' : 'bg-purple-500/15 text-purple-300 border border-purple-500/40'
+                      isCritical ? 'bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/40' : 'bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/40'
                     }`}>
                       {fz.predicted_risk_level}
                     </span>
                   </div>
 
-                  <h3 className="text-white text-sm font-semibold mb-3 tracking-wide">{fz.zone_name}</h3>
+                  <h3 className="text-slate-900 dark:text-white text-sm font-semibold mb-3 tracking-wide">{fz.zone_name}</h3>
 
-                  <div className="space-y-1.5 text-xs font-mono bg-[#16171B] p-3 rounded-lg border border-[#222327] mb-4">
-                    <div className="flex justify-between text-gray-300">
-                      <span className="text-[#82858E]">PROJECTED VOL:</span>
-                      <span className="text-[#FFB800] font-bold">₹{fz.forecasted_cashout_volume.toLocaleString()}</span>
+                  <div className="space-y-1.5 text-xs font-mono bg-slate-50 dark:bg-[#16171B] p-3 rounded-lg border border-gray-200 dark:border-[#222327] mb-4">
+                    <div className="flex justify-between text-slate-700 dark:text-gray-300">
+                      <span className="text-slate-500 dark:text-[#82858E]">PROJECTED VOL:</span>
+                      <span className="text-amber-600 dark:text-[#FFB800] font-bold">₹{fz.forecasted_cashout_volume.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span className="text-[#82858E]">PEAK SURGE:</span>
-                      <span className="text-purple-300 font-bold flex items-center gap-1">
+                    <div className="flex justify-between text-slate-700 dark:text-gray-300">
+                      <span className="text-slate-500 dark:text-[#82858E]">PEAK SURGE:</span>
+                      <span className="text-purple-600 dark:text-purple-300 font-bold flex items-center gap-1">
                         <Clock size={11} /> {fz.peak_hour.slice(11, 16)} IST
                       </span>
                     </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span className="text-[#82858E]">MONITORED ATMS:</span>
-                      <span className="text-[#00D26A] font-bold">{fz.targeted_atms.length} Terminals</span>
+                    <div className="flex justify-between text-slate-700 dark:text-gray-300">
+                      <span className="text-slate-500 dark:text-[#82858E]">MONITORED ATMS:</span>
+                      <span className="text-emerald-600 dark:text-[#00D26A] font-bold">{fz.targeted_atms.length} Terminals</span>
                     </div>
                   </div>
 
@@ -599,26 +599,26 @@ export function Heatmap() {
               }}
             >
               <Popup className="tactical-popup">
-                <div className="relative bg-[#0B0C10] p-5 w-80 text-gray-200">
+                <div className="relative bg-white dark:bg-[#0B0C10] p-5 w-80 text-slate-800 dark:text-gray-200">
                   <div className="flex justify-between items-center mb-1.5 pr-6">
-                    <span className="text-xs font-bold text-[#F73B3B] tracking-widest uppercase font-mono">
+                    <span className="text-xs font-bold text-red-600 dark:text-[#F73B3B] tracking-widest uppercase font-mono">
                       {zone.zone_id}
                     </span>
                     {zone.priority_weight && (
-                      <span className="text-[10px] px-2 py-0.5 bg-[#F73B3B]/15 text-[#F73B3B] border border-[#F73B3B]/30 font-mono rounded">
+                      <span className="text-[10px] px-2 py-0.5 bg-red-500/15 text-red-600 dark:text-[#F73B3B] border border-red-500/30 font-mono rounded">
                         Priority: {zone.priority_weight}
                       </span>
                     )}
                   </div>
-                  <div className="text-sm font-semibold text-white mb-2">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
                     Corroborated Target ATMs: {zone.target_nodes.length}
                   </div>
-                  <p className="text-xs text-[#82858E] mb-4">
+                  <p className="text-xs text-slate-500 dark:text-[#82858E] mb-4">
                     Anomalous spatial cash withdrawal cluster detected via DBSCAN triangulation.
                   </p>
                   <button 
                     onClick={() => dispatchPatrol(zone.zone_id)}
-                    className="w-full py-2.5 bg-[#F73B3B]/10 hover:bg-[#F73B3B]/20 text-[#F73B3B] font-mono font-bold text-[11px] uppercase tracking-widest rounded border border-[#F73B3B]/40 transition-colors cursor-pointer"
+                    className="w-full py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-[#F73B3B] font-mono font-bold text-[11px] uppercase tracking-widest rounded border border-red-500/40 transition-colors cursor-pointer"
                   >
                     Push to Patrol Unit
                   </button>
@@ -661,25 +661,25 @@ export function Heatmap() {
 
               <Marker position={coords} icon={customIcon}>
                 <Popup className="tactical-popup">
-                  <div className="relative bg-[#0B0C10] p-5 w-72 sm:w-80 text-gray-200">
+                  <div className="relative bg-white dark:bg-[#0B0C10] p-5 w-72 sm:w-80 text-slate-800 dark:text-gray-200">
                     {/* Header Row: pr-6 to prevent score pill from hitting close button */}
                     <div className="flex justify-between items-center mb-1.5 pr-6">
-                      <span className="text-[#00D26A] text-xs font-bold tracking-widest uppercase font-mono">
+                      <span className="text-emerald-600 dark:text-[#00D26A] text-xs font-bold tracking-widest uppercase font-mono">
                         {nType} NODE
                       </span>
-                      <span className="bg-[#16171B] border border-[#222327] text-[#82858E] text-[10px] font-mono px-2 py-0.5 rounded">
+                      <span className="bg-slate-100 dark:bg-[#16171B] border border-gray-200 dark:border-[#222327] text-slate-600 dark:text-[#82858E] text-[10px] font-mono px-2 py-0.5 rounded">
                         {riskScore.toFixed(1)}/100
                       </span>
                     </div>
 
                     {/* Node Location / Title */}
-                    <h3 className="text-white text-sm font-semibold mb-3 tracking-wide">
+                    <h3 className="text-slate-900 dark:text-white text-sm font-semibold mb-3 tracking-wide">
                       {node.metadata?.label || node.metadata?.name || node.id}
                     </h3>
 
                     {node.metadata?.evidence_chain && node.metadata.evidence_chain.length > 0 && (
-                      <div className="text-[10px] font-mono text-gray-400 mb-4 bg-[#16171B] p-2.5 rounded border border-[#222327]">
-                        <span className="text-[#82858E] block text-[9px] uppercase tracking-wider mb-0.5">Provenance Chain:</span>
+                      <div className="text-[10px] font-mono text-slate-600 dark:text-gray-400 mb-4 bg-slate-50 dark:bg-[#16171B] p-2.5 rounded border border-gray-200 dark:border-[#222327]">
+                        <span className="text-slate-500 dark:text-[#82858E] block text-[9px] uppercase tracking-wider mb-0.5">Provenance Chain:</span>
                         {node.metadata.evidence_chain.join(' → ')}
                       </div>
                     )}
@@ -687,7 +687,7 @@ export function Heatmap() {
                     {/* Button: py-2.5 for proper clickable touch area */}
                     <button 
                       onClick={() => navigate('/graph')}
-                      className="w-full border border-[#00D26A]/40 text-[#00D26A] bg-[#00D26A]/5 hover:bg-[#00D26A]/15 py-2.5 rounded-md text-[11px] font-mono font-bold tracking-widest uppercase transition-all shadow-[0_0_12px_rgba(0,210,106,0.1)] cursor-pointer"
+                      className="w-full border border-emerald-500/40 text-emerald-600 dark:text-[#00D26A] bg-emerald-500/5 hover:bg-emerald-500/15 py-2.5 rounded-md text-[11px] font-mono font-bold tracking-widest uppercase transition-all shadow-[0_0_12px_rgba(0,210,106,0.1)] cursor-pointer"
                     >
                       Inspect in Graph Workspace
                     </button>
@@ -702,28 +702,28 @@ export function Heatmap() {
 
       {/* 5. Bottom Predictive Stats Bar (when Predictive Mode is active) */}
       {isPredictiveMode && forecastZones.length > 0 && (
-        <div className="absolute bottom-6 left-6 z-[1000] bg-[#0B0F0D]/95 backdrop-blur-xl border border-purple-500/40 rounded-xl p-3.5 max-w-md shadow-2xl space-y-2">
-          <div className="flex items-center justify-between text-xs border-b border-white/10 pb-2">
-            <span className="font-bold text-purple-300 flex items-center gap-1.5 uppercase tracking-wider">
+        <div className="absolute bottom-6 left-6 z-[1000] bg-white/95 dark:bg-[#0B0F0D]/95 backdrop-blur-xl border border-purple-300 dark:border-purple-500/40 rounded-xl p-3.5 max-w-md shadow-2xl space-y-2 text-slate-800 dark:text-gray-200">
+          <div className="flex items-center justify-between text-xs border-b border-gray-200 dark:border-white/10 pb-2">
+            <span className="font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1.5 uppercase tracking-wider">
               <TrendingUp size={14} /> Forecast Horizon: Next {forecastHorizon} Hours
             </span>
-            <span className="text-[10px] font-mono text-gray-400">Payday & Weekend Weighted</span>
+            <span className="text-[10px] font-mono text-slate-500 dark:text-gray-400">Payday & Weekend Weighted</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center pt-1 font-mono text-xs">
-            <div className="bg-white/5 p-2 rounded border border-white/5">
-              <span className="text-[9px] text-gray-400 block uppercase">Forecast Hotspots</span>
-              <span className="text-purple-300 font-bold text-sm">{forecastZones.length} Zones</span>
+            <div className="bg-slate-100 dark:bg-white/5 p-2 rounded border border-gray-200 dark:border-white/5">
+              <span className="text-[9px] text-slate-500 dark:text-gray-400 block uppercase">Forecast Hotspots</span>
+              <span className="text-purple-700 dark:text-purple-300 font-bold text-sm">{forecastZones.length} Zones</span>
             </div>
-            <div className="bg-white/5 p-2 rounded border border-white/5">
-              <span className="text-[9px] text-gray-400 block uppercase">Projected Cashout</span>
-              <span className="text-amber-400 font-bold text-sm">
+            <div className="bg-slate-100 dark:bg-white/5 p-2 rounded border border-gray-200 dark:border-white/5">
+              <span className="text-[9px] text-slate-500 dark:text-gray-400 block uppercase">Projected Cashout</span>
+              <span className="text-amber-600 dark:text-amber-400 font-bold text-sm">
                 ₹{forecastZones.reduce((acc, z) => acc + z.forecasted_cashout_volume, 0).toLocaleString()}
               </span>
             </div>
-            <div className="bg-white/5 p-2 rounded border border-white/5">
-              <span className="text-[9px] text-gray-400 block uppercase">Critical Alert</span>
-              <span className="text-red-400 font-bold text-sm">
+            <div className="bg-slate-100 dark:bg-white/5 p-2 rounded border border-gray-200 dark:border-white/5">
+              <span className="text-[9px] text-slate-500 dark:text-gray-400 block uppercase">Critical Alert</span>
+              <span className="text-red-600 dark:text-red-400 font-bold text-sm">
                 {forecastZones.filter(z => z.predicted_risk_level === 'CRITICAL').length} High Urgency
               </span>
             </div>
@@ -733,10 +733,10 @@ export function Heatmap() {
 
       {/* 6. Last-Mile Patrol Dispatch Toast Notification */}
       {dispatchStatus && (
-        <div className="absolute bottom-10 right-10 z-[1000] bg-black/90 backdrop-blur-md border-l-4 border-purple-500 p-4 max-w-sm shadow-[0_0_25px_rgba(168,85,247,0.3)] animate-fade-in rounded-r-lg">
+        <div className="absolute bottom-10 right-10 z-[1000] bg-white/95 dark:bg-black/90 backdrop-blur-md border-l-4 border-purple-500 p-4 max-w-sm shadow-2xl animate-fade-in rounded-r-lg border border-gray-200 dark:border-transparent">
           <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 bg-purple-400 rounded-full animate-pulse" />
-            <span className="text-xs font-mono text-gray-200">
+            <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-pulse" />
+            <span className="text-xs font-mono text-slate-800 dark:text-gray-200 font-medium">
               {dispatchStatus}
             </span>
           </div>

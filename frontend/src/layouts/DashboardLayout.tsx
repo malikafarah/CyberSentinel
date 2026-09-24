@@ -13,8 +13,11 @@ import {
   Zap,
   Radio,
   ShieldCheck,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { TrafficSimulator } from '../components/TrafficSimulator';
 
 interface NavItem {
@@ -36,6 +39,7 @@ const navItems: readonly NavItem[] = [
 
 export function DashboardLayout() {
   const { user: u, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const accountMenu = useRef<HTMLDetailsElement>(null);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
@@ -87,6 +91,16 @@ export function DashboardLayout() {
         </div>
 
         <div className="header-right">
+          <button
+            className="topbar-btn theme-toggle-btn"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            <span className="theme-toggle-label">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+
           <button
             className="topbar-btn simulate"
             onClick={() => setSimulatorOpen(true)}

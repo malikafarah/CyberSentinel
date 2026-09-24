@@ -8,6 +8,7 @@ import { PredictionDetail } from './pages/PredictionDetail';
 import { Investigation } from './pages/Investigation';
 import { Settings } from './pages/Settings';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Loading } from './components/ui';
 
 import InvestigationWorkspace from './components/InvestigationWorkspace';
@@ -31,35 +32,37 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/"
-          element={
-            <RequireAuth>
-              <DashboardLayout />
-            </RequireAuth>
-          }
-        >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="heatmap" element={<Heatmap />} />
-          <Route path="alerts" element={<Alerts />} />
-          <Route path="complaints" element={<ComplaintsPage />} />
-          <Route path="cases" element={<CasesPage />} />
-          <Route path="cases/:id" element={<Investigation />} />
-          <Route path="cases/:id/graph" element={<InvestigationWorkspace />} />
-          <Route path="predictions/:id" element={<PredictionDetail />} />
-          <Route path="investigations/:id" element={<Investigation />} />
-          <Route path="investigations/:id/graph" element={<InvestigationWorkspace />} />
-          <Route path="graph" element={<InvestigationWorkspace />} />
-          <Route path="threat-fusion" element={<ThreatFusion />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <RequireAuth>
+                <DashboardLayout />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="heatmap" element={<Heatmap />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="complaints" element={<ComplaintsPage />} />
+            <Route path="cases" element={<CasesPage />} />
+            <Route path="cases/:id" element={<Investigation />} />
+            <Route path="cases/:id/graph" element={<InvestigationWorkspace />} />
+            <Route path="predictions/:id" element={<PredictionDetail />} />
+            <Route path="investigations/:id" element={<Investigation />} />
+            <Route path="investigations/:id/graph" element={<InvestigationWorkspace />} />
+            <Route path="graph" element={<InvestigationWorkspace />} />
+            <Route path="threat-fusion" element={<ThreatFusion />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

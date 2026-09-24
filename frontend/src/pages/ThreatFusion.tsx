@@ -14,9 +14,9 @@ interface FusionSignal {
 }
 
 const SOURCE_META: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  NPCI_eFRM: { icon: <Shield size={14} />, color: 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10', label: 'NPCI eFRM' },
-  DoT_Chakshu: { icon: <Smartphone size={14} />, color: 'text-purple-400 border-purple-500/40 bg-purple-500/10', label: 'DoT Chakshu' },
-  NCRP: { icon: <AlertTriangle size={14} />, color: 'text-amber-400 border-amber-500/40 bg-amber-500/10', label: 'NCRP 1930' },
+  NPCI_eFRM: { icon: <Shield size={14} />, color: 'text-emerald-700 dark:text-emerald-400 border-emerald-500/40 bg-emerald-500/10', label: 'NPCI eFRM' },
+  DoT_Chakshu: { icon: <Smartphone size={14} />, color: 'text-purple-700 dark:text-purple-400 border-purple-500/40 bg-purple-500/10', label: 'DoT Chakshu' },
+  NCRP: { icon: <AlertTriangle size={14} />, color: 'text-amber-700 dark:text-amber-400 border-amber-500/40 bg-amber-500/10', label: 'NCRP 1930' },
 };
 
 export function ThreatFusion() {
@@ -48,7 +48,7 @@ export function ThreatFusion() {
   return (
     <div className="page">
       <PageHeader eyebrow="NATIONAL SIGNAL FUSION" title="Multi-Agency Threat Intelligence">
-        <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5 border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 rounded-full">
+        <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 rounded-full font-medium">
           <Radio size={11} className="animate-pulse" /> Live Feed
         </span>
       </PageHeader>
@@ -72,7 +72,7 @@ export function ThreatFusion() {
       <section className="panel p-6 sm:p-7">
         <div className="mb-5 pb-2">
           <p className="eyebrow">REAL-TIME FUSION LOG</p>
-          <h2 className="text-xl font-bold text-white tracking-tight mt-1">National Agency Signals</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">National Agency Signals</h2>
         </div>
         {signals.length === 0 ? (
           <div className="py-12 text-center text-gray-500">
@@ -84,22 +84,22 @@ export function ThreatFusion() {
             {signals.map((sig, idx) => {
               const meta = SOURCE_META[sig.source] || SOURCE_META['NCRP'];
               return (
-                <article key={idx} className="flex items-center gap-4 p-3.5 rounded-lg bg-white/[0.02] border border-white/10 hover:border-white/20 transition-colors">
-                  <div className={`flex items-center gap-2 px-2.5 py-1 rounded border text-xs font-bold font-mono ${meta?.color || 'text-gray-400 border-gray-500/40 bg-gray-500/10'}`}>
+                <article key={idx} className="flex items-center gap-4 p-3.5 rounded-lg bg-slate-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 hover:border-emerald-500/40 transition-colors">
+                  <div className={`flex items-center gap-2 px-2.5 py-1 rounded border text-xs font-bold font-mono ${meta?.color || 'text-slate-600 dark:text-gray-400 border-gray-300 dark:border-gray-500/40 bg-slate-100 dark:bg-gray-500/10'}`}>
                     {meta?.icon}
                     <span>{sig.source}</span>
                   </div>
                   <div className="flex-grow min-w-0">
-                    <div className="text-xs font-semibold text-white truncate">{sig.identifier}</div>
-                    <div className="text-[10px] text-gray-500 truncate">{sig.reason}</div>
+                    <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">{sig.identifier}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-gray-500 truncate">{sig.reason}</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-[9px] text-gray-500 uppercase">Risk Delta</div>
-                    <div className="text-sm font-mono font-bold text-red-400">
+                    <div className="text-[9px] text-slate-500 dark:text-gray-500 uppercase">Risk Delta</div>
+                    <div className="text-sm font-mono font-bold text-red-500 dark:text-red-400">
                       {sig.input_risk.toFixed(0)} → {sig.resulting_risk.toFixed(0)}
                     </div>
                   </div>
-                  <div className="text-[10px] text-gray-500 font-mono text-right whitespace-nowrap">
+                  <div className="text-[10px] text-slate-500 dark:text-gray-500 font-mono text-right whitespace-nowrap">
                     {new Date(sig.timestamp).toLocaleTimeString('en-IN')}
                   </div>
                 </article>

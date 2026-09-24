@@ -54,13 +54,13 @@ export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
 
             return (
               <g key={item.label}>
-                {/* Dark Background Track */}
+                {/* Background Track */}
                 <circle
                   cx={center}
                   cy={center}
                   r={radius}
                   fill="none"
-                  stroke="#222327"
+                  className="radial-bg-track"
                   strokeWidth={strokeWidth}
                 />
                 {/* Illuminated Data Ring */}

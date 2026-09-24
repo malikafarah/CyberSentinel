@@ -410,27 +410,28 @@ export function Dashboard() {
                 </defs>
                 <XAxis
                   dataKey="hour"
-                  stroke="#222327"
-                  tick={{ fill: '#82858E', fontSize: 10, fontFamily: 'var(--font-mono)' }}
-                  axisLine={{ stroke: '#222327' }}
+                  stroke="var(--border)"
+                  tick={{ fill: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+                  axisLine={{ stroke: 'var(--border)' }}
                   tickLine={false}
                 />
                 <YAxis
-                  stroke="#222327"
-                  tick={{ fill: '#82858E', fontSize: 10, fontFamily: 'var(--font-mono)' }}
-                  axisLine={{ stroke: '#222327' }}
+                  stroke="var(--border)"
+                  tick={{ fill: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+                  axisLine={{ stroke: 'var(--border)' }}
                   tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: '#16171B',
-                    border: '1px solid #222327',
+                    background: 'var(--surface-raised)',
+                    border: '1px solid var(--border)',
                     borderRadius: '6px',
                     fontSize: '11px',
                     fontFamily: 'JetBrains Mono, monospace',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+                    boxShadow: 'var(--shadow-lg)',
+                    color: 'var(--text-primary)',
                   }}
-                  itemStyle={{ color: '#00D26A' }}
+                  itemStyle={{ color: 'var(--accent)' }}
                   formatter={(val: any, _name: any, item: any) => [`${val} Attempts (${item.payload.amount})`, 'Flagged Cash Withdrawals']}
                   labelFormatter={(lbl) => `Time Window: ${lbl}`}
                 />

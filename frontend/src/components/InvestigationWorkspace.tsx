@@ -502,19 +502,19 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0F1210] text-gray-200 font-sans overflow-hidden">
+    <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#0F1210] text-slate-900 dark:text-gray-200 font-sans overflow-hidden">
       {/* 1. Workspace Header */}
-      <header className="px-6 py-3 border-b border-white/10 bg-white/[0.02] flex justify-between items-center z-20 shrink-0">
+      <header className="px-6 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.02] flex justify-between items-center z-20 shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <GitGraph size={18} className="text-[#48D878]" />
-            <h1 className="text-sm font-semibold tracking-wide text-white uppercase">CASE #{caseId}</h1>
+            <GitGraph size={18} className="text-emerald-600 dark:text-[#48D878]" />
+            <h1 className="text-sm font-semibold tracking-wide text-slate-900 dark:text-white uppercase">CASE #{caseId}</h1>
           </div>
-          <span className="text-[9px] font-bold bg-[#48D878]/20 text-[#48D878] px-2 py-1 rounded border border-[#48D878]/30 uppercase tracking-widest flex items-center gap-1.5">
+          <span className="text-[9px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-[#48D878] px-2 py-1 rounded border border-emerald-500/30 uppercase tracking-widest flex items-center gap-1.5">
             <Radio size={10} className="animate-pulse" /> Live Telemetry
           </span>
           {activeChain && activeChain.length > 0 && (
-            <span className="text-[9px] font-bold bg-red-500/20 text-red-400 px-2 py-1 rounded border border-red-500/40 uppercase tracking-widest flex items-center gap-1.5 animate-pulse">
+            <span className="text-[9px] font-bold bg-red-500/20 text-red-600 dark:text-red-400 px-2 py-1 rounded border border-red-500/40 uppercase tracking-widest flex items-center gap-1.5 animate-pulse">
               <Sparkles size={10} /> Trail Active: {activeChain.length} Hops
             </span>
           )}
@@ -524,7 +524,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
           {activeChain && (
             <button
               onClick={handleResetHighlighting}
-              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-mono text-xs font-bold rounded-md border border-red-500/40 transition-all uppercase tracking-widest cursor-pointer flex items-center gap-1.5"
+              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-mono text-xs font-bold rounded-md border border-red-500/40 transition-all uppercase tracking-widest cursor-pointer flex items-center gap-1.5"
             >
               <RotateCcw size={12} /> Reset Trail Highlight
             </button>
@@ -534,8 +534,8 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
             onClick={() => setRightPanelTab((prev) => (prev === 'intake' ? 'inspection' : 'intake'))}
             className={`px-3.5 py-2 font-mono text-xs font-bold rounded-md border transition-all uppercase tracking-widest cursor-pointer flex items-center gap-2 ${
               rightPanelTab === 'intake'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
-                : 'bg-white/5 hover:bg-white/10 text-gray-300 border-white/10'
+                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
+                : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-300 border-gray-200 dark:border-white/10'
             }`}
           >
             <Cpu size={13} /> {rightPanelTab === 'intake' ? 'Viewing NCRP Intake' : 'NCRP Complaint Intake'}
@@ -545,24 +545,24 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
             onClick={() => setIsLiveStreaming((prev) => !prev)}
             className={`px-3.5 py-2 font-mono text-xs font-bold rounded-md border transition-all uppercase tracking-widest cursor-pointer flex items-center gap-2 ${
               isLiveStreaming
-                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                : 'bg-white/5 text-gray-400 border-white/10'
+                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 border-gray-200 dark:border-white/10'
             }`}
           >
-            <span className={`w-2 h-2 rounded-full ${isLiveStreaming ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`} />
+            <span className={`w-2 h-2 rounded-full ${isLiveStreaming ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`} />
             {isLiveStreaming ? 'STREAM: LIVE 🟢' : 'STREAM: PAUSED ⏸'}
           </button>
 
           <button
             onClick={() => setLayoutDirection((prev) => (prev === 'TB' ? 'LR' : 'TB'))}
-            className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-gray-300 font-mono text-xs font-bold rounded-md border border-white/15 transition-all uppercase tracking-widest cursor-pointer"
+            className="px-3.5 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-300 font-mono text-xs font-bold rounded-md border border-gray-200 dark:border-white/15 transition-all uppercase tracking-widest cursor-pointer"
           >
             LAYOUT: {layoutDirection === 'TB' ? 'TOP-DOWN ⬇' : 'LEFT-RIGHT ➡'}
           </button>
 
           <button
             onClick={() => navigate('/heatmap')}
-            className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-mono text-xs font-bold rounded-md border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase tracking-widest cursor-pointer"
+            className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold rounded-md border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase tracking-widest cursor-pointer font-semibold"
           >
             OPEN GIS HEATMAP
           </button>
@@ -574,8 +574,8 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
         {/* CENTER: The Visualizer Canvas */}
         <div className="flex-grow relative">
           {isLoading && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0F1210]/80">
-              <div className="text-[11px] text-[#48D878] tracking-widest uppercase font-mono animate-pulse">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/40 dark:bg-[#0F1210]/80">
+              <div className="text-[11px] text-emerald-600 dark:text-[#48D878] tracking-widest uppercase font-mono animate-pulse">
                 Syncing Network Graph...
               </div>
             </div>
@@ -589,45 +589,45 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
             onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView
-            className="bg-[#0F1210]"
+            className="bg-slate-50 dark:bg-[#0F1210]"
           >
-            <Background color="#ffffff" variant={BackgroundVariant.Dots} gap={24} size={1} style={{ opacity: 0.03 }} />
-            <Controls className="bg-[#0F1210] border-white/10 fill-gray-400" showInteractive={false} />
+            <Background color="#64748B" variant={BackgroundVariant.Dots} gap={24} size={1} style={{ opacity: 0.15 }} />
+            <Controls className="bg-white dark:bg-[#0F1210] border-gray-200 dark:border-white/10 fill-slate-700 dark:fill-gray-400 shadow-md" showInteractive={false} />
           </ReactFlow>
 
           {/* Graph Legend Overlay */}
-          <div className="absolute bottom-4 left-4 z-10 bg-[#0F1210]/90 backdrop-blur-md p-3 rounded-lg border border-white/10 text-[9px] font-mono space-y-1.5 shadow-xl">
-            <div className="text-gray-400 font-bold uppercase tracking-widest mb-1">Graph Legend</div>
+          <div className="absolute bottom-4 left-4 z-10 bg-white/95 dark:bg-[#0F1210]/90 backdrop-blur-md p-3 rounded-lg border border-gray-200 dark:border-white/10 text-[9px] font-mono space-y-1.5 shadow-xl text-slate-800 dark:text-gray-300">
+            <div className="text-slate-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Graph Legend</div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 border border-emerald-400" />
-              <span className="text-gray-300">Victim Account (Origin)</span>
+              <span>Victim Account (Origin)</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-orange-500 border border-orange-400" />
-              <span className="text-gray-300">Mule Account (Layering)</span>
+              <span>Mule Account (Layering)</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-purple-500 border border-purple-400" />
-              <span className="text-gray-300">Shared IP / Device</span>
+              <span>Shared IP / Device</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-red-500 border border-red-400" />
-              <span className="text-gray-300">ATM Terminal (Cash-out)</span>
+              <span>ATM Terminal (Cash-out)</span>
             </div>
           </div>
         </div>
 
         {/* FAR RIGHT: Entity Inspection or NCRP Complaint Intake Panel */}
-        <aside className="w-96 border-l border-white/10 bg-[#0B0F0D]/95 backdrop-blur-3xl p-5 flex flex-col z-20 shrink-0 overflow-y-auto">
+        <aside className="w-96 border-l border-gray-200 dark:border-white/10 bg-white/95 dark:bg-[#0B0F0D]/95 backdrop-blur-3xl p-5 flex flex-col z-20 shrink-0 overflow-y-auto text-slate-900 dark:text-gray-200">
           {/* Panel Selector Tabs */}
-          <div className="flex border-b border-white/10 mb-4 pb-2 justify-between items-center">
+          <div className="flex border-b border-gray-200 dark:border-white/10 mb-4 pb-2 justify-between items-center">
             <div className="flex gap-2">
               <button
                 onClick={() => setRightPanelTab('inspection')}
                 className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded transition-colors ${
                   rightPanelTab === 'inspection'
-                    ? 'bg-white/10 text-white border border-white/20'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white border border-gray-300 dark:border-white/20'
+                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200'
                 }`}
               >
                 Inspection
@@ -636,8 +636,8 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                 onClick={() => setRightPanelTab('intake')}
                 className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 ${
                   rightPanelTab === 'intake'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40'
+                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200'
                 }`}
               >
                 <Cpu size={12} /> NCRP Intake
@@ -652,20 +652,20 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                 <div className="space-y-4">
                   {/* Cross-Case Jurisdiction Alert */}
                   {((selectedNode.data.linked_cases && selectedNode.data.linked_cases.length > 1) || selectedNode.data.type === 'MULE') && (
-                    <div className="bg-purple-950/50 border-l-4 border-purple-500 p-3 rounded-r-lg border-y border-r border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
-                      <h4 className="text-purple-300 font-bold text-xs flex items-center gap-1.5 uppercase tracking-wide">
+                    <div className="bg-purple-50 dark:bg-purple-950/50 border-l-4 border-purple-500 p-3 rounded-r-lg border-y border-r border-purple-200 dark:border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+                      <h4 className="text-purple-700 dark:text-purple-300 font-bold text-xs flex items-center gap-1.5 uppercase tracking-wide">
                         🚨 Cross-Jurisdiction Alert
                       </h4>
-                      <p className="text-xs text-purple-200 mt-1">
+                      <p className="text-xs text-purple-900 dark:text-purple-200 mt-1">
                         This entity appears in <strong>{selectedNode.data.linked_cases?.length || 3}</strong> active cases across state borders.
                       </p>
-                      <ul className="mt-2 list-disc pl-4 text-xs text-purple-400 font-mono space-y-0.5">
+                      <ul className="mt-2 list-disc pl-4 text-xs text-purple-700 dark:text-purple-400 font-mono space-y-0.5">
                         {(selectedNode.data.linked_cases && selectedNode.data.linked_cases.length > 0
                           ? selectedNode.data.linked_cases
                           : ['FIR-DL-2026-8891 (Delhi)', 'FIR-MH-2026-3102 (Mumbai)', 'CYB-AP-2026-4412 (Vijayawada)']
                         ).map((caseId) => (
                           <li key={caseId}>
-                            <a href={`/cases/${caseId.split(' ')[0]}`} className="underline hover:text-purple-200">
+                            <a href={`/cases/${caseId.split(' ')[0]}`} className="underline hover:text-purple-900 dark:hover:text-purple-200">
                               {caseId}
                             </a>
                           </li>
@@ -674,31 +674,31 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                     </div>
                   )}
 
-                  <div className="p-4 bg-white/[0.03] rounded-lg border border-white/10">
-                    <div className="text-sm font-semibold text-gray-100 mb-2 truncate">{selectedNode.data.label}</div>
-                    <div className="flex justify-between items-center py-1 border-b border-white/5">
-                      <span className="text-xs text-gray-500">Node ID</span>
-                      <span className="text-xs font-mono text-gray-300">{selectedNode.data.id}</span>
+                  <div className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-lg border border-gray-200 dark:border-white/10">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-gray-100 mb-2 truncate">{selectedNode.data.label}</div>
+                    <div className="flex justify-between items-center py-1 border-b border-gray-200 dark:border-white/5">
+                      <span className="text-xs text-slate-500 dark:text-gray-400">Node ID</span>
+                      <span className="text-xs font-mono text-slate-800 dark:text-gray-300">{selectedNode.data.id}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-white/5 mt-1">
-                      <span className="text-xs text-gray-500">Classification</span>
-                      <span className="text-xs font-semibold text-gray-300">{selectedNode.data.type}</span>
+                    <div className="flex justify-between items-center py-1 border-b border-gray-200 dark:border-white/5 mt-1">
+                      <span className="text-xs text-slate-500 dark:text-gray-400">Classification</span>
+                      <span className="text-xs font-semibold text-slate-800 dark:text-gray-300">{selectedNode.data.type}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-white/5 mt-1">
-                      <span className="text-xs text-gray-500">Status</span>
+                    <div className="flex justify-between items-center py-1 border-b border-gray-200 dark:border-white/5 mt-1">
+                      <span className="text-xs text-slate-500 dark:text-gray-400">Status</span>
                       <span
                         className={`text-xs font-bold ${
-                          selectedNode.data.status === 'FROZEN' ? 'text-teal-400' : 'text-emerald-400'
+                          selectedNode.data.status === 'FROZEN' ? 'text-teal-600 dark:text-teal-400' : 'text-emerald-600 dark:text-emerald-400'
                         }`}
                       >
                         {selectedNode.data.status || 'ACTIVE'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-1 mt-1">
-                      <span className="text-xs text-gray-500">Threat Level</span>
+                      <span className="text-xs text-slate-500 dark:text-gray-400">Threat Level</span>
                       <span
                         className={`text-xs font-bold ${
-                          selectedNode.data.riskScore > 80 ? 'text-red-500' : 'text-[#48D878]'
+                          selectedNode.data.riskScore > 80 ? 'text-red-600 dark:text-red-500' : 'text-emerald-600 dark:text-[#48D878]'
                         }`}
                       >
                         {Number(selectedNode.data.riskScore).toFixed(1)}%
@@ -707,12 +707,12 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                   </div>
 
                   {/* Multi-Agency National Signal Badges */}
-                  <div className="p-3 bg-white/[0.02] border border-white/10 rounded-lg space-y-2">
+                  <div className="p-3 bg-slate-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-wider">
+                      <span className="text-[10px] font-mono text-slate-600 dark:text-gray-400 font-bold uppercase tracking-wider">
                         Ecosystem Signal Fusion
                       </span>
-                      <span className="text-[9px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                      <span className="text-[9px] text-emerald-700 dark:text-emerald-400 font-mono font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
                         Live Ingested
                       </span>
                     </div>
@@ -720,43 +720,43 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                     <div className="flex flex-col gap-1.5">
                       {/* NPCI eFRM Flag */}
                       {(selectedNode.data.metadata?.eFRM_flag || selectedNode.data.riskScore >= 80 || selectedNode.data.type === 'MULE') && (
-                        <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-red-500/15 border border-red-500/30 rounded text-red-300 font-mono">
+                        <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-red-500/15 border border-red-500/30 rounded text-red-700 dark:text-red-300 font-mono">
                           <span className="flex items-center gap-1.5 font-bold text-[11px]">
                             🛡️ NPCI eFRM Flagged
                           </span>
-                          <span className="text-[9px] text-red-400 font-semibold">UPI Velocity Anomaly</span>
+                          <span className="text-[9px] text-red-600 dark:text-red-400 font-semibold">UPI Velocity Anomaly</span>
                         </div>
                       )}
 
                       {/* DoT Chakshu / FRI Flag */}
                       {(selectedNode.data.metadata?.DoT_Chakshu_flag || selectedNode.data.metadata?.DoT_FRI_score || selectedNode.data.type === 'DEVICE' || selectedNode.data.riskScore >= 75) && (
-                        <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-purple-500/15 border border-purple-500/30 rounded text-purple-300 font-mono">
+                        <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-purple-500/15 border border-purple-500/30 rounded text-purple-700 dark:text-purple-300 font-mono">
                           <span className="flex items-center gap-1.5 font-bold text-[11px]">
                             📱 DoT Chakshu Blocklist
                           </span>
-                          <span className="text-[9px] text-purple-400 font-semibold">MNRL / SIM Churn</span>
+                          <span className="text-[9px] text-purple-600 dark:text-purple-400 font-semibold">MNRL / SIM Churn</span>
                         </div>
                       )}
 
                       {/* NCRP 1930 Corroboration */}
-                      <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-emerald-500/15 border border-emerald-500/30 rounded text-emerald-300 font-mono">
+                      <div className="flex items-center justify-between text-xs px-2.5 py-1.5 bg-emerald-500/15 border border-emerald-500/30 rounded text-emerald-700 dark:text-emerald-300 font-mono">
                         <span className="flex items-center gap-1.5 font-bold text-[11px]">
                           🏛️ NCRP 1930 Ingested
                         </span>
-                        <span className="text-[9px] text-emerald-400 font-semibold">FIR Corroborated</span>
+                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">FIR Corroborated</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="pt-2 flex flex-col gap-3">
                     {selectedNode.data.status === 'FROZEN' ? (
-                      <div className="bg-emerald-950/40 p-4 border border-emerald-500/40 rounded-lg text-gray-200">
+                      <div className="bg-emerald-50 dark:bg-emerald-950/40 p-4 border border-emerald-500/40 rounded-lg text-slate-800 dark:text-gray-200">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="badge bg-emerald-600 text-black text-xs px-2.5 py-1 rounded font-bold font-mono tracking-wider uppercase">
+                          <span className="badge bg-emerald-600 text-white text-xs px-2.5 py-1 rounded font-bold font-mono tracking-wider uppercase">
                             ACCOUNT FROZEN / LIEN ACTIVE
                           </span>
                         </div>
-                        <p className="text-xs text-emerald-300 mt-2">
+                        <p className="text-xs text-emerald-800 dark:text-emerald-300 mt-2">
                           Lien active on node. Officers can unfreeze or process appeals off-ramp.
                         </p>
                         <button
@@ -782,7 +782,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                   </div>
                 </div>
               ) : (
-                <div className="text-[11px] text-gray-500 text-center mt-12 uppercase tracking-widest">
+                <div className="text-[11px] text-slate-500 dark:text-gray-500 text-center mt-12 uppercase tracking-widest">
                   Select any graph node to inspect details or trigger evidence chains
                 </div>
               )}
@@ -791,11 +791,11 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
             /* TAB 2: NCRP Complaint Intake Panel */
             <div className="flex flex-col gap-3">
               <div>
-                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">
+                <p className="text-[10px] text-slate-600 dark:text-gray-400 font-semibold uppercase tracking-wider mb-1">
                   Unstructured Complaint Text
                 </p>
                 <textarea
-                  className="w-full h-28 p-2.5 text-xs font-mono bg-black/40 border border-white/15 rounded-lg text-gray-200 focus:border-emerald-500 focus:outline-none resize-none leading-relaxed"
+                  className="w-full h-28 p-2.5 text-xs font-mono bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/15 rounded-lg text-slate-900 dark:text-gray-200 focus:border-emerald-500 focus:outline-none resize-none leading-relaxed"
                   placeholder="Paste unstructured NCRP complaint narrative here..."
                   value={intakeText}
                   onChange={(e) => setIntakeText(e.target.value)}
@@ -811,7 +811,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                       'Victim duped of Rs 85,000 via fake KYC link. Transferred from victim account 98765432101234 to UPI scammer88@paytm and 9876543210@ybl. Caller contacted from +919876543210.'
                     )
                   }
-                  className="text-[9px] text-emerald-400/80 hover:text-emerald-300 underline font-mono"
+                  className="text-[9px] text-emerald-600 dark:text-emerald-400/80 hover:text-emerald-700 dark:hover:text-emerald-300 underline font-mono"
                 >
                   Load Sample Scam
                 </button>
@@ -820,7 +820,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                   type="button"
                   onClick={handleRunIntakeExtraction}
                   disabled={isExtracting || !intakeText.trim()}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-black font-bold text-xs rounded border border-emerald-400 disabled:opacity-50 transition-colors uppercase tracking-wider flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded border border-emerald-400 disabled:opacity-50 transition-colors uppercase tracking-wider flex items-center gap-1.5"
                 >
                   {isExtracting ? <RefreshCw size={12} className="spin" /> : <Cpu size={12} />} Extract Entities
                 </button>
@@ -828,8 +828,8 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
               {/* Extracted Entities List */}
               {extractedData && (
-                <div className="p-3 bg-white/[0.02] border border-white/10 rounded-lg space-y-2.5">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex justify-between">
+                <div className="p-3 bg-slate-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg space-y-2.5">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex justify-between">
                     <span>Parsed Identifiers</span>
                     <span>
                       {(extractedData.upis?.length || 0) +
@@ -841,23 +841,23 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
 
                   <div className="space-y-1.5 text-[11px] font-mono">
                     {extractedData.upis && extractedData.upis.length > 0 && (
-                      <div className="bg-black/30 p-2 rounded border border-white/5">
-                        <span className="text-[9px] text-emerald-400 block uppercase font-bold">UPI IDs:</span>
-                        <div className="text-gray-300 truncate">{extractedData.upis.join(', ')}</div>
+                      <div className="bg-slate-100 dark:bg-black/30 p-2 rounded border border-gray-200 dark:border-white/5">
+                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 block uppercase font-bold">UPI IDs:</span>
+                        <div className="text-slate-800 dark:text-gray-300 truncate">{extractedData.upis.join(', ')}</div>
                       </div>
                     )}
 
                     {extractedData.phones && extractedData.phones.length > 0 && (
-                      <div className="bg-black/30 p-2 rounded border border-white/5">
-                        <span className="text-[9px] text-emerald-400 block uppercase font-bold">Phones (+91):</span>
-                        <div className="text-gray-300 truncate">{extractedData.phones.join(', ')}</div>
+                      <div className="bg-slate-100 dark:bg-black/30 p-2 rounded border border-gray-200 dark:border-white/5">
+                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 block uppercase font-bold">Phones (+91):</span>
+                        <div className="text-slate-800 dark:text-gray-300 truncate">{extractedData.phones.join(', ')}</div>
                       </div>
                     )}
 
                     {extractedData.accounts && extractedData.accounts.length > 0 && (
-                      <div className="bg-black/30 p-2 rounded border border-white/5">
-                        <span className="text-[9px] text-amber-400 block uppercase font-bold">Bank Accounts:</span>
-                        <div className="text-gray-300 truncate">{extractedData.accounts.join(', ')}</div>
+                      <div className="bg-slate-100 dark:bg-black/30 p-2 rounded border border-gray-200 dark:border-white/5">
+                        <span className="text-[9px] text-amber-600 dark:text-amber-400 block uppercase font-bold">Bank Accounts:</span>
+                        <div className="text-slate-800 dark:text-gray-300 truncate">{extractedData.accounts.join(', ')}</div>
                       </div>
                     )}
                   </div>
@@ -867,7 +867,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
                     type="button"
                     onClick={handleConfirmGraphSeeding}
                     disabled={isSeeding}
-                    className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold text-xs rounded border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2"
                   >
                     {isSeeding ? <RefreshCw size={13} className="spin" /> : <Database size={13} />} Confirm Seeding into Graph
                   </button>
@@ -875,7 +875,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
               )}
 
               {intakeMessage && (
-                <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/30 rounded text-emerald-300 text-[10px] font-mono">
+                <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/30 rounded text-emerald-800 dark:text-emerald-300 text-[10px] font-mono">
                   {intakeMessage}
                 </div>
               )}
@@ -885,10 +885,10 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
       </div>
 
       {/* 3. The Audit Trail Terminal (25% height) */}
-      <div className="h-[25vh] border-t border-white/10 bg-[#080A08] shrink-0 flex flex-col font-mono text-[10px]">
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5 bg-white/[0.02]">
-          <div className="w-2 h-2 rounded-full bg-[#48D878] animate-pulse" />
-          <span className="text-gray-400 uppercase tracking-widest font-semibold">Cryptographic Ledger Stream</span>
+      <div className="h-[25vh] border-t border-gray-200 dark:border-white/10 bg-slate-100 dark:bg-[#080A08] shrink-0 flex flex-col font-mono text-[10px] text-slate-800 dark:text-gray-200">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 dark:border-white/5 bg-white/60 dark:bg-white/[0.02]">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-slate-600 dark:text-gray-400 uppercase tracking-widest font-semibold">Cryptographic Ledger Stream</span>
         </div>
 
         <div className="flex-grow overflow-y-auto p-4 space-y-2">
@@ -896,14 +896,14 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
             .slice()
             .reverse()
             .map((log) => (
-              <div key={log.id} className="flex gap-4 items-start text-gray-500 hover:text-gray-300 transition-colors">
-                <span className="text-gray-600 shrink-0">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                <span className="text-emerald-400 font-semibold shrink-0 w-24">{log.action}</span>
+              <div key={log.id} className="flex gap-4 items-start text-slate-600 dark:text-gray-500 hover:text-slate-900 dark:hover:text-gray-300 transition-colors">
+                <span className="text-slate-400 dark:text-gray-600 shrink-0">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 w-24">{log.action}</span>
                 <div className="flex flex-col gap-1 min-w-0">
                   <span className="truncate">
-                    TARGET: <span className="text-gray-300">{log.targetNodeId}</span>
+                    TARGET: <span className="text-slate-800 dark:text-gray-300 font-bold">{log.targetNodeId}</span>
                   </span>
-                  <span className="truncate text-emerald-500/70">HASH: {log.currentHash}</span>
+                  <span className="truncate text-emerald-700 dark:text-emerald-500/70">HASH: {log.currentHash}</span>
                 </div>
               </div>
             ))}

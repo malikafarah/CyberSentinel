@@ -69,13 +69,13 @@ export default function NcrpIntake() {
     <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
       {/* Header Info */}
-      <div className="panel" style={{ background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)', borderColor: 'var(--border-strong)' }}>
+      <div className="panel" style={{ background: 'var(--surface-raised)', borderColor: 'var(--border-strong)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <p className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Cpu size={14} style={{ color: 'var(--accent)' }} /> NCRP NLP PARSER & GRAPH SEEDER
             </p>
-            <h2 style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px', letterSpacing: '-0.02em' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
               Unstructured Complaint Intake
             </h2>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '650px' }}>
@@ -130,7 +130,6 @@ export default function NcrpIntake() {
             lineHeight: 1.6,
             resize: 'vertical',
             outline: 'none',
-            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)',
           }}
           placeholder="Paste unstructured NCRP complaint text here (e.g., 'Victim transferred Rs 50,000 to UPI ID suspect@ybl from mobile 9876543210...')..."
           value={rawText}
@@ -187,7 +186,7 @@ export default function NcrpIntake() {
             background: 'rgba(239, 68, 68, 0.1)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
             borderRadius: 'var(--radius-md)',
-            color: '#f87171',
+            color: 'var(--danger)',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -204,15 +203,15 @@ export default function NcrpIntake() {
         <div
           className="panel"
           style={{
-            background: 'rgba(255, 255, 255, 0.02)',
+            background: 'var(--surface)',
             border: '1px solid var(--border-strong)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            boxShadow: 'var(--shadow)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
             <div>
               <p className="eyebrow" style={{ color: 'var(--accent)' }}>IDENTIFIER RECOGNITION REPORT</p>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px', color: 'var(--text-primary)' }}>
                 Extracted Identifiers ({totalExtractedCount} Entities)
               </h3>
             </div>
@@ -223,7 +222,7 @@ export default function NcrpIntake() {
                 padding: '4px 8px',
                 borderRadius: 'var(--radius-sm)',
                 background: totalExtractedCount > 0 ? 'rgba(72, 216, 120, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                color: totalExtractedCount > 0 ? 'var(--accent)' : '#f87171',
+                color: totalExtractedCount > 0 ? 'var(--accent)' : 'var(--danger)',
                 border: `1px solid ${totalExtractedCount > 0 ? 'rgba(72, 216, 120, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
               }}
             >
@@ -266,7 +265,7 @@ export default function NcrpIntake() {
               <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {extractedData.upis && extractedData.upis.length > 0 ? (
                   extractedData.upis.map((upi: string) => (
-                    <li key={upi} style={{ fontFamily: 'JetBrains Mono, monospace', color: '#6ee7b7' }}>
+                    <li key={upi} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent)' }}>
                       {upi}
                     </li>
                   ))
@@ -300,12 +299,12 @@ export default function NcrpIntake() {
                 }}
               >
                 <span>Phone Numbers (+91)</span>
-                <span style={{ color: '#34D399' }}>{extractedData.phones?.length || 0}</span>
+                <span style={{ color: 'var(--accent)' }}>{extractedData.phones?.length || 0}</span>
               </h4>
               <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {extractedData.phones && extractedData.phones.length > 0 ? (
                   extractedData.phones.map((ph: string) => (
-                    <li key={ph} style={{ fontFamily: 'JetBrains Mono, monospace', color: '#6EE7B7' }}>
+                    <li key={ph} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent)' }}>
                       {ph}
                     </li>
                   ))
@@ -339,12 +338,12 @@ export default function NcrpIntake() {
                 }}
               >
                 <span>Bank Accounts</span>
-                <span style={{ color: '#f59e0b' }}>{extractedData.accounts?.length || 0}</span>
+                <span style={{ color: '#d97706' }}>{extractedData.accounts?.length || 0}</span>
               </h4>
               <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {extractedData.accounts && extractedData.accounts.length > 0 ? (
                   extractedData.accounts.map((acc: string) => (
-                    <li key={acc} style={{ fontFamily: 'JetBrains Mono, monospace', color: '#fcd34d' }}>
+                    <li key={acc} style={{ fontFamily: 'JetBrains Mono, monospace', color: '#d97706' }}>
                       {acc}
                     </li>
                   ))

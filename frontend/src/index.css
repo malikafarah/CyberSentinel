@@ -21,8 +21,8 @@ html, body, #root {
 body {
   min-width: 320px;
   /* Colour is set by --bg-page in styles.css; this is a safe fallback */
-  background: #0B0C10;
-  color: #FFFFFF;
+  background: var(--bg-page, #0B0C10);
+  color: var(--text-primary, #FFFFFF);
 }
 
 button, input, select, textarea {
@@ -42,3 +42,6 @@ a { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+html.light ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }

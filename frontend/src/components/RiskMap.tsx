@@ -97,21 +97,21 @@ export default function RiskMap({
                 {loc.name} · Risk: {loc.riskScore}%
               </Tooltip>
               <Popup>
-                <div style={{ background: '#151817', color: '#F1F3F1', padding: '4px', minWidth: '190px', fontFamily: 'sans-serif' }}>
-                  <p style={{ margin: '0 0 4px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px', color: '#6F7772', fontWeight: 700 }}>
+                <div style={{ background: 'var(--surface-raised)', color: 'var(--text-primary)', padding: '4px', minWidth: '190px', fontFamily: 'sans-serif' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', fontWeight: 700 }}>
                     PHYSICAL BANKING NODE
                   </p>
-                  <strong style={{ fontSize: '14px', display: 'block', marginBottom: '4px', color: '#FFFFFF' }}>{loc.name}</strong>
-                  <span style={{ fontSize: '11px', color: '#A6ADA8', display: 'block', marginBottom: '8px' }}>
+                  <strong style={{ fontSize: '14px', display: 'block', marginBottom: '4px', color: 'var(--text-primary)' }}>{loc.name}</strong>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>
                     {loc.location_id} · {loc.region}
                   </span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', borderTop: '1px solid #292D2A', paddingTop: '6px', fontSize: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', borderTop: '1px solid var(--border)', paddingTop: '6px', fontSize: '10px' }}>
                     <div>
-                      <span style={{ color: '#6F7772', display: 'block' }}>Type:</span>
-                      <b style={{ color: '#F1F3F1' }}>{loc.type}</b>
+                      <span style={{ color: 'var(--text-muted)', display: 'block' }}>Type:</span>
+                      <b style={{ color: 'var(--text-primary)' }}>{loc.type}</b>
                     </div>
                     <div>
-                      <span style={{ color: '#6F7772', display: 'block' }}>Risk Score:</span>
+                      <span style={{ color: 'var(--text-muted)', display: 'block' }}>Risk Score:</span>
                       <b style={{ color }}>{loc.riskScore}/100</b>
                     </div>
                   </div>

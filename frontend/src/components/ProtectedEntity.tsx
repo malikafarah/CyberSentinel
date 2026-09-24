@@ -47,7 +47,7 @@ export function ProtectedEntity({
 
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
-      <span className="font-mono bg-white/5 border border-white/10 text-gray-200 px-2 py-0.5 rounded text-xs tracking-wide">
+      <span className="font-mono bg-slate-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-slate-800 dark:text-gray-200 px-2 py-0.5 rounded text-xs tracking-wide">
         {isMasked ? maskPII(type, value) : value}
       </span>
       {isMasked ? (
@@ -55,14 +55,14 @@ export function ProtectedEntity({
           type="button"
           onClick={handleUnmask}
           disabled={loading}
-          className="text-xs text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+          className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer transition-colors font-medium"
           title="Unmask PII (Requires DPDP Act Justification)"
         >
           {showIcon && <Eye size={12} />}
           <span>{loading ? 'Logging...' : 'View'}</span>
         </button>
       ) : (
-        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-mono" title="PII Unmasked under DPDP Compliance">
+        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-medium" title="PII Unmasked under DPDP Compliance">
           <ShieldCheck size={12} />
           <span>Unmasked</span>
         </span>

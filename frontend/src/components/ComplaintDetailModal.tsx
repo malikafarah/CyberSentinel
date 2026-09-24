@@ -58,19 +58,19 @@ export default function ComplaintDetailModal({ complaintId, onClose }: Props) {
                   <span style={{ color: 'var(--text-subtle)', fontSize: '10px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <ShieldAlert size={12} /> Crime Category
                   </span>
-                  <strong style={{ display: 'block', marginTop: '2px', color: '#F1F3F1' }}>{complaint.crime_category}</strong>
+                  <strong style={{ display: 'block', marginTop: '2px', color: 'var(--text-primary)' }}>{complaint.crime_category}</strong>
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-subtle)', fontSize: '10px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <MapPin size={12} /> Geographic Region
                   </span>
-                  <strong style={{ display: 'block', marginTop: '2px', color: '#F1F3F1' }}>{complaint.region}</strong>
+                  <strong style={{ display: 'block', marginTop: '2px', color: 'var(--text-primary)' }}>{complaint.region}</strong>
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-subtle)', fontSize: '10px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Calendar size={12} /> Timestamp
                   </span>
-                  <span style={{ display: 'block', marginTop: '2px', fontFamily: 'JetBrains Mono', color: '#A6ADA8' }}>
+                  <span style={{ display: 'block', marginTop: '2px', fontFamily: 'JetBrains Mono', color: 'var(--text-muted)' }}>
                     {new Date(complaint.timestamp).toLocaleString()}
                   </span>
                 </div>
@@ -89,7 +89,7 @@ export default function ComplaintDetailModal({ complaintId, onClose }: Props) {
                   <span style={{ color: 'var(--text-subtle)', fontSize: '10px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <CreditCard size={12} /> Affected Account Number
                   </span>
-                  <span style={{ display: 'block', marginTop: '2px', fontFamily: 'JetBrains Mono', color: '#F1F3F1' }}>
+                  <span style={{ display: 'block', marginTop: '2px', fontFamily: 'JetBrains Mono', color: 'var(--text-primary)' }}>
                     {complaint.account_number}
                   </span>
                 </div>
@@ -100,7 +100,7 @@ export default function ComplaintDetailModal({ complaintId, onClose }: Props) {
                   <span style={{ color: 'var(--text-subtle)', fontSize: '10px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <User size={12} /> Reported By / Source
                   </span>
-                  <span style={{ display: 'block', marginTop: '2px', color: '#F1F3F1' }}>
+                  <span style={{ display: 'block', marginTop: '2px', color: 'var(--text-primary)' }}>
                     {complaint.reported_by}
                   </span>
                 </div>

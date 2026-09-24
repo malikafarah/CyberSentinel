@@ -46,14 +46,14 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({
   const needleLength = 52;
   const needleTip = polarToCartesian(center, center, needleLength, currentAngle);
 
-  const getRiskColor = (sc: number) => {
-    if (sc >= 75) return '#F73B3B';
-    if (sc >= 50) return '#FFB800';
-    if (sc >= 25) return '#3276FF';
-    return '#00D26A';
+  const getRiskCategory = (sc: number) => {
+    if (sc >= 75) return 'critical';
+    if (sc >= 50) return 'high';
+    if (sc >= 25) return 'medium';
+    return 'low';
   };
 
-  const riskColor = getRiskColor(score);
+  const riskCategory = getRiskCategory(score);
 
   return (
     <div className="risk-gauge-wrapper">
@@ -75,7 +75,7 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({
         <path
           d={backgroundArc}
           fill="none"
-          stroke="#222327"
+          className="gauge-bg-track"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
@@ -96,28 +96,24 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({
           y1={center}
           x2={needleTip.x}
           y2={needleTip.y}
-          stroke="#FFFFFF"
+          className="gauge-needle"
           strokeWidth={2.5}
           strokeLinecap="round"
-          filter="drop-shadow(0 0 5px rgba(0, 210, 106, 0.7))"
         />
 
         {/* Needle Center Hub */}
         <circle cx={center} cy={center} r={5} fill="#00D26A" />
-        <circle cx={center} cy={center} r={2} fill="#0B0C10" />
+        <circle cx={center} cy={center} r={2} className="gauge-hub-inner" />
 
         {/* 0 and 100 markers */}
-        <text x="25" y="132" fill="#82858E" fontSize="9" fontFamily="var(--font-mono)">0</text>
-        <text x="142" y="132" fill="#82858E" fontSize="9" fontFamily="var(--font-mono)">100</text>
+        <text x="25" y="132" className="gauge-marker" fontSize="9" fontFamily="var(--font-mono)">0</text>
+        <text x="142" y="132" className="gauge-marker" fontSize="9" fontFamily="var(--font-mono)">100</text>
       </svg>
 
       <div className="gauge-readout">
-        <span className="gauge-score-label">Live Score: {score}</span>
+        <span className="gauge-score-label">Live Score: {score}/100</span>
         <strong className="gauge-score-val">{score}</strong>
-        <span
-          className="gauge-risk-pill"
-          style={{ color: riskColor, borderColor: `${riskColor}55`, background: `${riskColor}18` }}
-        >
+        <span className={`gauge-risk-pill ${riskCategory}`}>
           {label}
         </span>
       </div>
