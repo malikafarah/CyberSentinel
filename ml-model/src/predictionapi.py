@@ -161,6 +161,7 @@ app = FastAPI(
     title="CyberSentinel IF + Graph Hotspot Predictor",
     lifespan=lifespan
 )
+ap = app
 
 def calibrate_anomaly_to_risk(raw_score: float, k: float = 40.0) -> float:
     score = 1.0 / (1.0 + np.exp(k * raw_score))

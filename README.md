@@ -225,9 +225,30 @@ cd CyberSentinel
 
 ---
 
-### Step 2: Backend Setup & Seed Database
+### Step 2: ML Model Service Setup
 ```bash
-cd backend
+cd ml-model
+
+# Create & activate virtual environment
+python -m venv venv
+# On Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+# On Linux/macOS:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start ML Prediction API server
+uvicorn src.predictionapi:ap --port 8000 --reload
+```
+> ML Prediction API documentation available at: **`http://localhost:8000/docs`**
+
+---
+
+### Step 3: Backend Setup & Seed Database
+```bash
+cd ../backend
 
 # Create & activate virtual environment
 python -m venv venv
@@ -243,16 +264,16 @@ pip install -r requirements.txt
 python -m spacy download en_core_web_md
 
 # Seed database with baseline cases, nodes, and locations
-python app/seed_db.py
+python seed_db.py
 
 # Start FastAPI server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 ```
-> Interactive OpenAPI documentation available at: **`http://localhost:8000/docs`**
+> Interactive OpenAPI documentation available at: **`http://localhost:8001/docs`**
 
 ---
 
-### Step 3: Frontend Setup
+### Step 4: Frontend Setup
 ```bash
 cd ../frontend
 
