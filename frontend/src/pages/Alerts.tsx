@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Check, LineChart, BriefcaseBusiness } from 'lucide-react';
 import { alertService, predictionService } from '../services/services';
 import type { Alert, Prediction } from '../types';
-import { ConfirmModal, Empty, Loading, PageHeader, RiskBadge, StatusBadge, ErrorState } from '../components/ui';
+import { ConfirmModal, Empty, Loading, PageHeader, RiskBadge, ErrorState } from '../components/ui';
 
 const tabs = ['All', 'Critical', 'High', 'Medium', 'Unacknowledged', 'Acknowledged'];
 
@@ -109,86 +110,130 @@ export function Alerts() {
       </div>
       {toast && <div className="toast">{toast}</div>}
       <section className="panel table-panel">
-        {shown.length ? (
-          shown.map((a) => {
-            const x = p.find(
-              (z) =>
-                z.id === a.prediction_id ||
-                z.id === `p_${a.prediction_id}` ||
-                (z as any).location_id === a.prediction_id
-            );
+        <div className="alert-table-wrap">
+          {/* Sticky Header Row */}
+          <div className="alert-table-header">
+            <div>Source Entity</div>
+            <div>Risk Score</div>
+            <div>Forecast</div>
+            <div>Status</div>
+            <div className="text-right">Actions</div>
+          </div>
 
-            // Robust Risk Score Resolution
-            let rawScore: number | undefined;
-            if (x?.risk_score !== undefined && x?.risk_score !== null) rawScore = Number(x.risk_score);
-            else if ((x as any)?.riskScore !== undefined) rawScore = Number((x as any).riskScore);
-            else if (a.riskScore !== undefined) rawScore = Number(a.riskScore);
-            else if (a.risk_score !== undefined) rawScore = Number(a.risk_score);
+          {shown.length ? (
+            <div className="flex flex-col">
+              {shown.map((a) => {
+                const x = p.find(
+                  (z) =>
+                    z.id === a.prediction_id ||
+                    z.id === `p_${a.prediction_id}` ||
+                    (z as any).location_id === a.prediction_id
+                );
 
-            if (rawScore === undefined || isNaN(rawScore)) {
-              if (a.severity === 'CRITICAL') rawScore = 95.0;
-              else if (a.severity === 'HIGH') rawScore = 78.0;
-              else if (a.severity === 'MEDIUM') rawScore = 55.0;
-              else rawScore = 30.0;
-            }
+                // Robust Risk Score Resolution
+                let rawScore: number | undefined;
+                if (x?.risk_score !== undefined && x?.risk_score !== null) rawScore = Number(x.risk_score);
+                else if ((x as any)?.riskScore !== undefined) rawScore = Number((x as any).riskScore);
+                else if (a.riskScore !== undefined) rawScore = Number(a.riskScore);
+                else if (a.risk_score !== undefined) rawScore = Number(a.risk_score);
 
-            if (rawScore > 0 && rawScore <= 1.0) {
-              rawScore = rawScore * 100;
-            }
+                if (rawScore === undefined || isNaN(rawScore)) {
+                  if (a.severity === 'CRITICAL') rawScore = 95.0;
+                  else if (a.severity === 'HIGH') rawScore = 78.0;
+                  else if (a.severity === 'MEDIUM') rawScore = 55.0;
+                  else rawScore = 30.0;
+                }
 
-            const formattedScore = rawScore.toFixed(1);
-            const scoreColor = rawScore >= 80 ? 'text-red-500' : rawScore >= 70 ? 'text-orange-400' : rawScore >= 50 ? 'text-yellow-400' : 'text-emerald-400';
+                if (rawScore > 0 && rawScore <= 1.0) {
+                  rawScore = rawScore * 100;
+                }
 
-            return (
-              <article className="alert-row" key={a.id}>
-                <RiskBadge level={a.severity} />
-                <div className="alert-primary">
-                  <b>{x ? x.location_id : a.prediction_id}</b>
-                  <span>
-                    {x ? `${x.location_name} · ${x.region}` : `Alert ID: ${a.id}`}
-                  </span>
-                </div>
-                <div>
-                  <small>Risk score</small>
-                  <b className={`font-mono ${scoreColor}`}>{formattedScore}%</b>
-                </div>
-                <div>
-                  <small>Forecast</small>
-                  <b className="font-mono">{x ? x.predicted_window : 'Active'}</b>
-                </div>
-                <StatusBadge status={a.status} />
-                <div className="row-actions">
-                  {x && (
-                    <button
-                      className="link-btn"
-                      onClick={() => nav(`/predictions/${x.id}`)}
-                    >
-                      Prediction
-                    </button>
-                  )}
-                  {x?.case_id && (
-                    <button
-                      className="link-btn"
-                      onClick={() => nav(`/investigations/${x.case_id}`)}
-                    >
-                      Case
-                    </button>
-                  )}
-                  {(a.status === 'NEW' || a.status === 'ACTIVE') && (
-                    <button
-                      className="btn small"
-                      onClick={() => setTarget(a.id)}
-                    >
-                      Acknowledge
-                    </button>
-                  )}
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <Empty>No alerts match the selected operational filter.</Empty>
-        )}
+                const formattedScore = rawScore.toFixed(1);
+                const scoreColor = rawScore >= 80 ? 'text-red-500' : rawScore >= 70 ? 'text-orange-400' : rawScore >= 50 ? 'text-yellow-400' : 'text-emerald-400';
+
+                return (
+                  <article className="alert-row group" key={a.id}>
+                    {/* Source Column */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <RiskBadge level={a.severity} />
+                      <div className="alert-primary min-w-0">
+                        <b className="truncate block text-gray-100">{x ? x.location_id : a.prediction_id}</b>
+                        <span className="truncate block text-gray-500 text-xs">
+                          {x ? `${x.location_name} · ${x.region}` : `Alert ID: ${a.id}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Risk Score Column */}
+                    <div className={`font-mono font-medium ${scoreColor}`}>
+                      {formattedScore}%
+                    </div>
+
+                    {/* Forecast Column */}
+                    <div className="font-mono text-sm text-gray-300">
+                      {x ? x.predicted_window : 'Active'}
+                    </div>
+
+                    {/* Status Column - Minimal glow dot / muted text */}
+                    <div className="flex items-center gap-2">
+                      {a.status === 'NEW' || a.status === 'ACTIVE' ? (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+                          <span className="text-xs font-semibold text-emerald-400 tracking-wider">NEW</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-gray-600" />
+                          <span className="text-xs font-medium text-gray-500 tracking-wider">ACKNOWLEDGED</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Actions Column - Standardized subtle icon actions + ghost acknowledge button */}
+                    <div className="flex items-center justify-end gap-2">
+                      {x && (
+                        <button
+                          className="p-1.5 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-xs"
+                          onClick={() => nav(`/predictions/${x.id}`)}
+                          title={`View Prediction Details (${x.id})`}
+                        >
+                          <LineChart size={14} />
+                          <span className="hidden xl:inline text-[11px]">Prediction</span>
+                        </button>
+                      )}
+                      {x?.case_id && (
+                        <button
+                          className="p-1.5 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-xs"
+                          onClick={() => nav(`/investigations/${x.case_id}`)}
+                          title={`View Investigation Case (${x.case_id})`}
+                        >
+                          <BriefcaseBusiness size={14} />
+                          <span className="hidden xl:inline text-[11px]">Case</span>
+                        </button>
+                      )}
+                      {(a.status === 'NEW' || a.status === 'ACTIVE') ? (
+                        <button
+                          className="px-2.5 py-1 text-xs font-medium text-emerald-400 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 hover:border-emerald-500/60 rounded flex items-center gap-1.5 transition-all shadow-[0_0_10px_rgba(16,185,129,0.08)]"
+                          onClick={() => setTarget(a.id)}
+                          title="Acknowledge Alert"
+                        >
+                          <Check size={13} />
+                          <span>Acknowledge</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-gray-600 px-2 py-1 font-mono">Archived</span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-8">
+              <Empty>No alerts match the selected operational filter.</Empty>
+            </div>
+          )}
+        </div>
       </section>
       <ConfirmModal
         open={!!target}

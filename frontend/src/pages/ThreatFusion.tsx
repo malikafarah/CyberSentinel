@@ -69,21 +69,23 @@ export function ThreatFusion() {
         })}
       </div>
 
-      <section className="panel table-panel">
-        <p className="eyebrow">REAL-TIME FUSION LOG</p>
-        <h2>National Agency Signals</h2>
+      <section className="panel p-6 sm:p-7">
+        <div className="mb-5 pb-2">
+          <p className="eyebrow">REAL-TIME FUSION LOG</p>
+          <h2 className="text-xl font-bold text-white tracking-tight mt-1">National Agency Signals</h2>
+        </div>
         {signals.length === 0 ? (
-          <div className="py-8 text-center text-gray-500">
-            <Radio size={32} className="mx-auto mb-3 opacity-30" />
+          <div className="py-12 text-center text-gray-500">
+            <Radio size={36} className="mx-auto mb-3 opacity-30 animate-pulse" />
             <p className="text-sm">No fusion signals yet. Use the Simulate Traffic feature or POST to /fusion/ingest-signal to see live data.</p>
           </div>
         ) : (
-          <div className="space-y-2 mt-4">
+          <div className="space-y-3">
             {signals.map((sig, idx) => {
               const meta = SOURCE_META[sig.source] || SOURCE_META['NCRP'];
               return (
-                <article key={idx} className="flex items-center gap-4 p-3 rounded-lg bg-white/[0.02] border border-white/10 hover:border-white/20 transition-colors">
-                  <div className={`flex items-center gap-2 px-2 py-1 rounded border text-xs font-bold font-mono ${meta?.color || 'text-gray-400 border-gray-500/40 bg-gray-500/10'}`}>
+                <article key={idx} className="flex items-center gap-4 p-3.5 rounded-lg bg-white/[0.02] border border-white/10 hover:border-white/20 transition-colors">
+                  <div className={`flex items-center gap-2 px-2.5 py-1 rounded border text-xs font-bold font-mono ${meta?.color || 'text-gray-400 border-gray-500/40 bg-gray-500/10'}`}>
                     {meta?.icon}
                     <span>{sig.source}</span>
                   </div>
