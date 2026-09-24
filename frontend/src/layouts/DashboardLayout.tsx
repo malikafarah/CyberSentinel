@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Bell,
   BriefcaseBusiness,
@@ -132,12 +133,24 @@ export function DashboardLayout() {
               to={to}
               className={({ isActive }) => `dock-item ${isActive ? 'active' : ''}`}
             >
-              <div className="dock-icon-box">
-                <Icon size={18} />
-                {badge && <span className="dock-badge">{badge}</span>}
-              </div>
-              <span className="dock-label">{label}</span>
-              <span className="dock-glow-indicator" />
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-dock-pill"
+                      className="dock-active-pill"
+                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                    >
+                      <div className="dock-active-glow" />
+                    </motion.div>
+                  )}
+                  <div className="dock-icon-box">
+                    <Icon size={18} />
+                    {badge && <span className="dock-badge">{badge}</span>}
+                  </div>
+                  <span className="dock-label">{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
