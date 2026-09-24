@@ -44,9 +44,9 @@ function ParticleSphere() {
       </bufferGeometry>
       <pointsMaterial
         size={0.05}
-        color="#48D878"
+        color="#00D26A"
         transparent
-        opacity={0.6}
+        opacity={0.65}
         sizeAttenuation
         blending={THREE.AdditiveBlending}
       />
@@ -64,12 +64,12 @@ export default function CyberBackground() {
         width: '100vw',
         height: '100vh',
         zIndex: -1,
-        background: 'radial-gradient(circle at center, #051A0E 0%, #000000 100%)',
+        background: 'radial-gradient(circle at center, #16171B 0%, #0B0C10 100%)',
         pointerEvents: 'none',
       }}
     >
       <Canvas camera={{ position: [0, 0, 20], fov: 60 }}>
-        <fog attach="fog" args={['#000000', 10, 40]} />
+        <fog attach="fog" args={['#0B0C10', 10, 40]} />
         <Stars radius={50} depth={50} count={2500} factor={4} saturation={0} fade speed={1} />
         <ParticleSphere />
         <OrbitControls

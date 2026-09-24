@@ -248,7 +248,12 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
   }, [layoutDirection, isLiveStreaming, caseId, initialNodes]);
 
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest' 
+      });
+    }
   }, [auditLogs]);
 
   // Reset any active evidence chain highlighting

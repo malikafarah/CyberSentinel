@@ -1,19 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Bell, BriefcaseBusiness, FileText, LayoutDashboard, LogOut, Map, Settings, UserCircle, Zap, Radio } from 'lucide-react';
+import {
+  Bell,
+  BriefcaseBusiness,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Map,
+  Settings,
+  UserCircle,
+  Zap,
+  Radio,
+  ShieldCheck,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { TrafficSimulator } from '../components/TrafficSimulator';
 
-const nav = [
-  ['/dashboard', 'Dashboard', LayoutDashboard],
-  ['/heatmap', 'Risk Heatmap', Map],
-  ['/alerts', 'Alerts', Bell],
-  ['/complaints', 'Complaints Registry', FileText],
-  ['/cases', 'Investigation Cases', BriefcaseBusiness],
-  ['/threat-fusion', 'Threat Fusion', Radio],
-  ['/settings', 'Profile & Settings', Settings],
-] as const;
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  badge?: string;
+}
 
+const navItems: readonly NavItem[] = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/heatmap', label: 'Heatmap', icon: Map },
+  { to: '/alerts', label: 'Alerts', icon: Bell, badge: '3' },
+  { to: '/complaints', label: 'Complaints', icon: FileText },
+  { to: '/cases', label: 'Cases', icon: BriefcaseBusiness },
+  { to: '/threat-fusion', label: 'Threat Fusion', icon: Radio },
+  { to: '/settings', label: 'Settings', icon: Settings },
+];
 
 export function DashboardLayout() {
   const { user: u, logout } = useAuth();
@@ -33,7 +51,9 @@ export function DashboardLayout() {
       }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && accountMenu.current) accountMenu.current.open = false;
+      if (event.key === 'Escape') {
+        if (accountMenu.current) accountMenu.current.open = false;
+      }
     };
     document.addEventListener('mousedown', closeMenu);
     document.addEventListener('keydown', closeOnEscape);
@@ -45,67 +65,83 @@ export function DashboardLayout() {
 
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <span>
-            CYBER<span>SENTINEL</span>
-          </span>
-        </div>
-        <p className="system-tag">PREDICTIVE INTELLIGENCE</p>
-        <nav>
-          {nav.map(([to, label, Icon]) => (
-            <NavLink key={to} to={to}>
-              <Icon size={18} />
-              <span>{label}</span>
-            </NavLink>
-          ))}
-        </nav>
-        <details className="account-menu" ref={accountMenu}>
-          <summary className="user-card">
-            <div className="avatar">{u?.name.slice(0, 1)}</div>
-            <div>
-              <b>{u?.name}</b>
-              <small>{u?.role}</small>
-            </div>
-          </summary>
-          <div className="account-popover">
-            <button onClick={() => navigate('/settings')}>
-              <UserCircle size={15} /> Account / Profile
-            </button>
-            <button onClick={signOut}>
-              <LogOut size={15} /> Sign Out
-            </button>
-          </div>
-        </details>
-      </aside>
-      <main className="main-content">
-        <div className="topbar">
-          <div className="topbar-left">
-            <span className="live">
-              <span className="live-dot" aria-hidden="true" />
-              LIVE THREAT TELEMETRY
+      {/* Top Header Bar */}
+      <header className="cyber-top-header" aria-label="Command Overview Header">
+        <div className="header-left">
+          <div className="nav-brand" onClick={() => navigate('/dashboard')} role="button" tabIndex={0}>
+            <span className="logo-icon" aria-hidden="true">
+              <ShieldCheck size={20} className="brand-shield" />
             </span>
-            <span className="classification-badge">LAW ENFORCEMENT SENSITIVE — OFFICIAL USE ONLY</span>
+            <span className="brand-name">
+              CYBER<span className="brand-accent">SENTINEL</span>
+            </span>
           </div>
-          <div className="topbar-right">
-            <button className="topbar-btn accent" onClick={() => navigate('/heatmap')}>
-              <Map size={14} />
-              Predictive Heatmap
-            </button>
-            <button className="topbar-btn simulate" onClick={() => setSimulatorOpen(true)}>
-              <Zap size={14} />
-              Simulate Traffic
-            </button>
-            <button className="topbar-signout" onClick={signOut}>
-              <LogOut size={15} /> Sign Out
-            </button>
+
+          <div className="header-divider" />
+
+          <div className="attack-surface-banner-tag">
+            <span className="live-dot" aria-hidden="true" />
+            <span>ATTACK SURFACE INTELLIGENCE &bull; OPERATIONAL MATRIX</span>
           </div>
         </div>
+
+        <div className="header-right">
+          <button
+            className="topbar-btn simulate"
+            onClick={() => setSimulatorOpen(true)}
+            title="Simulate Network Traffic"
+          >
+            <Zap size={14} />
+            <span className="simulate-label">Simulate Traffic</span>
+          </button>
+
+          <details className="account-menu" ref={accountMenu}>
+            <summary className="user-card-pill" aria-label="User Account Menu">
+              <div className="avatar">{u?.name ? u.name.slice(0, 1).toUpperCase() : 'U'}</div>
+              <div className="user-info-text">
+                <b>{u?.name || 'Operator'}</b>
+                <small>{u?.role || 'Analyst'}</small>
+              </div>
+            </summary>
+            <div className="account-popover">
+              <button onClick={() => { accountMenu.current && (accountMenu.current.open = false); navigate('/settings'); }}>
+                <UserCircle size={15} /> Account / Settings
+              </button>
+              <button onClick={signOut} className="danger-action">
+                <LogOut size={15} /> Sign Out
+              </button>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      {/* Main Content Area — Full width with bottom clearance for dock */}
+      <main className="app-content main-content-docked">
         <Outlet />
         {simulatorOpen && (
           <TrafficSimulator onClose={() => setSimulatorOpen(false)} />
         )}
       </main>
+
+      {/* Floating Bottom Dock Navigation */}
+      <div className="cyber-dock-wrapper" role="navigation" aria-label="Dock Navigation">
+        <nav className="cyber-dock">
+          {navItems.map(({ to, label, icon: Icon, badge }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) => `dock-item ${isActive ? 'active' : ''}`}
+            >
+              <div className="dock-icon-box">
+                <Icon size={18} />
+                {badge && <span className="dock-badge">{badge}</span>}
+              </div>
+              <span className="dock-label">{label}</span>
+              <span className="dock-glow-indicator" />
+            </NavLink>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }

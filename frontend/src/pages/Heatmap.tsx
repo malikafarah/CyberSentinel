@@ -260,29 +260,27 @@ export function Heatmap() {
   };
 
   return (
-    <div className="relative w-full h-screen bg-[#0F1210] font-sans overflow-hidden text-gray-200">
+    <div className="relative w-full h-[calc(100vh-58px)] bg-[#0B0C10] font-sans overflow-hidden text-gray-200">
       
-      {/* 1. Tactical Action Overlay & Mode Switcher */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-11/12 max-w-6xl bg-[#0F1210]/95 backdrop-blur-xl border border-white/15 rounded-xl p-4 flex flex-wrap justify-between items-center gap-3 shadow-[0_10px_35px_rgba(0,0,0,0.8)]">
+      {/* 1. Tactical Action Overlay & Mode Switcher (Positioned with top-20 sm:top-24 to clear top header) */}
+      <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-7xl bg-[#16171B]/95 backdrop-blur-xl border border-[#222327] rounded-xl px-6 py-3.5 flex flex-wrap justify-between items-center gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
         
-        <div className="flex gap-4 items-center">
-          <div className="flex flex-col">
-            <span className="text-[9px] uppercase tracking-widest text-gray-400">Analysis Engine</span>
-            <span className="text-xs font-bold text-white uppercase flex items-center gap-1.5">
-              <Compass size={13} className="text-[#48D878]" />
+        <div className="flex gap-4 items-center flex-wrap">
+          <div className="flex flex-col pr-4 border-r border-[#222327]">
+            <span className="text-[10px] uppercase tracking-widest text-[#82858E] font-mono">Analysis Engine</span>
+            <span className="text-sm font-bold text-white uppercase flex items-center gap-1.5 mt-0.5 font-mono">
+              <Compass size={14} className="text-[#00D26A]" />
               {isPredictiveMode ? 'Prophet Spatiotemporal Forecast' : 'Live Graph & DBSCAN'}
             </span>
           </div>
 
-          <div className="w-px h-7 bg-white/10 mx-1 hidden sm:block" />
-
           {/* Mode Switcher Toggle Button */}
           <button
             onClick={handleTogglePredictiveMode}
-            className={`px-3.5 py-1.5 rounded-lg border font-mono text-xs font-bold transition-all uppercase tracking-wider cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg border font-mono text-xs font-bold transition-all uppercase tracking-wider cursor-pointer flex items-center gap-2 ${
               isPredictiveMode
                 ? 'bg-purple-600/25 border-purple-500 text-purple-300 shadow-[0_0_20px_rgba(168,85,247,0.35)]'
-                : 'bg-white/5 border-white/15 text-gray-400 hover:text-white'
+                : 'bg-[#0B0C10] border-[#222327] text-[#82858E] hover:text-white hover:border-gray-600'
             }`}
           >
             <Sparkles size={13} className={isPredictiveMode ? 'animate-pulse text-purple-400' : ''} />
@@ -291,15 +289,15 @@ export function Heatmap() {
 
           {/* Horizon Selector (Visible in Predictive Mode) */}
           {isPredictiveMode && (
-            <div className="flex items-center gap-1 bg-black/50 p-1 rounded-lg border border-purple-500/40">
+            <div className="flex items-center gap-1 bg-[#0B0C10] p-1 rounded-lg border border-purple-500/40">
               {[6, 12, 24].map((hrs) => (
                 <button
                   key={hrs}
                   onClick={() => handleHorizonChange(hrs)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase transition-colors cursor-pointer ${
+                  className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase transition-colors cursor-pointer ${
                     forecastHorizon === hrs
                       ? 'bg-purple-600 text-white'
-                      : 'text-gray-400 hover:text-white'
+                      : 'text-[#82858E] hover:text-white'
                   }`}
                 >
                   +{hrs}H
@@ -312,7 +310,7 @@ export function Heatmap() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/graph')}
-            className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-mono text-xs font-bold rounded-lg border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase tracking-widest cursor-pointer"
+            className="px-4 py-2 bg-[#00D26A]/10 hover:bg-[#00D26A]/20 text-[#00D26A] font-mono text-xs font-bold rounded-lg border border-[#00D26A]/40 shadow-[0_0_12px_rgba(0,210,106,0.15)] transition-all uppercase tracking-widest cursor-pointer"
           >
             Graph Workspace
           </button>
@@ -320,11 +318,11 @@ export function Heatmap() {
           <button 
             onClick={runPrediction}
             disabled={isPredicting}
-            className="px-5 py-2 bg-[#48D878]/15 hover:bg-[#48D878]/25 text-[#48D878] font-mono text-xs font-bold rounded-lg border border-[#48D878]/60 shadow-[0_0_15px_rgba(72,216,120,0.2)] transition-all disabled:opacity-50 tracking-widest uppercase flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2 bg-[#00D26A] hover:bg-[#1aff7f] text-[#0B0C10] font-mono text-xs font-bold rounded-lg border border-[#00D26A] shadow-[0_0_15px_rgba(0,210,106,0.35)] transition-all disabled:opacity-50 tracking-widest uppercase flex items-center gap-2 cursor-pointer"
           >
             {isPredicting ? (
               <>
-                <div className="w-3.5 h-3.5 border-2 border-[#48D878]/30 border-t-[#48D878] rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-[#0B0C10]/30 border-t-[#0B0C10] rounded-full animate-spin" />
                 <span className="font-mono text-xs font-bold">Computing Forecast...</span>
               </>
             ) : (
@@ -386,42 +384,42 @@ export function Heatmap() {
               }}
             >
               <Popup className="tactical-popup">
-                <div className="bg-[#0B0F0D] p-3 -m-3 text-gray-200 min-w-[260px] rounded-lg border border-purple-500/50 shadow-2xl">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-[10px] font-bold text-purple-400 tracking-widest uppercase flex items-center gap-1">
-                      <Sparkles size={11} /> PREDICTED HOTSPOT (+{forecastHorizon}H)
+                <div className="relative bg-[#0B0C10] p-5 w-80 text-gray-200">
+                  <div className="flex justify-between items-center mb-1.5 pr-6">
+                    <span className="text-[11px] font-bold text-purple-400 tracking-widest uppercase flex items-center gap-1 font-mono">
+                      <Sparkles size={12} /> HOTSPOT (+{forecastHorizon}H)
                     </span>
-                    <span className={`text-[9px] px-2 py-0.5 font-mono font-bold rounded uppercase ${
-                      isCritical ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                    <span className={`text-[10px] px-2 py-0.5 font-mono font-bold rounded uppercase ${
+                      isCritical ? 'bg-red-500/15 text-red-400 border border-red-500/40' : 'bg-purple-500/15 text-purple-300 border border-purple-500/40'
                     }`}>
                       {fz.predicted_risk_level}
                     </span>
                   </div>
 
-                  <div className="text-xs font-bold text-white mb-2">{fz.zone_name}</div>
+                  <h3 className="text-white text-sm font-semibold mb-3 tracking-wide">{fz.zone_name}</h3>
 
-                  <div className="space-y-1 text-[11px] font-mono bg-black/60 p-2.5 rounded border border-white/10 mb-3">
+                  <div className="space-y-1.5 text-xs font-mono bg-[#16171B] p-3 rounded-lg border border-[#222327] mb-4">
                     <div className="flex justify-between text-gray-300">
-                      <span className="text-gray-500">PROJECTED VOL:</span>
-                      <span className="text-amber-400 font-bold">₹{fz.forecasted_cashout_volume.toLocaleString()}</span>
+                      <span className="text-[#82858E]">PROJECTED VOL:</span>
+                      <span className="text-[#FFB800] font-bold">₹{fz.forecasted_cashout_volume.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-gray-300">
-                      <span className="text-gray-500">PEAK SURGE:</span>
+                      <span className="text-[#82858E]">PEAK SURGE:</span>
                       <span className="text-purple-300 font-bold flex items-center gap-1">
-                        <Clock size={10} /> {fz.peak_hour.slice(11, 16)} IST
+                        <Clock size={11} /> {fz.peak_hour.slice(11, 16)} IST
                       </span>
                     </div>
                     <div className="flex justify-between text-gray-300">
-                      <span className="text-gray-500">MONITORED ATMS:</span>
-                      <span className="text-emerald-400">{fz.targeted_atms.length} Terminals</span>
+                      <span className="text-[#82858E]">MONITORED ATMS:</span>
+                      <span className="text-[#00D26A] font-bold">{fz.targeted_atms.length} Terminals</span>
                     </div>
                   </div>
 
                   <button
                     onClick={() => dispatchPatrol(fz.zone_id)}
-                    className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-[10px] uppercase tracking-widest rounded-md transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-mono font-bold text-[11px] uppercase tracking-widest rounded-md transition-all shadow-[0_0_15px_rgba(168,85,247,0.35)] flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Send size={11} /> Dispatch Pre-emptive Patrol
+                    <Send size={12} /> Dispatch Pre-emptive Patrol
                   </button>
                 </div>
               </Popup>
@@ -449,23 +447,26 @@ export function Heatmap() {
               }}
             >
               <Popup className="tactical-popup">
-                <div className="bg-[#0F1210] p-3 -m-3 text-gray-200 min-w-[240px] rounded border border-red-500/40">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-bold text-red-500 tracking-widest uppercase">
+                <div className="relative bg-[#0B0C10] p-5 w-80 text-gray-200">
+                  <div className="flex justify-between items-center mb-1.5 pr-6">
+                    <span className="text-xs font-bold text-[#F73B3B] tracking-widest uppercase font-mono">
                       {zone.zone_id}
                     </span>
                     {zone.priority_weight && (
-                      <span className="text-[9px] px-1.5 py-0.5 bg-red-500/20 text-red-400 font-mono rounded">
-                        Priority Weight: {zone.priority_weight}
+                      <span className="text-[10px] px-2 py-0.5 bg-[#F73B3B]/15 text-[#F73B3B] border border-[#F73B3B]/30 font-mono rounded">
+                        Priority: {zone.priority_weight}
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-400 mb-3 border-b border-white/10 pb-2">
+                  <div className="text-sm font-semibold text-white mb-2">
                     Corroborated Target ATMs: {zone.target_nodes.length}
                   </div>
+                  <p className="text-xs text-[#82858E] mb-4">
+                    Anomalous spatial cash withdrawal cluster detected via DBSCAN triangulation.
+                  </p>
                   <button 
                     onClick={() => dispatchPatrol(zone.zone_id)}
-                    className="w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-[10px] uppercase tracking-widest rounded border border-emerald-500/40 transition-colors cursor-pointer"
+                    className="w-full py-2.5 bg-[#F73B3B]/10 hover:bg-[#F73B3B]/20 text-[#F73B3B] font-mono font-bold text-[11px] uppercase tracking-widest rounded border border-[#F73B3B]/40 transition-colors cursor-pointer"
                   >
                     Push to Patrol Unit
                   </button>
@@ -508,27 +509,33 @@ export function Heatmap() {
 
               <Marker position={coords} icon={customIcon}>
                 <Popup className="tactical-popup">
-                  <div className="bg-[#0F1210] p-3 -m-3 text-gray-200 min-w-[220px] rounded border border-emerald-500/40">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-400">
+                  <div className="relative bg-[#0B0C10] p-5 w-72 sm:w-80 text-gray-200">
+                    {/* Header Row: pr-6 to prevent score pill from hitting close button */}
+                    <div className="flex justify-between items-center mb-1.5 pr-6">
+                      <span className="text-[#00D26A] text-xs font-bold tracking-widest uppercase font-mono">
                         {nType} NODE
                       </span>
-                      <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-white/10 text-white">
+                      <span className="bg-[#16171B] border border-[#222327] text-[#82858E] text-[10px] font-mono px-2 py-0.5 rounded">
                         {riskScore.toFixed(1)}/100
                       </span>
                     </div>
-                    <div className="text-xs font-semibold text-white mb-1">
+
+                    {/* Node Location / Title */}
+                    <h3 className="text-white text-sm font-semibold mb-3 tracking-wide">
                       {node.metadata?.label || node.metadata?.name || node.id}
-                    </div>
+                    </h3>
+
                     {node.metadata?.evidence_chain && node.metadata.evidence_chain.length > 0 && (
-                      <div className="text-[9px] font-mono text-gray-400 mb-3 bg-black/50 p-1.5 rounded border border-white/5">
-                        <span className="text-gray-500 block text-[8px] uppercase">Provenance Chain:</span>
+                      <div className="text-[10px] font-mono text-gray-400 mb-4 bg-[#16171B] p-2.5 rounded border border-[#222327]">
+                        <span className="text-[#82858E] block text-[9px] uppercase tracking-wider mb-0.5">Provenance Chain:</span>
                         {node.metadata.evidence_chain.join(' → ')}
                       </div>
                     )}
+
+                    {/* Button: py-2.5 for proper clickable touch area */}
                     <button 
                       onClick={() => navigate('/graph')}
-                      className="w-full py-1.5 bg-[#48D878]/10 hover:bg-[#48D878]/20 text-[#48D878] font-bold text-[10px] uppercase tracking-widest rounded border border-[#48D878]/40 transition-colors cursor-pointer"
+                      className="w-full border border-[#00D26A]/40 text-[#00D26A] bg-[#00D26A]/5 hover:bg-[#00D26A]/15 py-2.5 rounded-md text-[11px] font-mono font-bold tracking-widest uppercase transition-all shadow-[0_0_12px_rgba(0,210,106,0.1)] cursor-pointer"
                     >
                       Inspect in Graph Workspace
                     </button>
