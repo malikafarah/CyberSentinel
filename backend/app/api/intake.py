@@ -80,12 +80,16 @@ async def extract_ncrp_entities(complaint: ComplaintInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/seed-victims")
+@router.post("/graph/seed-victims")
 async def seed_victim_nodes(payload: SeedVictimsInput, request: Request):
     """
     Seed extracted victim identifiers into MongoDB nodes collection with Risk Score 100.
+    Supports both /api/v1/intake/seed-victims and /api/v1/graph/seed-victims.
     """
     try:
         db = get_db(request)
+        if db is None:
+            raise HTTPException(status_code=503, detail="Database connection is not available.")
         nodes_col = db["nodes"]
 
         # Parse entities from various potential payload shapes
@@ -93,7 +97,7 @@ async def seed_victim_nodes(payload: SeedVictimsInput, request: Request):
         phones = []
         accounts = []
 
-        if payload.entities:
+        if payload.entities and isinstance(payload.entities, dict):
             upis.extend(payload.entities.get("upis", []) or payload.entities.get("upi_ids", []) or [])
             phones.extend(payload.entities.get("phones", []) or payload.entities.get("phone_numbers", []) or [])
             accounts.extend(payload.entities.get("accounts", []) or payload.entities.get("account_numbers", []) or [])
@@ -105,7 +109,19 @@ async def seed_victim_nodes(payload: SeedVictimsInput, request: Request):
         if payload.accounts:
             accounts.extend(payload.accounts)
 
-        all_identifiers = list(set(upis + phones + accounts))
+        # Normalize and deduplicate string identifiers
+        all_identifiers = []
+        for raw_id in (upis + phones + accounts):
+            if isinstance(raw_id, dict):
+                val = raw_id.get("entity") or raw_id.get("value") or raw_id.get("id")
+                if val:
+                    all_identifiers.append(str(val).strip())
+            elif raw_id is not None:
+                cleaned = str(raw_id).strip()
+                if cleaned:
+                    all_identifiers.append(cleaned)
+        all_identifiers = list(set(all_identifiers))
+
         if not all_identifiers:
             return {
                 "status": "success",
@@ -122,15 +138,18 @@ async def seed_victim_nodes(payload: SeedVictimsInput, request: Request):
                 "$or": [
                     {"_id": identifier},
                     {"id": identifier},
-                    {"metadata.label": {"$regex": identifier, "$options": "i"}},
+                    {"metadata.label": {"$regex": re.escape(identifier), "$options": "i"}},
                     {"metadata.account": identifier},
                     {"metadata.upi": identifier},
                     {"metadata.phone": identifier},
-                    {"metadata.name": {"$regex": identifier, "$options": "i"}}
+                    {"metadata.name": {"$regex": re.escape(identifier), "$options": "i"}}
                 ]
             }
             if ObjectId.is_valid(identifier):
-                query["$or"].append({"_id": ObjectId(identifier)})
+                try:
+                    query["$or"].append({"_id": ObjectId(identifier)})
+                except Exception:
+                    pass
 
             existing_node = await nodes_col.find_one(query)
 
@@ -183,8 +202,12 @@ async def seed_victim_nodes(payload: SeedVictimsInput, request: Request):
             "seeded_count": len(updated_seed_nodes),
             "seed_nodes": updated_seed_nodes
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to seed victim nodes: {str(e)}")
 
 @router.post("/complaint")
 async def process_ncrp_complaint(complaint: ComplaintInput, request: Request):

@@ -513,7 +513,7 @@ async def get_case_graph(case_id: str, request: Request):
         })
 
     formatted_edges = []
-    for e in active_edges:
+    for idx, e in enumerate(active_edges):
         src = str(e.get("source"))
         tgt = str(e.get("target"))
         src_risk, src_type = node_risk_map.get(src, (85, "VICTIM"))
@@ -526,8 +526,9 @@ async def get_case_graph(case_id: str, request: Request):
         else:
             stroke_color = "#48D878" # Green for low risk
 
+        edge_id = str(e.get("_id") or e.get("tx_hash") or f"e{src}-{tgt}-{idx}")
         formatted_edges.append({
-            "id": f"e{src}-{tgt}",
+            "id": edge_id,
             "source": src,
             "target": tgt,
             "animated": True,
@@ -754,8 +755,8 @@ async def run_intelligence_pipeline(request: Request = None):
         ]
         
         frontend_edges = [
-            {"id": f"{u}-{v}", "source": u, "target": v, "type": attr.get('type', 'TRANSFER')}
-            for u, v, attr in G.edges(data=True)
+            {"id": f"e{u}-{v}-{idx}", "source": u, "target": v, "type": attr.get('type', 'TRANSFER')}
+            for idx, (u, v, attr) in enumerate(G.edges(data=True))
         ]
 
         return {
