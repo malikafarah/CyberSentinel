@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Rectangle, Popup, Marker, CircleMarker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { locationService } from '../services/services';
-import { TrendingUp, Clock, Sparkles, Send, Compass } from 'lucide-react';
+import { TrendingUp, Clock, Sparkles, Send, Flame, RotateCw, Maximize2 } from 'lucide-react';
+import { ThreatGlobeHeatmap, type GlobePoint, type ThreatGlobeHeatmapRef } from '../components/ThreatGlobeHeatmap';
 
 // --- Types mapping to our Python FastAPI response ---
 interface BoundingBox {
@@ -138,6 +139,13 @@ const MapUpdater = ({
 
 export function Heatmap() {
   const navigate = useNavigate();
+  const globeHeatmapRef = useRef<ThreatGlobeHeatmapRef>(null);
+  const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
+  const [textureMode, setTextureMode] = useState<'satellite' | 'dark'>('satellite');
+  const [activeLayers, setActiveLayers] = useState<'hex' | 'points' | 'both'>('hex');
+  const [hexResolution, setHexResolution] = useState<number>(4);
+  const [autoRotate, setAutoRotate] = useState<boolean>(false);
+
   const [zones, setZones] = useState<InterdictionZone[]>([]);
   const [forecastZones, setForecastZones] = useState<ForecastZone[]>([]);
   const [graphNodes, setGraphNodes] = useState<GraphNode[]>([]);
@@ -174,13 +182,10 @@ export function Heatmap() {
   const fetchForecast = async (hours: number) => {
     setIsPredicting(true);
     try {
-      // Use authenticated api.get — /forecast is now declared before /{prediction_id}
-      // so it won't be shadowed and won't require auth (but the token is sent anyway)
       const data = await api.get<{ zones?: ForecastZone[] }>(
         '/predictions/forecast',
         { hours_ahead: hours }
       ).catch(() =>
-        // Fallback to engine forecast endpoint
         api.get<{ zones?: ForecastZone[] }>('/engine/forecast', { hours_ahead: hours })
       );
       setForecastZones(data.zones || []);
@@ -239,7 +244,6 @@ export function Heatmap() {
     setTimeout(() => setDispatchStatus(null), 4000);
   };
 
-
   const getNodeCoordinates = (node: GraphNode): [number, number] | null => {
     if (node.metadata?.lat && node.metadata?.lng) {
       return [Number(node.metadata.lat), Number(node.metadata.lng)];
@@ -259,77 +263,212 @@ export function Heatmap() {
     return locMap[node.id] || null;
   };
 
+  // Convert all telemetry nodes and zones into 3D Globe Points
+  const globePoints: GlobePoint[] = useMemo(() => {
+    const pts: GlobePoint[] = [];
+
+    // Graph nodes
+    graphNodes.forEach((node) => {
+      const coords = getNodeCoordinates(node);
+      if (coords) {
+        pts.push({
+          lat: coords[0],
+          lng: coords[1],
+          weight: node.riskScore || 75,
+          label: `${node.metadata?.name || node.id} (${node.type})`,
+          type: node.type,
+          riskScore: node.riskScore,
+        });
+      }
+    });
+
+    // Forecast zones
+    forecastZones.forEach((fz) => {
+      if (fz.center?.lat && fz.center?.lng) {
+        pts.push({
+          lat: fz.center.lat,
+          lng: fz.center.lng,
+          weight: fz.risk_score || (fz.predicted_risk_level === 'CRITICAL' ? 95 : 78),
+          label: `Hotspot: ${fz.zone_name}`,
+          type: 'HOTSPOT',
+          riskScore: fz.risk_score,
+        });
+      }
+    });
+
+    // Interdiction zones
+    zones.forEach((z) => {
+      if (z.center?.lat && z.center?.lng) {
+        pts.push({
+          lat: z.center.lat,
+          lng: z.center.lng,
+          weight: (z.priority_weight || 1) * 88,
+          label: `Interdiction Zone: ${z.zone_id}`,
+          type: 'INTERDICTION',
+        });
+      }
+    });
+
+    return pts;
+  }, [graphNodes, forecastZones, zones]);
+
   return (
     <div className="relative w-full h-[calc(100vh-58px)] bg-[#0B0C10] font-sans overflow-hidden text-gray-200">
       
-      {/* 1. Tactical Action Overlay & Mode Switcher (Positioned with top-20 sm:top-24 to clear top header) */}
-      <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-7xl bg-[#16171B]/95 backdrop-blur-xl border border-[#222327] rounded-xl px-6 py-3.5 flex flex-wrap justify-between items-center gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+      {/* 1. Single Unified Parent Container with whitespace-nowrap and shrink-0 */}
+      <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-7xl h-16 px-4 bg-[#121318]/90 backdrop-blur-md rounded-xl border border-gray-800 shadow-lg overflow-x-auto scrollbar-hide whitespace-nowrap flex items-center justify-between gap-4">
         
-        <div className="flex gap-4 items-center flex-wrap">
-          <div className="flex flex-col pr-4 border-r border-[#222327]">
-            <span className="text-[10px] uppercase tracking-widest text-[#82858E] font-mono">Analysis Engine</span>
-            <span className="text-sm font-bold text-white uppercase flex items-center gap-1.5 mt-0.5 font-mono">
-              <Compass size={14} className="text-[#00D26A]" />
-              {isPredictiveMode ? 'Prophet Spatiotemporal Forecast' : 'Live Graph & DBSCAN'}
+        {/* LEFT: Node Status & Map Toggle */}
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0a0b0e] rounded-full border border-gray-800">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+            <span className="text-[10px] font-mono tracking-widest text-gray-300 uppercase">
+              Mesh • {viewMode === '3d' ? globePoints.length : graphNodes.length} Nodes
             </span>
           </div>
 
-          {/* Mode Switcher Toggle Button */}
-          <button
-            onClick={handleTogglePredictiveMode}
-            className={`px-4 py-2 rounded-lg border font-mono text-xs font-bold transition-all uppercase tracking-wider cursor-pointer flex items-center gap-2 ${
-              isPredictiveMode
-                ? 'bg-purple-600/25 border-purple-500 text-purple-300 shadow-[0_0_20px_rgba(168,85,247,0.35)]'
-                : 'bg-[#0B0C10] border-[#222327] text-[#82858E] hover:text-white hover:border-gray-600'
-            }`}
-          >
-            <Sparkles size={13} className={isPredictiveMode ? 'animate-pulse text-purple-400' : ''} />
-            <span>{isPredictiveMode ? 'Predictive Mode (Active)' : 'Switch to Predictive Mode (Next 12h)'}</span>
-          </button>
+          <div className="flex bg-[#0a0b0e] p-1 rounded-lg border border-gray-800">
+            <button
+              onClick={() => setViewMode('3d')}
+              className={`px-3 py-1 text-xs font-semibold rounded cursor-pointer transition-all ${
+                viewMode === '3d'
+                  ? 'text-black bg-[#00d664] shadow'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              3D Globe
+            </button>
+            <button
+              onClick={() => setViewMode('2d')}
+              className={`px-3 py-1 text-xs font-semibold rounded cursor-pointer transition-all ${
+                viewMode === '2d'
+                  ? 'text-black bg-[#00d664] shadow'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              2D Map
+            </button>
+          </div>
+        </div>
 
-          {/* Horizon Selector (Visible in Predictive Mode) */}
-          {isPredictiveMode && (
-            <div className="flex items-center gap-1 bg-[#0B0C10] p-1 rounded-lg border border-purple-500/40">
-              {[6, 12, 24].map((hrs) => (
+        {/* CENTER: Engine Status & Actions (Using gap and border-x to prevent overlap) */}
+        <div className="flex items-center gap-4 px-4 border-x border-gray-800/50 shrink-0">
+          {/* Fixed Text Wrapping */}
+          <div className="flex flex-col justify-center">
+            <span className="text-[9px] text-gray-500 uppercase tracking-widest">Analysis Engine</span>
+            <span className={`text-xs font-bold flex items-center gap-1.5 ${isPredictiveMode ? 'text-purple-400' : 'text-emerald-500'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isPredictiveMode ? 'bg-purple-500' : 'bg-emerald-500'}`}></span>
+              {isPredictiveMode ? 'PROPHET FORECAST (+12H)' : 'LIVE GRAPH & DBSCAN'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/graph')}
+              className="px-3 py-1 text-xs text-emerald-500 border border-emerald-500/30 rounded hover:bg-emerald-500/10 transition-all cursor-pointer"
+            >
+              Graph
+            </button>
+            <button
+              onClick={runPrediction}
+              disabled={isPredicting}
+              className="px-3 py-1 text-xs text-emerald-500 border border-emerald-500/30 rounded hover:bg-emerald-500/10 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+            >
+              {isPredicting ? (
+                <>
+                  <div className="w-2.5 h-2.5 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+                  <span>Running...</span>
+                </>
+              ) : (
+                <span>Pipeline</span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT: Predictive Controls & Layer Toggles */}
+        <div className="flex items-center gap-4 shrink-0">
+          {/* Predictive Toggle Group */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleTogglePredictiveMode}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-lg border transition-all cursor-pointer ${
+                isPredictiveMode
+                  ? 'text-purple-300 bg-purple-900/20 border-purple-500/40 shadow-[0_0_12px_rgba(168,85,247,0.25)]'
+                  : 'text-gray-300 bg-[#1a1c23] border-gray-700 hover:bg-gray-800'
+              }`}
+            >
+              <Sparkles size={13} className="text-purple-400" />
+              <span>Predictive Mode</span>
+            </button>
+
+            {isPredictiveMode && (
+              <div className="flex bg-[#0a0b0e] p-1 rounded-lg border border-gray-800 text-[10px]">
+                {[6, 12, 24].map((hrs) => (
+                  <button
+                    key={hrs}
+                    onClick={() => handleHorizonChange(hrs)}
+                    className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                      forecastHorizon === hrs
+                        ? 'text-black bg-purple-500 shadow'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    +{hrs}H
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Layer Controls (Safely inside the unified background container) */}
+          {viewMode === '3d' && (
+            <div className="flex items-center gap-2 pl-4 border-l border-gray-800/50">
+              <button
+                onClick={() => setTextureMode((prev) => (prev === 'satellite' ? 'dark' : 'satellite'))}
+                className={`px-3 py-1 text-xs rounded border transition-all cursor-pointer ${
+                  textureMode === 'satellite'
+                    ? 'text-blue-400 border-blue-500/30 bg-blue-500/10'
+                    : 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10'
+                }`}
+              >
+                {textureMode === 'satellite' ? 'Satellite' : 'Dark'}
+              </button>
+              <button
+                onClick={() => setActiveLayers((prev) => (prev === 'hex' ? 'both' : prev === 'both' ? 'points' : 'hex'))}
+                className="px-3 py-1 text-xs text-emerald-500 border border-emerald-500/30 rounded hover:bg-emerald-500/10 transition-all cursor-pointer capitalize"
+              >
+                {activeLayers}
+              </button>
+              <div className="flex items-center gap-2 text-gray-400 ml-1">
                 <button
-                  key={hrs}
-                  onClick={() => handleHorizonChange(hrs)}
-                  className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase transition-colors cursor-pointer ${
-                    forecastHorizon === hrs
-                      ? 'bg-purple-600 text-white'
-                      : 'text-[#82858E] hover:text-white'
-                  }`}
+                  onClick={() => setHexResolution((prev) => (prev === 4 ? 3 : prev === 3 ? 5 : 4))}
+                  className="p-1 hover:text-orange-400 transition-colors cursor-pointer"
+                  title={`Hex Resolution: Level ${hexResolution}`}
                 >
-                  +{hrs}H
+                  <Flame size={14} className={hexResolution === 5 ? 'text-orange-400' : ''} />
                 </button>
-              ))}
+                <button
+                  onClick={() => setAutoRotate((prev) => !prev)}
+                  className={`p-1 transition-colors cursor-pointer ${
+                    autoRotate ? 'text-emerald-400' : 'hover:text-white'
+                  }`}
+                  title={autoRotate ? 'Pause Rotation' : 'Auto-Rotate Globe'}
+                >
+                  <RotateCw size={14} className={autoRotate ? 'animate-spin' : ''} style={{ animationDuration: '6s' }} />
+                </button>
+                <button
+                  onClick={() => globeHeatmapRef.current?.resetView()}
+                  className="p-1 hover:text-white transition-colors cursor-pointer"
+                  title="Reset Perspective"
+                >
+                  <Maximize2 size={14} />
+                </button>
+              </div>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/graph')}
-            className="px-4 py-2 bg-[#00D26A]/10 hover:bg-[#00D26A]/20 text-[#00D26A] font-mono text-xs font-bold rounded-lg border border-[#00D26A]/40 shadow-[0_0_12px_rgba(0,210,106,0.15)] transition-all uppercase tracking-widest cursor-pointer"
-          >
-            Graph Workspace
-          </button>
-
-          <button 
-            onClick={runPrediction}
-            disabled={isPredicting}
-            className="px-4 py-2 bg-[#00D26A] hover:bg-[#1aff7f] text-[#0B0C10] font-mono text-xs font-bold rounded-lg border border-[#00D26A] shadow-[0_0_15px_rgba(0,210,106,0.35)] transition-all disabled:opacity-50 tracking-widest uppercase flex items-center gap-2 cursor-pointer"
-          >
-            {isPredicting ? (
-              <>
-                <div className="w-3.5 h-3.5 border-2 border-[#0B0C10]/30 border-t-[#0B0C10] rounded-full animate-spin" />
-                <span className="font-mono text-xs font-bold">Computing Forecast...</span>
-              </>
-            ) : (
-              <span className="font-mono text-xs font-bold">Re-run Pipeline</span>
-            )}
-          </button>
-        </div>
       </div>
 
       {isPredicting && isPredictiveMode && (
@@ -341,17 +480,30 @@ export function Heatmap() {
         </div>
       )}
 
-      {/* 2. GIS Map Canvas */}
-      <MapContainer 
-        center={[16.5062, 80.6480]} // Vijayawada epicenter
-        zoom={13}
-        className="w-full h-full z-0"
-        zoomControl={false}
-      >
-        <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution='&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
-        />
+      {/* 2. Visual Canvas: 3D Threat Globe or 2D GIS Map */}
+      {viewMode === '3d' ? (
+        <div className="w-full h-full absolute inset-0 z-0">
+          <ThreatGlobeHeatmap
+            ref={globeHeatmapRef}
+            points={globePoints}
+            height="100%"
+            textureMode={textureMode}
+            activeLayers={activeLayers}
+            hexResolution={hexResolution}
+            autoRotate={autoRotate}
+          />
+        </div>
+      ) : (
+        <MapContainer 
+          center={[16.5062, 80.6480]} // Vijayawada epicenter
+          zoom={13}
+          className="w-full h-full z-0"
+          zoomControl={false}
+        >
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution='&copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
+          />
         
         <MapUpdater
           zones={zones}
@@ -546,6 +698,7 @@ export function Heatmap() {
           );
         })}
       </MapContainer>
+      )}
 
       {/* 5. Bottom Predictive Stats Bar (when Predictive Mode is active) */}
       {isPredictiveMode && forecastZones.length > 0 && (
