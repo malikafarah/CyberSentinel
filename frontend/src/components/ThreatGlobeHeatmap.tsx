@@ -198,6 +198,7 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
         width={dimensions.width}
         height={dimensions.height}
         backgroundColor={isLight ? '#F1F5F9' : '#0a0b0e'}
+        rendererConfig={{ powerPreference: 'high-performance', antialias: false, alpha: false }}
         
         // 1. Satellite vs Dark Earth Texture
         globeImageUrl={

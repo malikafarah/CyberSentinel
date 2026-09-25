@@ -150,6 +150,7 @@ export default function SecureActionModal({ accountId, onClose, onSuccess }: Sec
                 className="w-full bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/15 p-2.5 rounded-lg font-mono tracking-widest text-base text-slate-900 dark:text-gray-100 focus:border-red-500 focus:outline-none"
                 placeholder="****"
                 maxLength={6}
+                autoComplete="new-password"
               />
               <p className="text-[10px] text-slate-500 dark:text-gray-500 mt-1 font-mono">
                 Authorizes digital signature generation and cryptographic ledger immutability.

@@ -13,37 +13,8 @@ from pydantic import BaseModel, Field
 # PATHS
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-HOTSPOT_DIR = os.path.join(
-    BASE_DIR, "models", "hotspot", "v1"
-)
-ap = app
-
-VOLUME_DIR = os.path.join(
-    BASE_DIR, "models", "volume", "v1"
-)
-
-HOTSPOT_MODEL_PATH = os.path.join(
-    HOTSPOT_DIR, "model.joblib"
-)
-
-HOTSPOT_SCHEMA_PATH = os.path.join(
-    HOTSPOT_DIR, "feature_schema.json"
-)
-
-HOTSPOT_METADATA_PATH = os.path.join(
-    HOTSPOT_DIR, "metadata.json"
-)
-
-VOLUME_MODEL_PATH = os.path.join(
-    VOLUME_DIR, "model.joblib"
-)
-
-VOLUME_SCHEMA_PATH = os.path.join(
-    VOLUME_DIR, "feature_schema.json"
-)
-
-VOLUME_METADATA_PATH = os.path.join(
-    VOLUME_DIR, "metadata.json"
+MODEL_PATH = os.path.join(
+    BASE_DIR, "models", "model.pkl"
 )
 
 # REQUEST SCHEMAS
@@ -182,35 +153,29 @@ def load_model(path: str):
         )
 
 
-hotspot_model = load_model(HOTSPOT_MODEL_PATH)
-volume_model = load_model(VOLUME_MODEL_PATH)
+model_artifact = load_model(MODEL_PATH)
 
-hotspot_schema = load_json(HOTSPOT_SCHEMA_PATH)
-hotspot_metadata = load_json(HOTSPOT_METADATA_PATH)
-
-volume_schema = load_json(VOLUME_SCHEMA_PATH)
-volume_metadata = load_json(VOLUME_METADATA_PATH)
-
-
-HOTSPOT_FEATURES = hotspot_schema.get(
-    "feature_names",
-    []
-)
-
-VOLUME_FEATURES = volume_schema.get(
-    "feature_names",
-    []
-)
-
-HOTSPOT_MODEL_VERSION = hotspot_metadata.get(
-    "model_version",
-    "hotspot_v1"
-)
-
-VOLUME_MODEL_VERSION = volume_metadata.get(
-    "model_version",
-    "volume_v1"
-)
+if model_artifact:
+    hotspot_model = model_artifact.get("hotspot_model")
+    volume_model = model_artifact.get("volume_model")
+    
+    HOTSPOT_FEATURES = model_artifact.get("feature_names", [])
+    VOLUME_FEATURES = model_artifact.get("feature_names", [])
+    
+    HOTSPOT_MODEL_VERSION = model_artifact.get("model_version", "hotspot_v1")
+    VOLUME_MODEL_VERSION = model_artifact.get("model_version", "volume_v1")
+    
+    hotspot_metadata = model_artifact.get("metrics", {})
+    volume_metadata = model_artifact.get("metrics", {})
+else:
+    hotspot_model = None
+    volume_model = None
+    HOTSPOT_FEATURES = []
+    VOLUME_FEATURES = []
+    HOTSPOT_MODEL_VERSION = "unknown"
+    VOLUME_MODEL_VERSION = "unknown"
+    hotspot_metadata = {}
+    volume_metadata = {}
 
 
 # FASTAPI

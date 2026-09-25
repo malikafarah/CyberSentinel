@@ -14,7 +14,7 @@ from app.api.engine import router as engine_router
 from app.api.actions import router as actions_router, intervene_router, audit_router
 from app.api.intake import router as intake_router
 from app.api.fusion import router as fusion_router
-from app.bg_tasks import generate_alerts_periodically, retrain_model_periodically
+from app.bg_tasks import retrain_model_periodically
 import asyncio
 
 @asynccontextmanager
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     
     # Start background tasks
     app.state.bg_tasks = []
-    app.state.bg_tasks.append(asyncio.create_task(generate_alerts_periodically()))
+
     app.state.bg_tasks.append(asyncio.create_task(retrain_model_periodically()))
     
     yield
