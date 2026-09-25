@@ -316,3 +316,161 @@ async def process_ncrp_complaint(complaint: ComplaintInput, request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ATM Intake
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ATMInput(BaseModel):
+    atm_id: str
+    atm_bank: Optional[str] = None
+    atm_city: Optional[str] = None
+    atm_district: Optional[str] = None
+    atm_state: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    atm_type: Optional[str] = "BANK_ATM"
+    onsite_offsite: Optional[str] = None
+    indoor_outdoor: Optional[str] = None
+    cctv_available: Optional[bool] = None
+    operating_status: Optional[str] = "ACTIVE"
+    location_type: Optional[str] = None
+    security_guard_present: Optional[bool] = None
+    shutter_lock_present: Optional[bool] = None
+
+
+@router.post("/atm", status_code=201)
+async def intake_atm(atm: ATMInput, request: Request):
+    """
+    Store or update an ATM record in db.atms.
+    ATMs stored here are used as candidates by POST /api/v1/predictions/run.
+
+    Rejects ATMs with missing or zero coordinates — use latitude=null
+    and longitude=null for unmapped ATMs; the predictions endpoint will
+    skip them automatically.
+    """
+    db = get_db(request)
+
+    # Reject (0, 0) coordinates
+    if atm.latitude == 0.0 or atm.longitude == 0.0:
+        raise HTTPException(
+            status_code=422,
+            detail="ATM coordinates (0, 0) are not valid. "
+                   "Use null for unknown coordinates rather than 0.",
+        )
+
+    doc = atm.model_dump()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db["atms"].update_one(
+        {"atm_id": atm.atm_id},
+        {"$set": doc},
+        upsert=True,
+    )
+    return {"status": "success", "atm_id": atm.atm_id, "action": "upserted"}
+
+
+@router.post("/atm/bulk", status_code=201)
+async def intake_atm_bulk(atms: List[ATMInput], request: Request):
+    """Bulk ingest ATM records. Skips ATMs with (0, 0) coordinates."""
+    db = get_db(request)
+    upserted, skipped = 0, 0
+    now = datetime.now(timezone.utc).isoformat()
+
+    for atm in atms:
+        if atm.latitude == 0.0 or atm.longitude == 0.0:
+            skipped += 1
+            continue
+        doc = atm.model_dump()
+        doc["created_at"] = now
+        await db["atms"].update_one({"atm_id": atm.atm_id}, {"$set": doc}, upsert=True)
+        upserted += 1
+
+    return {"status": "success", "upserted": upserted, "skipped_zero_coords": skipped}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Transaction Intake (for graph building)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TransactionInput(BaseModel):
+    transaction_id: str
+    source_hashed_acc_no: Optional[str] = None
+    destination_hashed_acc_no: Optional[str] = None
+    transaction_amount: float
+    transaction_date: Optional[str] = None
+    transaction_time: Optional[str] = None
+    transaction_type: Optional[str] = "TRANSFER"
+    payment_mode: Optional[str] = None
+    bank_name: Optional[str] = None
+    atm_id: Optional[str] = None
+    city: Optional[str] = None
+    district: Optional[str] = None
+    state: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    device_id: Optional[str] = None
+    ip_address: Optional[str] = None
+    is_fraud: Optional[int] = 0
+    fraud_type: Optional[str] = None
+    complaint_id: Optional[str] = None
+
+
+@router.post("/transaction", status_code=201)
+async def intake_transaction(tx: TransactionInput, request: Request):
+    """
+    Store a transaction record in db.transactions.
+    Transactions stored here are used by GET /engine/graph/build to construct
+    the financial relationship graph from actual data.
+    """
+    db = get_db(request)
+    doc = tx.model_dump()
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+
+    # Reject (0, 0) coordinates
+    if doc.get("latitude") == 0.0:
+        doc["latitude"] = None
+    if doc.get("longitude") == 0.0:
+        doc["longitude"] = None
+
+    existing = await db["transactions"].find_one({"transaction_id": tx.transaction_id})
+    if existing:
+        return {"status": "already_exists", "transaction_id": tx.transaction_id}
+
+    await db["transactions"].insert_one(doc)
+    return {"status": "success", "transaction_id": tx.transaction_id}
+
+
+@router.post("/transaction/bulk", status_code=201)
+async def intake_transaction_bulk(transactions: List[TransactionInput], request: Request):
+    """Bulk ingest transaction records. Deduplicates by transaction_id."""
+    db = get_db(request)
+    now = datetime.now(timezone.utc).isoformat()
+    inserted, skipped = 0, 0
+    existing_ids = set()
+
+    tx_ids = [t.transaction_id for t in transactions]
+    existing_docs = await db["transactions"].find(
+        {"transaction_id": {"$in": tx_ids}}, {"transaction_id": 1}
+    ).to_list(length=len(tx_ids))
+    existing_ids = {d["transaction_id"] for d in existing_docs}
+
+    new_docs = []
+    for tx in transactions:
+        if tx.transaction_id in existing_ids:
+            skipped += 1
+            continue
+        doc = tx.model_dump()
+        doc["created_at"] = now
+        if doc.get("latitude") == 0.0:
+            doc["latitude"] = None
+        if doc.get("longitude") == 0.0:
+            doc["longitude"] = None
+        new_docs.append(doc)
+        inserted += 1
+
+    if new_docs:
+        await db["transactions"].insert_many(new_docs)
+
+    return {"status": "success", "inserted": inserted, "skipped_duplicates": skipped}

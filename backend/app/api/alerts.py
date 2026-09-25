@@ -10,11 +10,34 @@ from app.schemas.alert import AlertCreate, AlertAcknowledge
 
 router = APIRouter(prefix="/alerts", tags=["Alerts"])
 
-SEED_ALERTS = [
-    {"id": "ALT-104", "prediction_id": "p104", "riskScore": 95.0, "risk_score": 95.0, "severity": "CRITICAL", "status": "NEW", "location": "Benz Circle ATM, Vijayawada", "crime_category": "Coordinated ATM Cash-Out", "bank": "SBI", "created_at": "2026-08-30T15:42:00Z"},
-    {"id": "ALT-221", "prediction_id": "p221", "riskScore": 92.0, "risk_score": 92.0, "severity": "CRITICAL", "status": "ACKNOWLEDGED", "location": "MG Road ATM, Vijayawada", "crime_category": "Mule Account Layering", "bank": "HDFC", "created_at": "2026-08-30T14:10:00Z", "acknowledged_at": "2026-08-30T14:30:00Z"},
-    {"id": "ALT-087", "prediction_id": "p087", "riskScore": 78.0, "risk_score": 78.0, "severity": "HIGH", "status": "NEW", "location": "KPHB Colony ATM, Hyderabad", "crime_category": "UPI Velocity Fraud", "bank": "ICICI", "created_at": "2026-08-30T12:05:00Z"},
-    {"id": "ALT-309", "prediction_id": "p309", "riskScore": 55.0, "risk_score": 55.0, "severity": "MEDIUM", "status": "NEW", "location": "Patamata ATM Strip, Vijayawada", "crime_category": "Suspicious Withdrawal Pattern", "bank": "PNB", "created_at": "2026-08-30T09:32:00Z"},
+# Prototype seed alerts — clearly labelled SIMULATED. Only injected when the
+# alerts collection is empty AND no real prediction runs have been completed.
+# Run POST /api/v1/predictions/run to replace these with real ML-driven alerts.
+_PROTOTYPE_SEED_ALERTS = [
+    {
+        "id": "ALT-PROTO-001",
+        "alert_type": "PREDICTED_CASH_OUT_HOTSPOT",
+        "risk_score": 87.4, "riskScore": 87.4, "severity": "CRITICAL",
+        "status": "NEW",
+        "location": "ATM_DEL_0001 — Delhi [SIMULATED PROTOTYPE]",
+        "city": "Delhi", "state": "Delhi",
+        "crime_category": "Predicted ATM Cash-Out Hotspot [SIMULATED — run /predictions/run to replace]",
+        "reason_codes": ["SIMULATED_SEED_DATA"],
+        "top_factors": [], "created_at": "2026-09-20T10:00:00Z",
+        "_is_prototype_seed": True,
+    },
+    {
+        "id": "ALT-PROTO-002",
+        "alert_type": "PREDICTED_CASH_OUT_HOTSPOT",
+        "risk_score": 74.1, "riskScore": 74.1, "severity": "HIGH",
+        "status": "NEW",
+        "location": "ATM_ALW_0001 — Alwar, Rajasthan [SIMULATED PROTOTYPE]",
+        "city": "Alwar", "state": "Rajasthan",
+        "crime_category": "Predicted ATM Cash-Out Hotspot [SIMULATED — run /predictions/run to replace]",
+        "reason_codes": ["SIMULATED_SEED_DATA"],
+        "top_factors": [], "created_at": "2026-09-20T10:00:00Z",
+        "_is_prototype_seed": True,
+    },
 ]
 
 def get_db(request: Request):
@@ -28,9 +51,12 @@ def build_alert_query(alert_id: str):
     return {"id": alert_id}
 
 async def seed_alerts_if_empty(db):
-    count = await db["alerts"].count_documents({})
-    if count == 0:
-        await db["alerts"].insert_many(SEED_ALERTS)
+    """Seed prototype alerts only when collection is empty and no prediction runs exist."""
+    alert_count = await db["alerts"].count_documents({})
+    if alert_count == 0:
+        run_count = await db["prediction_runs"].count_documents({"status": "COMPLETED"})
+        if run_count == 0:
+            await db["alerts"].insert_many(_PROTOTYPE_SEED_ALERTS)
 
 @router.get("/")
 async def get_alerts(request: Request, limit: int = 25):

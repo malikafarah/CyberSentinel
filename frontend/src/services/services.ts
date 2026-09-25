@@ -173,9 +173,13 @@ export const predictionService = {
   },
 
   triggerPredictLive: async (): Promise<Prediction[]> => {
-    const data = await api.post<any[]>('/predictions/predict-live');
-    if (!Array.isArray(data)) return [];
-    return data.map(normalizePrediction);
+    const data = await api.post<any>('/predictions/run', {
+      prediction_horizon_hours: 24,
+      include_graph_features: true
+    });
+    // The new response schema returns an object containing a 'hotspots' array.
+    const hotspots = Array.isArray(data) ? data : (data?.hotspots || []);
+    return hotspots.map(normalizePrediction);
   },
 };
 

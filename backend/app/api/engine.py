@@ -1,3 +1,21 @@
+"""
+CyberSentinel Intelligence Engine — API Router
+===============================================
+Provides the ML pipeline endpoints for financial graph analysis, risk propagation,
+syndicate detection, and ATM interdiction zone computation.
+
+Key design principles
+---------------------
+- **No hardcoded seed data**: All graph construction is driven by real transactions
+  imported via the intake pipeline (POST /api/v1/intake/transaction).
+- ``build_graph_from_transactions(db)`` is the single source of truth for deriving
+  nodes and edges from raw transaction documents.
+- DBSCAN spatial clustering always uses real ATM coordinates from ``db.atms``; if
+  insufficient data exists the step is skipped gracefully rather than injecting
+  synthetic coordinates.
+- SSE terminal stream yields human-readable progress at every pipeline stage.
+"""
+
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import StreamingResponse
 from typing import Optional, List, Dict, Any
@@ -15,29 +33,180 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/engine", tags=["Intelligence Engine"])
 
-SEED_NODES = [
-    {"_id": "n_victim_1", "type": "VICTIM", "riskScore": 95, "status": "ACTIVE", "label": "Victim Acct A — HDFC (Mumbai)", "metadata": {"name": "Victim Acct A", "bank": "HDFC", "ifsc": "HDFC0001234", "account": "3194****1029"}},
-    {"_id": "n_mule_1", "type": "MULE", "riskScore": 92, "status": "ACTIVE", "label": "Mule Acct 101 — SBI (Vijayawada)", "metadata": {"name": "Mule Account 101", "bank": "SBI", "ifsc": "SBIN0001234", "account": "3194****5572"}},
-    {"_id": "n_mule_2", "type": "MULE", "riskScore": 88, "status": "ACTIVE", "label": "Mule Acct 102 — PNB (Hyderabad)", "metadata": {"name": "Mule Account 102", "bank": "PNB", "ifsc": "PUNB0012345", "account": "6281****0033"}},
-    {"_id": "M883", "type": "MULE", "riskScore": 90, "status": "ACTIVE", "label": "Mule Acct M883 — SBI (Vijayawada)", "metadata": {"name": "Mule Account (SBI)", "bank": "SBI", "ifsc": "SBIN0005678", "account": "M883****2281"}},
-    {"_id": "n_atm_104", "type": "ATM", "riskScore": 85.7, "status": "ACTIVE", "label": "ATM-104 — MG Road, Vijayawada (HDFC)", "metadata": {"lat": 16.5062, "lng": 80.6480, "location_id": "ATM-104", "bank": "HDFC", "city": "Vijayawada"}},
-    {"_id": "n_atm_221", "type": "ATM", "riskScore": 85.7, "status": "ACTIVE", "label": "ATM-221 — Benz Circle, Vijayawada (SBI)", "metadata": {"lat": 16.5044, "lng": 80.6558, "location_id": "ATM-221", "bank": "SBI", "city": "Vijayawada"}},
-]
-
-SEED_EDGES = [
-    {"source": "n_victim_1", "target": "n_mule_1", "type": "TRANSFER"},
-    {"source": "n_victim_1", "target": "n_mule_2", "type": "TRANSFER"},
-    {"source": "n_victim_1", "target": "M883", "type": "TRANSFER"},
-    {"source": "n_mule_1", "target": "n_atm_104", "type": "WITHDRAWAL"},
-    {"source": "n_mule_1", "target": "n_atm_221", "type": "WITHDRAWAL"},
-    {"source": "n_mule_2", "target": "n_atm_104", "type": "WITHDRAWAL"},
-    {"source": "M883", "target": "n_atm_221", "type": "WITHDRAWAL"},
-]
 
 def get_db(request: Request):
     if hasattr(request.app, "mongodb") and request.app.mongodb is not None:
         return request.app.mongodb
     return get_database()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Graph Builder — derives nodes/edges from raw transaction documents
+# ─────────────────────────────────────────────────────────────────────────────
+
+async def build_graph_from_transactions(db) -> Dict[str, int]:
+    """
+    Reads ``db.transactions`` and upserts derived nodes/edges into ``db.nodes``
+    and ``db.edges``.
+
+    Node types created
+    ------------------
+    - ACCOUNT  — every unique ``source_hashed_acc_no`` / ``destination_hashed_acc_no``
+    - ATM      — when ``payment_mode`` is ATM and ``atm_id`` is not None/''/'NONE'
+    - DEVICE   — when a ``device_id`` is shared across ≥ 2 source accounts
+
+    Edge types created
+    ------------------
+    - TRANSFER          — ACCOUNT → ACCOUNT
+    - CASH_WITHDRAWAL   — ACCOUNT → ATM
+    - USES              — ACCOUNT → DEVICE
+
+    Returns a summary dict: nodes_created, edges_created, atm_nodes, account_nodes.
+    """
+    transactions = await db["transactions"].find({}).to_list(length=5000)
+
+    nodes_upserted = 0
+    edges_upserted = 0
+    atm_nodes_created = 0
+    account_nodes_created = 0
+
+    # Track device → [source_accounts] for SHARED_DEVICE detection
+    device_to_accounts: Dict[str, set] = {}
+
+    for tx in transactions:
+        src_acc = tx.get("source_hashed_acc_no") or tx.get("source_account")
+        dst_acc = tx.get("destination_hashed_acc_no") or tx.get("destination_account")
+        amount = float(tx.get("amount", 0) or 0)
+        ts = tx.get("timestamp") or tx.get("transaction_date") or datetime.now(timezone.utc).isoformat()
+        payment_mode = str(tx.get("payment_mode", "") or "").upper()
+        atm_id_raw = tx.get("atm_id") or tx.get("atm_location_id")
+        device_id = tx.get("device_id") or tx.get("device_fingerprint")
+
+        # ── Upsert ACCOUNT nodes ─────────────────────────────────────────────
+        for acc in [src_acc, dst_acc]:
+            if acc:
+                acc_str = str(acc)
+                result = await db["nodes"].update_one(
+                    {"_id": acc_str},
+                    {"$setOnInsert": {
+                        "_id": acc_str,
+                        "type": "ACCOUNT",
+                        "riskScore": 0.0,
+                        "status": "ACTIVE",
+                        "label": f"Account {acc_str[-6:]}",
+                        "metadata": {"hashed_acc_no": acc_str}
+                    }},
+                    upsert=True
+                )
+                if result.upserted_id is not None:
+                    nodes_upserted += 1
+                    account_nodes_created += 1
+
+        # ── Upsert ACCOUNT→ACCOUNT TRANSFER edge ────────────────────────────
+        if src_acc and dst_acc:
+            src_str = str(src_acc)
+            dst_str = str(dst_acc)
+            result = await db["edges"].update_one(
+                {"source": src_str, "target": dst_str, "type": "TRANSFER"},
+                {"$set": {
+                    "source": src_str,
+                    "target": dst_str,
+                    "type": "TRANSFER",
+                    "last_amount": amount,
+                    "last_timestamp": ts
+                }, "$inc": {"tx_count": 1}, "$min": {"first_timestamp": ts},
+                "$max": {"last_amount_max": amount}},
+                upsert=True
+            )
+            if result.upserted_id is not None:
+                edges_upserted += 1
+
+        # ── ATM node + CASH_WITHDRAWAL edge ─────────────────────────────────
+        atm_is_valid = (
+            payment_mode == "ATM"
+            and atm_id_raw is not None
+            and str(atm_id_raw).strip().upper() not in ("", "NONE", "NULL", "N/A")
+        )
+        if atm_is_valid and src_acc:
+            atm_id_str = str(atm_id_raw).strip()
+            src_str = str(src_acc)
+
+            result = await db["nodes"].update_one(
+                {"_id": atm_id_str},
+                {"$setOnInsert": {
+                    "_id": atm_id_str,
+                    "type": "ATM",
+                    "riskScore": 0.0,
+                    "status": "ACTIVE",
+                    "label": f"ATM {atm_id_str}",
+                    "metadata": {"atm_id": atm_id_str}
+                }},
+                upsert=True
+            )
+            if result.upserted_id is not None:
+                nodes_upserted += 1
+                atm_nodes_created += 1
+
+            result = await db["edges"].update_one(
+                {"source": src_str, "target": atm_id_str, "type": "CASH_WITHDRAWAL"},
+                {"$set": {
+                    "source": src_str,
+                    "target": atm_id_str,
+                    "type": "CASH_WITHDRAWAL",
+                    "last_amount": amount,
+                    "last_timestamp": ts
+                }, "$inc": {"tx_count": 1}},
+                upsert=True
+            )
+            if result.upserted_id is not None:
+                edges_upserted += 1
+
+        # ── Track device_id for SHARED_DEVICE detection ──────────────────────
+        if device_id and src_acc:
+            dev_str = str(device_id).strip()
+            if dev_str and dev_str.upper() not in ("NONE", "NULL", ""):
+                device_to_accounts.setdefault(dev_str, set()).add(str(src_acc))
+
+    # ── DEVICE nodes + USES edges for shared devices ─────────────────────────
+    for dev_id, accounts in device_to_accounts.items():
+        if len(accounts) >= 2:
+            # Upsert DEVICE node
+            result = await db["nodes"].update_one(
+                {"_id": f"DEV_{dev_id}"},
+                {"$setOnInsert": {
+                    "_id": f"DEV_{dev_id}",
+                    "type": "DEVICE",
+                    "riskScore": 0.0,
+                    "status": "ACTIVE",
+                    "label": f"Device {dev_id}",
+                    "metadata": {"device_id": dev_id, "linked_accounts": list(accounts)}
+                }},
+                upsert=True
+            )
+            if result.upserted_id is not None:
+                nodes_upserted += 1
+
+            # Upsert USES edges for each account sharing the device
+            for acc_str in accounts:
+                result = await db["edges"].update_one(
+                    {"source": acc_str, "target": f"DEV_{dev_id}", "type": "USES"},
+                    {"$set": {
+                        "source": acc_str,
+                        "target": f"DEV_{dev_id}",
+                        "type": "USES"
+                    }},
+                    upsert=True
+                )
+                if result.upserted_id is not None:
+                    edges_upserted += 1
+
+    return {
+        "nodes_created": nodes_upserted,
+        "edges_created": edges_upserted,
+        "atm_nodes": atm_nodes_created,
+        "account_nodes": account_nodes_created,
+    }
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SSE: ML Pipeline Terminal Stream
@@ -49,6 +218,7 @@ def _sse(event_type: str, message: str, data: dict = None) -> str:
     if data:
         payload["data"] = data
     return f"data: {json.dumps(payload)}\n\n"
+
 
 async def _pipeline_generator(db):
     """
@@ -68,10 +238,26 @@ async def _pipeline_generator(db):
 
     nodes_count = await db["nodes"].count_documents({"status": {"$ne": "FROZEN"}})
     if nodes_count == 0:
-        yield _sse("WARN", "Node collection is empty. Seeding baseline graph...")
-        await db["nodes"].insert_many(SEED_NODES)
-        await db["edges"].insert_many(SEED_EDGES)
-        nodes_count = len(SEED_NODES)
+        yield _sse("WARN", "Node collection is empty. Attempting to build graph from transaction data...")
+        # Check whether there are any transactions to work from
+        tx_count = await db["transactions"].count_documents({})
+        if tx_count == 0:
+            yield _sse(
+                "WARN",
+                "No transaction data found. Import transactions via "
+                "POST /api/v1/intake/transaction to build the financial graph."
+            )
+            # Continue with empty graph — pipeline steps will handle 0-node case
+        else:
+            build_result = await build_graph_from_transactions(db)
+            yield _sse(
+                "OK",
+                f"Graph built from {tx_count} transaction(s): "
+                f"{build_result['account_nodes']} account nodes, "
+                f"{build_result['atm_nodes']} ATM nodes, "
+                f"{build_result['edges_created']} edges."
+            )
+            nodes_count = build_result["nodes_created"]
     await asyncio.sleep(0.3)
 
     nodes = await db["nodes"].find({"status": {"$ne": "FROZEN"}}).to_list(length=500)
@@ -229,63 +415,84 @@ async def _pipeline_generator(db):
                 candidate_atms.append({"id": n, "riskScore": attr.get("riskScore", 80),
                     "lat": float(meta["lat"]), "lng": float(meta["lng"])})
 
-    # Synthetic Vijayawada ATM fallback
+    # If fewer than 2 graph ATMs have coordinates, query db.atms directly
     if len(candidate_atms) < 2:
-        candidate_atms = [
-            {"id": "ATM_BENZ_1", "riskScore": 89.0, "lat": 16.4971, "lng": 80.6516},
-            {"id": "ATM_BENZ_2", "riskScore": 87.5, "lat": 16.4975, "lng": 80.6650},
-            {"id": "ATM_PATAMATA", "riskScore": 84.0, "lat": 16.5020, "lng": 80.6580},
-            {"id": "ATM_MG_ROAD", "riskScore": 82.0, "lat": 16.5060, "lng": 80.6490},
-        ]
-        yield _sse("WARN", "Insufficient live ATM geo-data. Injecting synthetic Vijayawada ATM corpus.")
-    await asyncio.sleep(0.2)
-
-    yield _sse("INFO", f"Running DBSCAN  ε=5km  min_samples=2  metric=haversine  algo=ball_tree")
-    await asyncio.sleep(0.5)
-
-    coords = np.array([[atm["lat"], atm["lng"]] for atm in candidate_atms])
-    coords_rad = np.radians(coords)
-    ZONE_RADIUS_KM = 5.0
-    epsilon = ZONE_RADIUS_KM / 6371.0
-    dbscan = DBSCAN(eps=epsilon, min_samples=2, metric="haversine", algorithm="ball_tree")
-    labels = dbscan.fit_predict(coords_rad)
-    await asyncio.sleep(0.3)
-
-    clusters: Dict[int, List] = {}
-    noise_count = 0
-    for atm, label in zip(candidate_atms, labels):
-        cid = int(label)
-        if cid == -1:
-            noise_count += 1
-            continue
-        clusters.setdefault(cid, []).append(atm)
-
-    if not clusters:
-        clusters[0] = candidate_atms
-        yield _sse("WARN", f"All points classified as noise under min_samples=2. Falling back to primary cluster.")
-    else:
-        yield _sse("OK", f"DBSCAN complete — {len(clusters)} cluster(s) found, {noise_count} noise point(s)")
-    await asyncio.sleep(0.2)
+        yield _sse("INFO", "Querying db.atms collection for additional ATM coordinates...")
+        try:
+            db_atms = await db["atms"].find(
+                {"$and": [
+                    {"lat": {"$exists": True, "$ne": None}},
+                    {"lng": {"$exists": True, "$ne": None}}
+                ]}
+            ).to_list(length=500)
+            for atm_doc in db_atms:
+                atm_id = str(atm_doc.get("_id") or atm_doc.get("atm_id") or atm_doc.get("id"))
+                if atm_id not in executed_atm_ids:
+                    try:
+                        candidate_atms.append({
+                            "id": atm_id,
+                            "riskScore": float(atm_doc.get("riskScore", atm_doc.get("risk_score", 50))),
+                            "lat": float(atm_doc["lat"]),
+                            "lng": float(atm_doc["lng"])
+                        })
+                    except (TypeError, ValueError):
+                        continue  # Skip ATMs with non-numeric coordinates
+        except Exception as atm_err:
+            yield _sse("WARN", f"db.atms query failed: {atm_err}")
 
     interdiction_zones = []
-    for label, atms in clusters.items():
-        lats = [a["lat"] for a in atms]
-        lngs = [a["lng"] for a in atms]
-        padding = 0.01
-        zone = {
-            "zone_id": f"TARGET-CLUSTER-{int(label)+1}",
-            "priority_weight": len(atms),
-            "center": {"lat": sum(lats)/len(lats), "lng": sum(lngs)/len(lngs)},
-            "bounding_box": {"north": max(lats)+padding, "south": min(lats)-padding,
-                             "east": max(lngs)+padding, "west": min(lngs)-padding},
-            "target_nodes": [a["id"] for a in atms]
-        }
-        interdiction_zones.append(zone)
-        avg_risk = round(sum(a["riskScore"] for a in atms) / len(atms), 1)
-        yield _sse("DATA", f"  → {zone['zone_id']}  |  {len(atms)} ATMs  |  avg risk {avg_risk}  |  ⚡ DISPATCH_UNIT")
-        await asyncio.sleep(0.15)
 
-    interdiction_zones.sort(key=lambda z: z["priority_weight"], reverse=True)
+    if len(candidate_atms) < 2:
+        yield _sse("WARN",
+            f"Insufficient ATM geo-data ({len(candidate_atms)} point(s) found). "
+            "Skipping DBSCAN — import ATM location data to enable spatial clustering."
+        )
+    else:
+        yield _sse("INFO", f"Running DBSCAN  ε=5km  min_samples=2  metric=haversine  algo=ball_tree")
+        await asyncio.sleep(0.5)
+
+        coords = np.array([[atm["lat"], atm["lng"]] for atm in candidate_atms])
+        coords_rad = np.radians(coords)
+        ZONE_RADIUS_KM = 5.0
+        epsilon = ZONE_RADIUS_KM / 6371.0
+        dbscan = DBSCAN(eps=epsilon, min_samples=2, metric="haversine", algorithm="ball_tree")
+        labels = dbscan.fit_predict(coords_rad)
+        await asyncio.sleep(0.3)
+
+        clusters: Dict[int, List] = {}
+        noise_count = 0
+        for atm, label in zip(candidate_atms, labels):
+            cid = int(label)
+            if cid == -1:
+                noise_count += 1
+                continue
+            clusters.setdefault(cid, []).append(atm)
+
+        if not clusters:
+            clusters[0] = candidate_atms
+            yield _sse("WARN", f"All points classified as noise under min_samples=2. Falling back to primary cluster.")
+        else:
+            yield _sse("OK", f"DBSCAN complete — {len(clusters)} cluster(s) found, {noise_count} noise point(s)")
+        await asyncio.sleep(0.2)
+
+        for label, atms in clusters.items():
+            lats = [a["lat"] for a in atms]
+            lngs = [a["lng"] for a in atms]
+            padding = 0.01
+            zone = {
+                "zone_id": f"TARGET-CLUSTER-{int(label)+1}",
+                "priority_weight": len(atms),
+                "center": {"lat": sum(lats)/len(lats), "lng": sum(lngs)/len(lngs)},
+                "bounding_box": {"north": max(lats)+padding, "south": min(lats)-padding,
+                                 "east": max(lngs)+padding, "west": min(lngs)-padding},
+                "target_nodes": [a["id"] for a in atms]
+            }
+            interdiction_zones.append(zone)
+            avg_risk = round(sum(a["riskScore"] for a in atms) / len(atms), 1)
+            yield _sse("DATA", f"  → {zone['zone_id']}  |  {len(atms)} ATMs  |  avg risk {avg_risk}  |  ⚡ DISPATCH_UNIT")
+            await asyncio.sleep(0.15)
+
+        interdiction_zones.sort(key=lambda z: z["priority_weight"], reverse=True)
 
     # ── Step 5: Final Report ──────────────────────────────────────────────────
     yield _sse("STEP", "═══ STEP 5/5 ─ Intelligence Report ═══")
@@ -303,6 +510,7 @@ async def _pipeline_generator(db):
     yield _sse("OK", "Intelligence pipeline complete. Awaiting operational response.")
     await asyncio.sleep(0.2)
     yield _sse("DONE", "SYSTEM READY", {"interdiction_zones": interdiction_zones, "nodes_analyzed": G.number_of_nodes(), "high_risk_count": len(high_risk)})
+
 
 @router.get("/stream-pipeline")
 async def stream_ml_pipeline(request: Request):
@@ -334,15 +542,44 @@ async def stream_ml_pipeline(request: Request):
     )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Graph Build Endpoint
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/graph/build")
+async def build_graph_endpoint(request: Request):
+    """
+    Triggers ``build_graph_from_transactions`` and returns a summary of the
+    nodes and edges upserted into the graph collections.
+    """
+    db = get_db(request)
+    try:
+        tx_count = await db["transactions"].count_documents({})
+        if tx_count == 0:
+            return {
+                "status": "warn",
+                "message": "No transaction data found. Import transactions via POST /api/v1/intake/transaction to build the financial graph.",
+                "nodes_created": 0,
+                "edges_created": 0,
+                "atm_nodes": 0,
+                "account_nodes": 0,
+            }
+        result = await build_graph_from_transactions(db)
+        result["status"] = "success"
+        result["transactions_processed"] = tx_count
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/api/engine/propagate-risk")
 async def propagate_risk_and_find_hotspots(request: Request):
     db = get_db(request)
 
-    # 1. Fetch all active nodes and edges (seed baseline if empty)
+    # 1. Fetch all active nodes and edges (build from transactions if empty)
     nodes_count = await db["nodes"].count_documents({"status": {"$ne": "FROZEN"}})
     if nodes_count == 0:
-        await db["nodes"].insert_many(SEED_NODES)
-        await db["edges"].insert_many(SEED_EDGES)
+        await build_graph_from_transactions(db)
 
     nodes = await db["nodes"].find({"status": {"$ne": "FROZEN"}}).to_list(length=200)
     edges = await db["edges"].find().to_list(length=200)
@@ -461,31 +698,32 @@ async def get_case_graph(case_id: str, request: Request):
         nodes = case_nodes
         edges = case_edges if case_edges else edges
     else:
-        # Fallback: use all nodes but log it
+        # Fallback: use all nodes — return empty graph if none exist
         if not nodes:
-            nodes = SEED_NODES
+            nodes = []
         if not edges:
-            edges = SEED_EDGES
+            edges = []
 
     # Ensure all MULE nodes are connected by checking for orphan nodes
     connected_targets = {str(e.get("target")) for e in edges}
     connected_sources = {str(e.get("source")) for e in edges}
     all_connected = connected_targets.union(connected_sources)
-    victim_id = next((str(n.get("_id") or n.get("id")) for n in nodes if n.get("type") == "VICTIM"), "n_victim_1")
-    atm_id = next((str(n.get("_id") or n.get("id")) for n in nodes if n.get("type") == "ATM"), "n_atm_104")
+    victim_id = next((str(n.get("_id") or n.get("id")) for n in nodes if n.get("type") == "VICTIM"), None)
+    atm_id = next((str(n.get("_id") or n.get("id")) for n in nodes if n.get("type") == "ATM"), None)
 
-    # Auto-link any floating/orphaned MULE nodes
+    # Auto-link any floating/orphaned MULE nodes (only when victim and ATM anchors exist)
     active_edges = list(edges)
-    for n in nodes:
-        nid = str(n.get("_id") or n.get("id"))
-        if n.get("type") == "MULE" and nid not in all_connected:
-            new_edge_in = {"source": victim_id, "target": nid, "type": "TRANSFER"}
-            new_edge_out = {"source": nid, "target": atm_id, "type": "WITHDRAWAL"}
-            active_edges.extend([new_edge_in, new_edge_out])
-            try:
-                await db["edges"].insert_many([new_edge_in, new_edge_out])
-            except Exception:
-                pass
+    if victim_id and atm_id:
+        for n in nodes:
+            nid = str(n.get("_id") or n.get("id"))
+            if n.get("type") == "MULE" and nid not in all_connected:
+                new_edge_in = {"source": victim_id, "target": nid, "type": "TRANSFER"}
+                new_edge_out = {"source": nid, "target": atm_id, "type": "WITHDRAWAL"}
+                active_edges.extend([new_edge_in, new_edge_out])
+                try:
+                    await db["edges"].insert_many([new_edge_in, new_edge_out])
+                except Exception:
+                    pass
 
     node_risk_map = {}
     formatted_nodes = []
@@ -552,13 +790,14 @@ async def run_intelligence_pipeline(request: Request = None):
 
         nodes_count = await db["nodes"].count_documents({"status": {"$ne": "FROZEN"}})
         if nodes_count == 0:
-            await db["nodes"].insert_many(SEED_NODES)
-            await db["edges"].insert_many(SEED_EDGES)
+            # Build from transactions instead of inserting hardcoded seed data
+            await build_graph_from_transactions(db)
+
         active_nodes = await db["nodes"].find({"status": {"$ne": "FROZEN"}}).to_list(length=500)
         all_edges = await db["edges"].find().to_list(length=500)
 
         if not active_nodes:
-            return {"status": "error", "message": "No active nodes found in database."}
+            return {"status": "error", "message": "No active nodes found in database. Import transactions via POST /api/v1/intake/transaction."}
 
         # 1. Build NetworkX Directed Graph with Edge Weights
         G = nx.DiGraph()
@@ -684,18 +923,40 @@ async def run_intelligence_pipeline(request: Request = None):
                         "lng": float(meta['lng'])
                     })
 
-        # Synthetic Vijayawada candidate ATMs fallback if database candidate set has < 2 items
+        # If fewer than 2 candidates from graph, query db.atms for real coordinates
         if len(candidate_atms) < 2:
-            candidate_atms = [
-                {"id": "ATM_BENZ_1", "riskScore": 89.0, "lat": 16.4971, "lng": 80.6516},
-                {"id": "ATM_BENZ_2", "riskScore": 87.5, "lat": 16.4975, "lng": 80.6650},
-                {"id": "ATM_PATAMATA_1", "riskScore": 84.0, "lat": 16.5020, "lng": 80.6580},
-                {"id": "ATM_MG_ROAD_1", "riskScore": 82.0, "lat": 16.5060, "lng": 80.6490}
-            ]
+            try:
+                db_atms = await db["atms"].find(
+                    {"$and": [
+                        {"lat": {"$exists": True, "$ne": None}},
+                        {"lng": {"$exists": True, "$ne": None}}
+                    ]}
+                ).to_list(length=500)
+                for atm_doc in db_atms:
+                    atm_id_val = str(atm_doc.get("_id") or atm_doc.get("atm_id") or atm_doc.get("id"))
+                    if atm_id_val not in executed_atm_ids:
+                        try:
+                            candidate_atms.append({
+                                "id": atm_id_val,
+                                "riskScore": float(atm_doc.get("riskScore", atm_doc.get("risk_score", 50))),
+                                "lat": float(atm_doc["lat"]),
+                                "lng": float(atm_doc["lng"])
+                            })
+                        except (TypeError, ValueError):
+                            continue
+            except Exception:
+                pass  # Gracefully skip if atms collection unavailable
 
         interdiction_zones = []
 
-        if len(candidate_atms) > 0:
+        if len(candidate_atms) < 2:
+            # Insufficient ATM geo-data — skip DBSCAN, log warning
+            import logging
+            logging.getLogger(__name__).warning(
+                "run_intelligence_pipeline: fewer than 2 candidate ATMs with coordinates found. "
+                "Skipping DBSCAN clustering. Import ATM location data to enable spatial analysis."
+            )
+        elif len(candidate_atms) > 0:
             coords = np.array([[atm["lat"], atm["lng"]] for atm in candidate_atms])
             coords_radians = np.radians(coords)
             
@@ -784,8 +1045,14 @@ async def get_fraud_syndicates(request: Request):
     edges = await db["edges"].find().to_list(length=500)
 
     if not nodes:
-        nodes = SEED_NODES
-        edges = SEED_EDGES
+        # Return empty result instead of using hardcoded seed data
+        return {
+            "status": "success",
+            "algorithm": "Louvain Community Detection",
+            "syndicate_count": 0,
+            "syndicates": [],
+            "message": "No graph data found. Import transactions via POST /api/v1/intake/transaction."
+        }
 
     G = nx.DiGraph()
     for node in nodes:
@@ -1234,4 +1501,3 @@ async def get_simulated_transactions(request: Request, limit: int = 25):
         return {"status": "success", "count": len(docs), "transactions": docs}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
