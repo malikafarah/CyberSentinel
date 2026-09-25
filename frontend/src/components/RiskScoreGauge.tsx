@@ -111,8 +111,9 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({
       </svg>
 
       <div className="gauge-readout">
-        <span className="gauge-score-label">Live Score: {score}/100</span>
-        <strong className="gauge-score-val">{score}</strong>
+        <div className="gauge-score-wrap">
+          <strong className="gauge-score-val">{score}</strong>
+        </div>
         <span className={`gauge-risk-pill ${riskCategory}`}>
           {label}
         </span>

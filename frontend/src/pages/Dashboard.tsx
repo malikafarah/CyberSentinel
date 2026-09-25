@@ -167,11 +167,11 @@ export function Dashboard() {
           </div>
           <RiskNodeRadialChart
             data={[
-              { label: 'Bank Kiosks', value: 2850, color: '#FFB800' },
-              { label: 'Micro-ATMs', value: 1420, color: '#F73B3B' },
-              { label: 'POS Cash Points', value: 980, color: '#82858E' },
-              { label: 'Metro ATM Hubs', value: summary.atRiskAtms || 89, color: '#00D26A' },
-              { label: 'High-Risk Clusters', value: summary.highRiskZones || 18, color: '#3276FF' },
+              { label: 'Bank Kiosks', value: 2850, color: '#38BDF8' },
+              { label: 'Micro-ATMs', value: 1420, color: '#818CF8' },
+              { label: 'POS Cash Points', value: 980, color: '#FBBF24' },
+              { label: 'Metro ATM Hubs', value: summary.atRiskAtms || 89, color: '#FB923C' },
+              { label: 'High-Risk Clusters', value: summary.highRiskZones || 18, color: '#EF4444' },
             ]}
           />
         </div>

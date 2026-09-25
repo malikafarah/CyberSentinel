@@ -77,8 +77,10 @@ const DEFAULT_FALLBACK_EDGES: Edge[] = [
     target: '2',
     animated: true,
     label: 'TRANSFER (₹50,000)',
-    style: { stroke: '#ef4444', strokeWidth: 2, opacity: 0.8 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' }
+    labelStyle: { fill: '#334155', fontSize: 9, fontWeight: 700, fontFamily: 'monospace' },
+    labelBgStyle: { fill: '#F1F5F9', fillOpacity: 0.95, rx: 4, ry: 4, stroke: '#CBD5E1', strokeWidth: 1 },
+    style: { stroke: '#DC2626', strokeWidth: 1.5, opacity: 0.9 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#DC2626' }
   },
   {
     id: 'e2-3',
@@ -86,8 +88,10 @@ const DEFAULT_FALLBACK_EDGES: Edge[] = [
     target: '3',
     animated: true,
     label: 'CASH WITHDRAWAL',
-    style: { stroke: '#ef4444', strokeWidth: 2, opacity: 0.8 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' }
+    labelStyle: { fill: '#334155', fontSize: 9, fontWeight: 700, fontFamily: 'monospace' },
+    labelBgStyle: { fill: '#F1F5F9', fillOpacity: 0.95, rx: 4, ry: 4, stroke: '#CBD5E1', strokeWidth: 1 },
+    style: { stroke: '#DC2626', strokeWidth: 1.5, opacity: 0.9 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#DC2626' }
   }
 ];
 
@@ -152,19 +156,19 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
       const srcRisk = nodeMap.get(e.source) || 85;
       const eType = String(e.type || 'TRANSFER').toUpperCase();
 
-      let stroke = '#48D878';
-      if (eType === 'SHARED_KYC') stroke = '#a855f7';
-      else if (srcRisk >= 80) stroke = '#ef4444';
-      else if (srcRisk >= 50) stroke = '#f97316';
+      let stroke = '#16A34A';
+      if (eType === 'SHARED_KYC') stroke = '#7E22CE';
+      else if (srcRisk >= 80) stroke = '#DC2626';
+      else if (srcRisk >= 50) stroke = '#D97706';
 
       return {
         ...e,
         type: 'smoothstep',
         animated: true,
         label: eType.replace('_', ' '),
-        labelStyle: { fill: '#9ca3af', fontSize: 10, fontWeight: 600 },
-        labelBgStyle: { fill: '#0F1210', fillOpacity: 0.8 },
-        style: { stroke, strokeWidth: 2, opacity: 0.85 },
+        labelStyle: { fill: '#334155', fontSize: 9, fontWeight: 700, fontFamily: 'monospace' },
+        labelBgStyle: { fill: '#F1F5F9', fillOpacity: 0.95, rx: 4, ry: 4, stroke: '#CBD5E1', strokeWidth: 1 },
+        style: { stroke, strokeWidth: 1.5, opacity: 0.9 },
         markerEnd: { type: MarkerType.ArrowClosed, color: stroke }
       };
     });
@@ -596,23 +600,27 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
           </ReactFlow>
 
           {/* Graph Legend Overlay */}
-          <div className="absolute bottom-4 left-4 z-10 bg-white/95 dark:bg-[#0F1210]/90 backdrop-blur-md p-3 rounded-lg border border-gray-200 dark:border-white/10 text-[9px] font-mono space-y-1.5 shadow-xl text-slate-800 dark:text-gray-300">
-            <div className="text-slate-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Graph Legend</div>
+          <div className="absolute bottom-4 left-4 z-10 bg-white/95 dark:bg-[#0F1210]/90 backdrop-blur-md p-3.5 rounded-lg border border-slate-200 dark:border-white/10 text-[9.5px] font-mono space-y-1.5 shadow-lg text-slate-800 dark:text-gray-300">
+            <div className="text-slate-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1.5 font-sans text-[10px]">Graph Legend</div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 border border-emerald-400" />
-              <span>Victim Account (Origin)</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#F0FDF4] border border-[#86EFAC]" />
+              <span className="text-slate-700 dark:text-gray-300">Victim Account (Origin)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-orange-500 border border-orange-400" />
-              <span>Mule Account (Layering)</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#FFFBEB] border border-[#FCD34D]" />
+              <span className="text-slate-700 dark:text-gray-300">Mule Account (Layering)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-purple-500 border border-purple-400" />
-              <span>Shared IP / Device</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#ECFEFF] border border-[#A5F3FC]" />
+              <span className="text-slate-700 dark:text-gray-300">Frozen / Isolated Mule</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-red-500 border border-red-400" />
-              <span>ATM Terminal (Cash-out)</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#FEF2F2] border border-[#FECACA]" />
+              <span className="text-slate-700 dark:text-gray-300">ATM Terminal (Cash-out)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#FAF5FF] border border-[#E9D5FF]" />
+              <span className="text-slate-700 dark:text-gray-300">Shared IP / Device</span>
             </div>
           </div>
         </div>

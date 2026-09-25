@@ -12,11 +12,11 @@ interface RiskNodeRadialChartProps {
 
 export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
   data = [
-    { label: 'Bank Kiosks', value: 2850, color: '#FFB800' }, // Medium Risk Yellow
-    { label: 'Micro-ATMs', value: 1420, color: '#F73B3B' },  // High Risk Red
-    { label: 'POS Cash Points', value: 980, color: '#82858E' }, // Muted Grey
-    { label: 'Metro ATM Hubs', value: 89, color: '#00D26A' }, // Low Risk Green
-    { label: 'High-Risk Clusters', value: 18, color: '#3276FF' }, // Info Blue
+    { label: 'Bank Kiosks', value: 2850, color: '#38BDF8' },
+    { label: 'Micro-ATMs', value: 1420, color: '#818CF8' },
+    { label: 'POS Cash Points', value: 980, color: '#FBBF24' },
+    { label: 'Metro ATM Hubs', value: 89, color: '#FB923C' },
+    { label: 'High-Risk Clusters', value: 18, color: '#EF4444' },
   ],
 }) => {
   // Sort or preserve outer-to-inner ordering
@@ -27,10 +27,10 @@ export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
   const totalNodes = sortedData.reduce((acc, curr) => acc + curr.value, 0);
 
   // SVG Configuration
-  const size = 220;
+  const size = 200;
   const center = size / 2;
-  const strokeWidth = 8;
-  const gap = 6;
+  const strokeWidth = 7;
+  const gap = 5;
 
   return (
     <div className="risk-node-radial-chart">
@@ -45,11 +45,11 @@ export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
         >
           {sortedData.map((item, index) => {
             // Calculate radius dynamically shrinking inward for each data point
-            const radius = (size / 2) - (strokeWidth / 2) - (index * (strokeWidth + gap));
+            const radius = (size / 2) - (strokeWidth / 2) - 4 - (index * (strokeWidth + gap));
             const circumference = 2 * Math.PI * radius;
 
             // Calculate proportional offset
-            const percentage = Math.min(1, Math.max(0.08, item.value / maxValue));
+            const percentage = Math.min(1, Math.max(0.06, item.value / maxValue));
             const strokeDashoffset = circumference - (percentage * circumference);
 
             return (
@@ -75,8 +75,7 @@ export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
                   strokeDashoffset={strokeDashoffset}
                   strokeLinecap="round"
                   style={{
-                    transition: 'stroke-dashoffset 1s ease-out',
-                    filter: `drop-shadow(0 0 6px ${item.color}88)`,
+                    transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
                 />
               </g>
@@ -84,8 +83,8 @@ export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
           })}
         </svg>
 
-        {/* Centered Typography - Formatted to prevent overlap */}
-        <div className="radial-center-text">
+        {/* Centered Typography Badge */}
+        <div className="radial-center-badge">
           <span className="radial-total-val">
             {totalNodes.toLocaleString()}
           </span>
@@ -104,7 +103,6 @@ export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
               className="radial-legend-dot"
               style={{
                 backgroundColor: item.color,
-                boxShadow: `0 0 10px ${item.color}66`,
               }}
             />
             {/* Value */}
@@ -112,7 +110,7 @@ export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
               {item.value.toLocaleString()}
             </span>
             {/* Label */}
-            <span className="radial-legend-name">
+            <span className="radial-legend-name" title={item.label}>
               {item.label}
             </span>
           </div>
@@ -123,3 +121,4 @@ export const RiskNodeRadialChart: React.FC<RiskNodeRadialChartProps> = ({
 };
 
 export default RiskNodeRadialChart;
+

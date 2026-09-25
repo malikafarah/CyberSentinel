@@ -316,10 +316,10 @@ export function Heatmap() {
     <div className="relative w-full h-[calc(100vh-58px)] bg-slate-100 dark:bg-[#0B0C10] font-sans overflow-hidden text-slate-900 dark:text-gray-200">
       
       {/* 1. Single Unified Parent Container with whitespace-nowrap and shrink-0 */}
-      <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-7xl h-16 px-4 bg-white/95 dark:bg-[#121318]/90 backdrop-blur-md rounded-xl border border-slate-200 dark:border-gray-800 shadow-md overflow-x-auto scrollbar-hide whitespace-nowrap flex items-center justify-between gap-4">
+      <div className="absolute top-4 sm:top-5 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-7xl h-14 px-4 bg-white/95 dark:bg-[#121318]/90 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-gray-800 shadow-lg shadow-slate-200/50 dark:shadow-black/40 overflow-x-auto scrollbar-hide whitespace-nowrap flex items-center justify-between gap-4 transition-colors">
         
         {/* LEFT: Node Status & Map Toggle */}
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-[#0a0b0e] rounded-full border border-slate-200 dark:border-gray-800">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
             <span className="text-[10px] font-mono tracking-widest text-slate-700 dark:text-gray-300 uppercase font-semibold">
@@ -332,7 +332,7 @@ export function Heatmap() {
               onClick={() => setViewMode('3d')}
               className={`px-3 py-1 text-xs font-semibold rounded cursor-pointer transition-all ${
                 viewMode === '3d'
-                  ? 'text-black bg-[#00d664] shadow font-bold'
+                  ? 'text-white bg-emerald-600 dark:text-black dark:bg-[#00d664] shadow-sm font-bold'
                   : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -342,7 +342,7 @@ export function Heatmap() {
               onClick={() => setViewMode('2d')}
               className={`px-3 py-1 text-xs font-semibold rounded cursor-pointer transition-all ${
                 viewMode === '2d'
-                  ? 'text-black bg-[#00d664] shadow font-bold'
+                  ? 'text-white bg-emerald-600 dark:text-black dark:bg-[#00d664] shadow-sm font-bold'
                   : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -365,14 +365,14 @@ export function Heatmap() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/graph')}
-              className="px-3 py-1 text-xs text-emerald-700 dark:text-emerald-500 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 rounded transition-all cursor-pointer font-semibold"
+              className="px-3 py-1 text-xs text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded transition-all cursor-pointer font-semibold"
             >
               Graph
             </button>
             <button
               onClick={runPrediction}
               disabled={isPredicting}
-              className="px-3 py-1 text-xs text-emerald-700 dark:text-emerald-500 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 rounded transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5 font-semibold"
+              className="px-3 py-1 text-xs text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5 font-semibold"
             >
               {isPredicting ? (
                 <>
@@ -428,15 +428,15 @@ export function Heatmap() {
                 onClick={() => setTextureMode((prev) => (prev === 'satellite' ? 'dark' : 'satellite'))}
                 className={`px-3 py-1 text-xs font-semibold rounded border transition-all cursor-pointer ${
                   textureMode === 'satellite'
-                    ? 'text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10'
-                    : 'text-emerald-700 dark:text-emerald-500 border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10'
+                    ? 'text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20'
+                    : 'text-emerald-700 dark:text-emerald-500 border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20'
                 }`}
               >
                 {textureMode === 'satellite' ? 'Satellite' : 'Dark'}
               </button>
               <button
                 onClick={() => setActiveLayers((prev) => (prev === 'hex' ? 'both' : prev === 'both' ? 'points' : 'hex'))}
-                className="px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-500 border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded transition-all cursor-pointer capitalize"
+                className="px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded transition-all cursor-pointer capitalize"
               >
                 {activeLayers}
               </button>

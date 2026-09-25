@@ -221,7 +221,7 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
         hexBinResolution={hexResolution}
         hexMargin={0.15}
         hexTopColor={(d: any) => weightToColor(d.sumWeight)}
-        hexSideColor={(d: any) => `${weightToColor(d.sumWeight)}dd`}
+        hexSideColor={(d: any) => weightToColor(d.sumWeight)}
         hexAltitude={(d: any) => Math.min(0.55, Math.max(0.06, (d.sumWeight / 250) * 0.48))}
         hexBinMerge={true}
         onHexClick={(hex: any) => {

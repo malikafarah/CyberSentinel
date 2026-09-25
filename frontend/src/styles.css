@@ -944,15 +944,15 @@ html.light .card-badge {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 36px;
+  gap: 28px;
   flex: 1;
-  padding: 4px 8px 10px 4px;
+  padding: 6px 4px 8px;
 }
 
 .radial-graphic-wrap {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 200px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -963,64 +963,77 @@ html.light .card-badge {
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.5));
+  overflow: visible;
 }
 
 .radial-bg-track {
-  stroke: #222327;
+  stroke: #1E2026;
 }
 
 html.light .radial-bg-track {
-  stroke: #E2E8F0; /* Soft slate-100/200 base track */
+  stroke: #E2E8F0;
+  opacity: 0.8;
 }
 
-.radial-center-text {
+.radial-center-badge {
   position: absolute;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   pointer-events: none;
-  padding: 24px;
-  gap: 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  gap: 2px;
+}
+
+html.light .radial-center-badge {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .radial-total-val {
   font-family: var(--font-mono);
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.8px;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
 .radial-total-label {
-  font-size: 10px;
+  font-size: 8.5px;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .radial-legend-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   flex: 1;
+  min-width: 0;
 }
 
 .radial-legend-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  font-size: 14px;
+  gap: 10px;
+  font-size: 13px;
 }
 
 .radial-legend-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -1028,16 +1041,21 @@ html.light .radial-bg-track {
 .radial-legend-val {
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 13.5px;
   color: var(--text-primary);
-  min-width: 52px;
+  width: 46px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 .radial-legend-name {
   color: var(--text-muted);
-  font-size: 14px;
-  letter-spacing: 0.02em;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Risk Score Gauge ─────────────────────────────────────────────────────── */
@@ -1094,26 +1112,25 @@ html.light .gauge-marker {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: -22px;
+  margin-top: -14px;
+  gap: 4px;
+  position: relative;
+  z-index: 2;
 }
 
-.gauge-score-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  color: #82858E;
-}
-
-html.light .gauge-score-label {
-  color: #64748B; /* text-slate-500 medium grey */
+.gauge-score-wrap {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
 }
 
 .gauge-score-val {
   font-family: var(--font-mono);
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.1;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .gauge-risk-pill {

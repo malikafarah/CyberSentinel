@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, LineChart, BriefcaseBusiness } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { alertService, predictionService } from '../services/services';
 import type { Alert, Prediction } from '../types';
 import { ConfirmModal, Empty, Loading, PageHeader, RiskBadge, ErrorState } from '../components/ui';
@@ -189,26 +189,24 @@ export function Alerts() {
                       )}
                     </div>
 
-                    {/* Actions Column - Standardized subtle icon actions + ghost acknowledge button */}
+                    {/* Actions Column - Standardized subtle text actions + ghost acknowledge button */}
                     <div className="flex items-center justify-end gap-2">
                       {x && (
                         <button
-                          className="p-1.5 text-slate-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-xs"
+                          className="px-2 py-1 text-slate-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all text-xs font-medium cursor-pointer"
                           onClick={() => nav(`/predictions/${x.id}`)}
                           title={`View Prediction Details (${x.id})`}
                         >
-                          <LineChart size={14} />
-                          <span className="hidden xl:inline text-[11px]">Prediction</span>
+                          Prediction
                         </button>
                       )}
                       {x?.case_id && (
                         <button
-                          className="p-1.5 text-slate-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-xs"
+                          className="px-2 py-1 text-slate-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10 rounded border border-transparent hover:border-emerald-500/20 transition-all text-xs font-medium cursor-pointer"
                           onClick={() => nav(`/investigations/${x.case_id}`)}
                           title={`View Investigation Case (${x.case_id})`}
                         >
-                          <BriefcaseBusiness size={14} />
-                          <span className="hidden xl:inline text-[11px]">Case</span>
+                          Case
                         </button>
                       )}
                       {(a.status === 'NEW' || a.status === 'ACTIVE') ? (

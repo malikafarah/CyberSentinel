@@ -56,7 +56,7 @@ export default function RiskMap({
   return (
     <div style={{ position: 'relative', width: '100%', height, borderRadius: '9px', overflow: 'hidden', border: '1px solid #292D2A' }}>
       {loading && (
-        <div style={{ position: 'absolute', inset: 0, background: '#0B0D0C80', zIndex: 1000, display: 'grid', placeItems: 'center', color: '#48D878', fontFamily: 'monospace', fontSize: '11px' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(11, 13, 12, 0.5)', zIndex: 1000, display: 'grid', placeItems: 'center', color: '#48D878', fontFamily: 'monospace', fontSize: '11px' }}>
           Loading geospatial ATM telemetry...
         </div>
       )}
