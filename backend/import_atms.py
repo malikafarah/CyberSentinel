@@ -4,8 +4,11 @@ from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorClient
 
 # Using the connection string from seed_db.py
-MONGO_URI = 'mongodb+srv://class11thscienceppt_db_user:GJwnXqLbz8PuytwR@cybersentinelbackenddb.qlmllev.mongodb.net/?appName=cybersentinelBackendDB'
-DB_NAME = 'cybersentinel_db'
+import os
+from dotenv import load_dotenv
+load_dotenv()
+MONGO_URI = os.getenv("MONGODB_CONNECTION_STRING")
+DB_NAME = os.getenv("MONGODB_DB_NAME", "cybersentinel_db")
 CSV_FILE = '../ml-model/data/synthetic/synthetic_atms.csv'
 
 async def main():

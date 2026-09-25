@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { PageHeader, Loading, ErrorState } from '../components/ui';
-import { Radio, Shield, Smartphone, AlertTriangle } from 'lucide-react';
+import { Radio, Shield, Smartphone, AlertTriangle, Zap } from 'lucide-react';
 
 interface FusionSignal {
   identifier: string;
@@ -23,6 +23,31 @@ export function ThreatFusion() {
   const [signals, setSignals] = useState<FusionSignal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const simulateAgencies = async () => {
+    setLoading(true);
+    try {
+      const agencies = ['NPCI_eFRM', 'DoT_Chakshu', 'NCRP'];
+      const identifiers = ['+919876543210', 'n_mule_1', 'n_victim_1', '7890123456@upi', 'n_atm_104', 'n_atm_221'];
+      const reasons = ['High velocity transfers', 'SIM swap detected', 'Reported via 1930', 'Known mule signature'];
+      
+      const count = Math.floor(Math.random() * 2) + 1;
+      for (let i = 0; i < count; i++) {
+        await api.post('/fusion/ingest-signal', {
+          identifier: identifiers[Math.floor(Math.random() * identifiers.length)],
+          source: agencies[Math.floor(Math.random() * agencies.length)],
+          risk_score: Math.floor(Math.random() * 40) + 60,
+          reason: reasons[Math.floor(Math.random() * reasons.length)],
+          timestamp: new Date().toISOString()
+        });
+      }
+      await load(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -47,10 +72,18 @@ export function ThreatFusion() {
 
   return (
     <div className="page">
-      <PageHeader eyebrow="NATIONAL SIGNAL FUSION" title="Multi-Agency Threat Intelligence">
-        <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 rounded-full font-medium">
-          <Radio size={11} className="animate-pulse" /> Live Feed
-        </span>
+            <PageHeader eyebrow="NATIONAL SIGNAL FUSION" title="Multi-Agency Threat Intelligence">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={simulateAgencies}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded transition-all cursor-pointer"
+          >
+            <Zap size={14} /> Simulate Traffic
+          </button>
+          <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 rounded-full font-medium">
+            <Radio size={11} className="animate-pulse" /> Live Feed
+          </span>
+        </div>
       </PageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">

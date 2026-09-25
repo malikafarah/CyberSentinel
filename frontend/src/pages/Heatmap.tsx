@@ -320,10 +320,10 @@ export function Heatmap() {
   }, [graphNodes, forecastZones, zones]);
 
   return (
-    <div className="relative w-full h-[calc(100vh-58px)] bg-slate-100 dark:bg-[#0B0C10] font-sans overflow-hidden text-slate-900 dark:text-gray-200">
+    <div className="relative w-full h-[calc(100vh-64px)] bg-slate-100 dark:bg-[#0B0C10] font-sans overflow-hidden text-slate-900 dark:text-gray-200">
       
       {/* 1. Single Unified Parent Container with whitespace-nowrap and shrink-0 */}
-      <div className="absolute top-4 sm:top-5 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-7xl h-14 px-4 bg-white/95 dark:bg-[#121318]/90 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-gray-800 shadow-lg shadow-slate-200/50 dark:shadow-black/40 overflow-x-auto scrollbar-hide whitespace-nowrap flex items-center justify-between gap-4 transition-colors">
+      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-7xl h-14 px-4 bg-white/95 dark:bg-[#121318]/90 backdrop-blur-md rounded-xl border border-slate-200/90 dark:border-gray-800 shadow-lg shadow-slate-200/50 dark:shadow-black/40 overflow-x-auto scrollbar-hide whitespace-nowrap flex items-center justify-between gap-4 transition-colors">
         
         {/* LEFT: Node Status & Map Toggle */}
         <div className="flex items-center gap-3 shrink-0">
@@ -560,7 +560,7 @@ export function Heatmap() {
                   <div className="space-y-1.5 text-xs font-mono bg-slate-50 dark:bg-[#16171B] p-3 rounded-lg border border-gray-200 dark:border-[#222327] mb-4">
                     <div className="flex justify-between text-slate-700 dark:text-gray-300">
                       <span className="text-slate-500 dark:text-[#82858E]">PROJECTED VOL:</span>
-                      <span className="text-amber-600 dark:text-[#FFB800] font-bold">₹{fz.forecasted_cashout_volume.toLocaleString()}</span>
+                      <span className="text-amber-600 dark:text-[#FFB800] font-bold">Rs. {fz.forecasted_cashout_volume.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-slate-700 dark:text-gray-300">
                       <span className="text-slate-500 dark:text-[#82858E]">PEAK SURGE:</span>
@@ -709,23 +709,22 @@ export function Heatmap() {
 
       {/* 5. Bottom Predictive Stats Bar (when Predictive Mode is active) */}
       {isPredictiveMode && forecastZones.length > 0 && (
-        <div className="absolute bottom-6 left-6 z-[1000] bg-white/95 dark:bg-[#0B0F0D]/95 backdrop-blur-xl border border-purple-300 dark:border-purple-500/40 rounded-xl p-3.5 max-w-md shadow-2xl space-y-2 text-slate-800 dark:text-gray-200">
-          <div className="flex items-center justify-between text-xs border-b border-gray-200 dark:border-white/10 pb-2">
-            <span className="font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1.5 uppercase tracking-wider">
-              <TrendingUp size={14} /> Forecast Horizon: Next {forecastHorizon} Hours
-            </span>
-            <span className="text-[10px] font-mono text-slate-500 dark:text-gray-400">Payday & Weekend Weighted</span>
-          </div>
+        <div className="absolute top-1/2 -translate-y-1/2 left-6 z-[1000] bg-white/95 dark:bg-[#0B0F0D]/95 backdrop-blur-xl border border-purple-300 dark:border-purple-500/40 rounded-xl p-3.5 max-w-md shadow-2xl space-y-2 text-slate-800 dark:text-gray-200">
+          <div className="flex flex-col gap-1 text-xs border-b border-gray-200 dark:border-white/10 pb-2">
+              <span className="font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1.5 uppercase tracking-wider">
+                <TrendingUp size={14} /> Forecast Horizon: Next {forecastHorizon} Hours
+              </span>
+              <span className="text-[10px] font-mono text-slate-500 dark:text-gray-400">Payday & Weekend Weighted</span>
+            </div>
 
-          <div className="grid grid-cols-3 gap-2 text-center pt-1 font-mono text-xs">
+          <div className="grid grid-cols-1 gap-2 text-left pt-1 font-mono text-xs">
             <div className="bg-slate-100 dark:bg-white/5 p-2 rounded border border-gray-200 dark:border-white/5">
               <span className="text-[9px] text-slate-500 dark:text-gray-400 block uppercase">Forecast Hotspots</span>
               <span className="text-purple-700 dark:text-purple-300 font-bold text-sm">{forecastZones.length} Zones</span>
             </div>
             <div className="bg-slate-100 dark:bg-white/5 p-2 rounded border border-gray-200 dark:border-white/5">
               <span className="text-[9px] text-slate-500 dark:text-gray-400 block uppercase">Projected Cashout</span>
-              <span className="text-amber-600 dark:text-amber-400 font-bold text-sm">
-                ₹{forecastZones.reduce((acc, z) => acc + z.forecasted_cashout_volume, 0).toLocaleString()}
+              <span className="text-amber-600 dark:text-amber-400 font-bold text-sm">Rs. {forecastZones.reduce((acc, z) => acc + z.forecasted_cashout_volume, 0).toLocaleString()}
               </span>
             </div>
             <div className="bg-slate-100 dark:bg-white/5 p-2 rounded border border-gray-200 dark:border-white/5">

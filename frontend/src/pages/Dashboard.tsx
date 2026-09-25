@@ -248,7 +248,7 @@ export function Dashboard() {
               <span className="kpi-label">ESTIMATED EXPOSURE</span>
               <ShieldCheck size={14} className="kpi-icon" />
             </div>
-            <strong className="kpi-val">â‚¹4.82 Cr</strong>
+            <strong className="kpi-val">Rs. 4.82 Cr</strong>
             <span className="kpi-trend positive"><ArrowUpRight size={12} /> Flagged Flow</span>
           </div>
 

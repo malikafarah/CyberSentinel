@@ -76,7 +76,7 @@ const DEFAULT_FALLBACK_EDGES: Edge[] = [
     source: '1',
     target: '2',
     animated: true,
-    label: 'TRANSFER (₹50,000)',
+    label: 'TRANSFER (Rs. 50,000)',
     labelStyle: { fill: '#334155', fontSize: 9, fontWeight: 700, fontFamily: 'monospace' },
     labelBgStyle: { fill: '#F1F5F9', fillOpacity: 0.95, rx: 4, ry: 4, stroke: '#CBD5E1', strokeWidth: 1 },
     style: { stroke: '#DC2626', strokeWidth: 1.5, opacity: 0.9 },

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -8,29 +8,27 @@ import {
   LayoutDashboard,
   LogOut,
   Map,
-  Settings,
-  UserCircle,
-  Zap,
+  Network,
   Radio,
+  Settings,
   ShieldCheck,
-  Sun,
-  Moon,
+  UserCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { TrafficSimulator } from '../components/TrafficSimulator';
 
 interface NavItem {
   to: string;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   badge?: string;
+  dot?: boolean;
 }
 
 const navItems: readonly NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/heatmap', label: 'Heatmap', icon: Map },
-  { to: '/alerts', label: 'Alerts', icon: Bell, badge: '3' },
+  { to: '/graph', label: 'Graph Workspace', icon: Network },
+  { to: '/alerts', label: 'Alerts', icon: Bell, dot: true },
   { to: '/complaints', label: 'Complaints', icon: FileText },
   { to: '/cases', label: 'Cases', icon: BriefcaseBusiness },
   { to: '/threat-fusion', label: 'Threat Fusion', icon: Radio },
@@ -39,10 +37,8 @@ const navItems: readonly NavItem[] = [
 
 export function DashboardLayout() {
   const { user: u, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const accountMenu = useRef<HTMLDetailsElement>(null);
-  const [simulatorOpen, setSimulatorOpen] = useState(false);
 
   const signOut = () => {
     logout();
@@ -70,7 +66,7 @@ export function DashboardLayout() {
 
   return (
     <div className="shell">
-      {/* Top Header Bar */}
+      {/* Top Header Bar with integrated Capsule Dock */}
       <header className="cyber-top-header" aria-label="Command Overview Header">
         <div className="header-left">
           <div className="nav-brand" onClick={() => navigate('/dashboard')} role="button" tabIndex={0}>
@@ -81,35 +77,56 @@ export function DashboardLayout() {
               CYBER<span className="brand-accent">SENTINEL</span>
             </span>
           </div>
+        </div>
 
-          <div className="header-divider" />
-
-          <div className="attack-surface-banner-tag">
-            <span className="live-dot" aria-hidden="true" />
-            <span>ATTACK SURFACE INTELLIGENCE &bull; OPERATIONAL MATRIX</span>
-          </div>
+        {/* Center: Navigation Dock (Capsule shape preserved, aligned with title) */}
+        <div className="cyber-dock-wrapper" role="navigation" aria-label="Dock Navigation">
+          <nav className="cyber-dock">
+            {navItems.map(({ to, label, icon: Icon, badge, dot }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) => `dock-item ${isActive ? 'active' : ''}`}
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-dock-pill"
+                        className="dock-active-pill"
+                        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                      >
+                        <div className="dock-active-glow" />
+                      </motion.div>
+                    )}
+                    <div className="dock-icon-box">
+                      <Icon size={16} />
+                      {badge && <span className="dock-badge">{badge}</span>}
+                      {dot && (
+                        <span
+                          className="dock-dot"
+                          style={{
+                            position: 'absolute',
+                            top: '-2px',
+                            right: '-4px',
+                            width: '7px',
+                            height: '7px',
+                            backgroundColor: '#ef4444',
+                            borderRadius: '50%',
+                            boxShadow: '0 0 6px rgba(239, 68, 68, 0.8)',
+                          }}
+                        />
+                      )}
+                    </div>
+                    <span className="dock-label">{label}</span>
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
         </div>
 
         <div className="header-right">
-          <button
-            className="topbar-btn theme-toggle-btn"
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-            <span className="theme-toggle-label">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-          </button>
-
-          <button
-            className="topbar-btn simulate"
-            onClick={() => setSimulatorOpen(true)}
-            title="Simulate Network Traffic"
-          >
-            <Zap size={14} />
-            <span className="simulate-label">Simulate Traffic</span>
-          </button>
-
           <details className="account-menu" ref={accountMenu}>
             <summary className="user-card-pill" aria-label="User Account Menu">
               <div className="avatar">{u?.name ? u.name.slice(0, 1).toUpperCase() : 'U'}</div>
@@ -119,7 +136,12 @@ export function DashboardLayout() {
               </div>
             </summary>
             <div className="account-popover">
-              <button onClick={() => { accountMenu.current && (accountMenu.current.open = false); navigate('/settings'); }}>
+              <button
+                onClick={() => {
+                  accountMenu.current && (accountMenu.current.open = false);
+                  navigate('/settings');
+                }}
+              >
                 <UserCircle size={15} /> Account / Settings
               </button>
               <button onClick={signOut} className="danger-action">
@@ -130,45 +152,10 @@ export function DashboardLayout() {
         </div>
       </header>
 
-      {/* Main Content Area — Full width with bottom clearance for dock */}
+      {/* Main Content Area */}
       <main className="app-content main-content-docked">
         <Outlet />
-        {simulatorOpen && (
-          <TrafficSimulator onClose={() => setSimulatorOpen(false)} />
-        )}
       </main>
-
-      {/* Floating Bottom Dock Navigation */}
-      <div className="cyber-dock-wrapper" role="navigation" aria-label="Dock Navigation">
-        <nav className="cyber-dock">
-          {navItems.map(({ to, label, icon: Icon, badge }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) => `dock-item ${isActive ? 'active' : ''}`}
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <motion.div
-                      layoutId="active-dock-pill"
-                      className="dock-active-pill"
-                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                    >
-                      <div className="dock-active-glow" />
-                    </motion.div>
-                  )}
-                  <div className="dock-icon-box">
-                    <Icon size={18} />
-                    {badge && <span className="dock-badge">{badge}</span>}
-                  </div>
-                  <span className="dock-label">{label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-      </div>
     </div>
   );
 }

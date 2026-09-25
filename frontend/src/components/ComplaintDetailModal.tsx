@@ -78,8 +78,7 @@ export default function ComplaintDetailModal({ complaintId, onClose }: Props) {
                   <span style={{ color: 'var(--text-subtle)', fontSize: '10px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Banknote size={12} /> Disputed Amount
                   </span>
-                  <strong style={{ display: 'block', marginTop: '2px', color: 'var(--accent)', fontFamily: 'JetBrains Mono', fontSize: '14px' }}>
-                    ₹{Number(complaint.amount).toLocaleString('en-IN')}
+                  <strong style={{ display: 'block', marginTop: '2px', color: 'var(--accent)', fontFamily: 'JetBrains Mono', fontSize: '14px' }}>Rs. {Number(complaint.amount).toLocaleString('en-IN')}
                   </strong>
                 </div>
               </div>

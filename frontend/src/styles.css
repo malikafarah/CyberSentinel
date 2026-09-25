@@ -148,22 +148,30 @@ a { color: inherit; text-decoration: none; }
   position: sticky;
   top: 0;
   z-index: 900;
-  height: 58px;
-  background: rgba(11, 12, 16, 0.88);
+  height: 64px;
+  background: rgba(11, 12, 16, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 28px;
+  padding: 0 24px;
   transition: all 0.2s ease;
 }
 
 html.light .cyber-top-header {
-  background: rgba(255, 255, 255, 0.88);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  height: 64px;
+  background: rgba(11, 12, 16, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  transition: all 0.2s ease;
 }
 
 .header-left, .header-right {
@@ -230,12 +238,16 @@ html.light .attack-surface-banner-tag {
 
 /* ── Floating Bottom Dock Navigation ───────────────────────────────────────── */
 .cyber-dock-wrapper {
-  position: fixed;
-  bottom: 22px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  pointer-events: none;
+  position: static;
+  transform: none;
+  z-index: auto;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  max-width: 900px;
+  margin: 0 16px;
 }
 
 .cyber-dock {
@@ -265,8 +277,8 @@ html.light .cyber-dock {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
+  gap: 2px;
+  padding: 4px 10px;
   color: var(--text-muted);
   text-decoration: none;
   border-radius: 20px;
@@ -346,8 +358,8 @@ html.light .cyber-dock {
 
 .main-content-docked {
   flex: 1;
-  min-height: calc(100vh - 58px);
-  padding-bottom: 96px;
+  min-height: calc(100vh - 64px);
+  padding-bottom: 0;
 }
 
 /* Navigation Links */
@@ -539,9 +551,9 @@ html.light .cyber-dock {
 /* ── Main Content Area ────────────────────────────────────────────────────── */
 .main-content, .app-content {
   flex: 1;
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
   min-width: 0;
-  padding-top: 86px;
+  padding-top: 0;
   padding-left: 0;
   padding-right: 0;
   background: var(--bg-page);
@@ -1998,7 +2010,20 @@ html.light .modal-backdrop {
 }
 
 @media (max-width: 768px) {
-  .cyber-top-header { padding: 0 14px; height: 54px; }
+  .cyber-top-header {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  height: 64px;
+  background: rgba(11, 12, 16, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  transition: all 0.2s ease;
+}
   .attack-surface-banner-tag { display: none; }
   .header-divider { display: none; }
   .theme-toggle-label { display: none; }
@@ -2007,9 +2032,33 @@ html.light .modal-backdrop {
   .page-header > div:last-child { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
   .bento-dashboard { padding: 14px 10px 80px; }
   .bento-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .cyber-dock-wrapper { bottom: 12px; max-width: calc(100vw - 16px); }
+  .cyber-dock-wrapper {
+  position: static;
+  transform: none;
+  z-index: auto;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  max-width: 900px;
+  margin: 0 16px;
+}
   .cyber-dock { padding: 6px 10px; gap: 4px; border-radius: 28px; }
-  .dock-item { padding: 5px 8px; }
+  .dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 10px;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: 20px;
+  transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
+}
   .dock-label { font-size: 9.5px; }
   .page { padding: 18px 14px 84px; }
   .alert-table-wrap { min-width: unset; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -2020,7 +2069,20 @@ html.light .modal-backdrop {
 }
 
 @media (max-width: 540px) {
-  .cyber-top-header { padding: 0 10px; height: 50px; }
+  .cyber-top-header {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  height: 64px;
+  background: rgba(11, 12, 16, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  transition: all 0.2s ease;
+}
   .nav-brand { font-size: 12px; gap: 6px; }
   .nav-brand .brand-name { font-size: 11.5px; }
   .page { padding: 14px 10px 84px; }
@@ -2040,7 +2102,20 @@ html.light .modal-backdrop {
   .radial-legend-row { justify-content: space-between; }
   .radial-legend-name { text-align: left; }
   .cyber-dock { padding: 4px 6px; gap: 2px; border-radius: 24px; }
-  .dock-item { padding: 4px 5px; }
+  .dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 10px;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: 20px;
+  transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
+}
   .dock-label { font-size: 7.5px; letter-spacing: -0.2px; }
   .dock-icon-box svg { width: 14px; height: 14px; }
   .detail-hero { display: block; }

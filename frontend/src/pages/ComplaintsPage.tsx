@@ -94,7 +94,7 @@ export default function ComplaintsPage() {
             <article className="kpi">
               <Banknote />
               <p>Reported Loss Value</p>
-              <strong>₹{totalAmount.toLocaleString('en-IN')}</strong>
+              <strong>Rs. {totalAmount.toLocaleString('en-IN')}</strong>
               <small>Disputed financial fraud sum</small>
             </article>
             <article className="kpi">
@@ -219,8 +219,7 @@ export default function ComplaintsPage() {
                         <td style={{ padding: '14px 16px', fontFamily: 'JetBrains Mono', color: 'var(--text-muted)' }}>
                           {c.account_number || '—'}
                         </td>
-                        <td style={{ padding: '14px 16px', fontFamily: 'JetBrains Mono', fontWeight: 700, color: 'var(--text-primary)' }}>
-                          ₹{Number(c.amount).toLocaleString('en-IN')}
+                        <td style={{ padding: '14px 16px', fontFamily: 'JetBrains Mono', fontWeight: 700, color: 'var(--text-primary)' }}>Rs. {Number(c.amount).toLocaleString('en-IN')}
                         </td>
                         <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                           <button
