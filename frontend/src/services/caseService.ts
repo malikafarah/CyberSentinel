@@ -1,6 +1,5 @@
 import { api } from './api';
 import type { Case } from '../types';
-import { cases as mockCases } from '../mocks/data';
 
 export const caseService = {
   /**
@@ -9,7 +8,7 @@ export const caseService = {
   getCases: async (): Promise<Case[]> => {
     try {
       const data = await api.get<Case[]>('/cases/');
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         return data.map((c: any) => ({
           ...c,
           id: c.id || (c._id ? String(c._id) : 'CYB-CASE'),
@@ -23,10 +22,11 @@ export const caseService = {
           timeline: Array.isArray(c.timeline) ? c.timeline : [],
         }));
       }
+      return [];
     } catch (err) {
-      console.warn('Failed to load /cases/ from backend, falling back to seed mock data:', err);
+      console.warn('Failed to load /cases/ from backend:', err);
+      return [];
     }
-    return mockCases;
   },
 
   /**
@@ -49,11 +49,10 @@ export const caseService = {
           timeline: Array.isArray(caseData.timeline) ? caseData.timeline : [],
         };
       }
-    } catch {
-      // Fallback
+    } catch (err) {
+      console.warn(`Failed to load case ${id}:`, err);
     }
-    const found = mockCases.find((c) => c.id === id);
-    return found;
+    return undefined;
   },
 
   /**
@@ -111,12 +110,9 @@ export const caseService = {
     try {
       const updated = await api.post<Case>(`/cases/${encodeURIComponent(caseId)}/notes`, { note });
       if (updated) return updated;
-    } catch {
-      const found = mockCases.find((c) => c.id === caseId);
-      if (found) {
-        found.notes.push(note);
-        return { ...found };
-      }
+    } catch (err) {
+      console.warn(`Failed to add note to case ${caseId}:`, err);
     }
+    return undefined;
   },
 };

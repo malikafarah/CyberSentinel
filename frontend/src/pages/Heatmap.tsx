@@ -209,20 +209,27 @@ export function Heatmap() {
     fetchForecast(hours);
   };
 
-  const runPrediction = async () => {
+    const runPrediction = async () => {
     setIsPredicting(true);
     setDispatchStatus(null);
     try {
-      const data = await api.post<{
-        interdiction_zones?: InterdictionZone[];
-        graph?: { nodes: GraphNode[] };
-      }>('/engine/run-intelligence');
-      setZones(data.interdiction_zones || []);
-      if (data.graph && Array.isArray(data.graph.nodes)) {
-        setGraphNodes(data.graph.nodes);
+      const data = await api.post<any>('/predictions/run', {
+        prediction_horizon_hours: 24,
+        include_graph_features: true,
+        max_candidates: 50
+      });
+      if (data && data.hotspots) {
+        const newNodes: GraphNode[] = data.hotspots.map((h: any) => ({
+          id: h.atm_id,
+          type: 'ATM',
+          riskScore: h.risk_score,
+          metadata: { lat: h.latitude, lng: h.longitude, name: h.atm_id }
+        }));
+        setGraphNodes(newNodes);
+        setZones([]);
       }
     } catch (error) {
-      console.error('Failed to run prediction pipeline:', error);
+      console.error('Failed to run ML prediction pipeline:', error);
     } finally {
       setIsPredicting(false);
     }

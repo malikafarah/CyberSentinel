@@ -36,6 +36,7 @@ function normalizePrediction(p: any): Prediction {
     confidence: p.confidence ? (p.confidence <= 1 ? Math.round(p.confidence * 100) : Math.round(p.confidence)) : 85,
     case_id: p.case_id,
     created_at: p.created_at,
+    predicted_withdrawal_volume: p.predicted_withdrawal_volume || 0,
   };
 }
 
@@ -48,60 +49,37 @@ export const authService = {
    * to fetch the authoritative, server-verified user profile from the database.
    */
   login: async (email: string, password: string, _role?: Role): Promise<User> => {
-    try {
-      const res = await api.post<TokenResponse>('/auth/login', {
-        email,
-        password,
-      });
+    const res = await api.post<TokenResponse>('/auth/login', {
+      email,
+      password,
+    });
 
-      if (res && res.access_token) {
-        localStorage.setItem('cs-token', res.access_token);
+    if (res && res.access_token) {
+      localStorage.setItem('cs-token', res.access_token);
 
-        // Fetch verified user profile directly from GET /auth/me
-        try {
-          const verifiedUser = await authService.getProfile();
-          return verifiedUser;
-        } catch {
-          // If /me fails temporarily, fallback to email parsing with passed role
-          const userName = email.split('@')[0]?.replace(/\./g, ' ') || 'Officer';
-          const formattedName = userName
-            .split(' ')
-            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ');
+      // Fetch verified user profile directly from GET /auth/me
+      try {
+        const verifiedUser = await authService.getProfile();
+        return verifiedUser;
+      } catch {
+        const userName = email.split('@')[0]?.replace(/\./g, ' ') || 'Officer';
+        const formattedName = userName
+          .split(' ')
+          .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
 
-          const fallbackUser: User = {
-            id: email,
-            name: formattedName,
-            email: email,
-            username: email,
-            role: _role || 'LEA Officer',
-          };
-          localStorage.setItem('cs-user', JSON.stringify(fallbackUser));
-          return fallbackUser;
-        }
+        const fallbackUser: User = {
+          id: email,
+          name: formattedName,
+          email: email,
+          username: email,
+          role: _role || 'LEA Officer',
+        };
+        localStorage.setItem('cs-user', JSON.stringify(fallbackUser));
+        return fallbackUser;
       }
-    } catch {
-      // Fallback for offline / demo environment
     }
-
-    const fallbackToken = 'demo-jwt-token-cybersentinel-2026';
-    const userName = email.split('@')[0]?.replace(/\./g, ' ') || 'Officer';
-    const formattedName = userName
-      .split(' ')
-      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-
-    const user: User = {
-      id: email,
-      name: formattedName,
-      email: email,
-      username: email,
-      role: _role || 'LEA Officer',
-    };
-
-    localStorage.setItem('cs-token', fallbackToken);
-    localStorage.setItem('cs-user', JSON.stringify(user));
-    return user;
+    throw new Error('Login failed: Invalid response');
   },
 
   /**

@@ -68,66 +68,8 @@ export const locationService = {
       const rawList = Array.isArray(res) ? res : (res?.data || []);
       return rawList.map(normalizeLocationRecord);
     } catch (err) {
-      console.warn('Failed to fetch /locations/, falling back to default seed nodes:', err);
-      // Resilient fallback for offline mode
-      return [
-        {
-          id: 'ATM-104',
-          name: 'MG Road Branch ATM',
-          type: 'ATM Terminal',
-          riskScore: 92,
-          risk_score: 92,
-          risk_level: 'CRITICAL',
-          region: 'Vijayawada',
-          coordinates: { lat: 16.5062, lng: 80.6480 },
-          latitude: 16.5062,
-          longitude: 80.6480,
-          location_id: 'ATM-104',
-          location_name: 'MG Road Branch ATM',
-        },
-        {
-          id: 'ATM-221',
-          name: 'Benz Circle ATM Cluster',
-          type: 'ATM Terminal',
-          riskScore: 88,
-          risk_score: 88,
-          risk_level: 'CRITICAL',
-          region: 'Vijayawada',
-          coordinates: { lat: 16.5044, lng: 80.6558 },
-          latitude: 16.5044,
-          longitude: 80.6558,
-          location_id: 'ATM-221',
-          location_name: 'Benz Circle ATM Cluster',
-        },
-        {
-          id: 'ATM-087',
-          name: 'KPHB Colony ATM',
-          type: 'ATM Terminal',
-          riskScore: 78,
-          risk_score: 78,
-          risk_level: 'HIGH',
-          region: 'Hyderabad',
-          coordinates: { lat: 17.4933, lng: 78.3914 },
-          latitude: 17.4933,
-          longitude: 78.3914,
-          location_id: 'ATM-087',
-          location_name: 'KPHB Colony ATM',
-        },
-        {
-          id: 'ATM-309',
-          name: 'Gachibowli Financial District ATM',
-          type: 'ATM Terminal',
-          riskScore: 55,
-          risk_score: 55,
-          risk_level: 'MEDIUM',
-          region: 'Hyderabad',
-          coordinates: { lat: 17.4401, lng: 78.3489 },
-          latitude: 17.4401,
-          longitude: 78.3489,
-          location_id: 'ATM-309',
-          location_name: 'Gachibowli Financial District ATM',
-        },
-      ];
+      console.warn('Failed to fetch /locations/:', err);
+      return [];
     }
   },
 

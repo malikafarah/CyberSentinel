@@ -12,34 +12,6 @@ router = APIRouter(prefix="/alerts", tags=["Alerts"])
 
 # Prototype seed alerts — clearly labelled SIMULATED. Only injected when the
 # alerts collection is empty AND no real prediction runs have been completed.
-# Run POST /api/v1/predictions/run to replace these with real ML-driven alerts.
-_PROTOTYPE_SEED_ALERTS = [
-    {
-        "id": "ALT-PROTO-001",
-        "alert_type": "PREDICTED_CASH_OUT_HOTSPOT",
-        "risk_score": 87.4, "riskScore": 87.4, "severity": "CRITICAL",
-        "status": "NEW",
-        "location": "ATM_DEL_0001 — Delhi [SIMULATED PROTOTYPE]",
-        "city": "Delhi", "state": "Delhi",
-        "crime_category": "Predicted ATM Cash-Out Hotspot [SIMULATED — run /predictions/run to replace]",
-        "reason_codes": ["SIMULATED_SEED_DATA"],
-        "top_factors": [], "created_at": "2026-09-20T10:00:00Z",
-        "_is_prototype_seed": True,
-    },
-    {
-        "id": "ALT-PROTO-002",
-        "alert_type": "PREDICTED_CASH_OUT_HOTSPOT",
-        "risk_score": 74.1, "riskScore": 74.1, "severity": "HIGH",
-        "status": "NEW",
-        "location": "ATM_ALW_0001 — Alwar, Rajasthan [SIMULATED PROTOTYPE]",
-        "city": "Alwar", "state": "Rajasthan",
-        "crime_category": "Predicted ATM Cash-Out Hotspot [SIMULATED — run /predictions/run to replace]",
-        "reason_codes": ["SIMULATED_SEED_DATA"],
-        "top_factors": [], "created_at": "2026-09-20T10:00:00Z",
-        "_is_prototype_seed": True,
-    },
-]
-
 def get_db(request: Request):
     if hasattr(request.app, "mongodb") and request.app.mongodb is not None:
         return request.app.mongodb
@@ -50,18 +22,9 @@ def build_alert_query(alert_id: str):
         return {"$or": [{"_id": ObjectId(alert_id)}, {"id": alert_id}]}
     return {"id": alert_id}
 
-async def seed_alerts_if_empty(db):
-    """Seed prototype alerts only when collection is empty and no prediction runs exist."""
-    alert_count = await db["alerts"].count_documents({})
-    if alert_count == 0:
-        run_count = await db["prediction_runs"].count_documents({"status": "COMPLETED"})
-        if run_count == 0:
-            await db["alerts"].insert_many(_PROTOTYPE_SEED_ALERTS)
-
 @router.get("/")
 async def get_alerts(request: Request, limit: int = 25):
     db = get_db(request)
-    await seed_alerts_if_empty(db)
     alerts = await db["alerts"].find().sort("created_at", -1).to_list(length=min(limit, 50))
     for a in alerts:
         if "_id" in a:
@@ -84,7 +47,6 @@ async def get_alerts(request: Request, limit: int = 25):
 @router.patch("/{alert_id}/acknowledge")
 async def acknowledge_alert(alert_id: str, request: Request):
     db = get_db(request)
-    await seed_alerts_if_empty(db)
     now_iso = datetime.now(timezone.utc).isoformat()
     
     result = await db["alerts"].find_one_and_update(

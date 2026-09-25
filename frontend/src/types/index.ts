@@ -45,6 +45,7 @@ export interface Prediction {
   confidence: number;
   case_id?: string;
   created_at?: string;
+  predicted_withdrawal_volume?: number;
 }
 
 export interface Complaint {

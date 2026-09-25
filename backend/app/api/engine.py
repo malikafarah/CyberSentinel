@@ -421,8 +421,8 @@ async def _pipeline_generator(db):
         try:
             db_atms = await db["atms"].find(
                 {"$and": [
-                    {"lat": {"$exists": True, "$ne": None}},
-                    {"lng": {"$exists": True, "$ne": None}}
+                    {"latitude": {"$exists": True, "$ne": None}},
+                    {"longitude": {"$exists": True, "$ne": None}}
                 ]}
             ).to_list(length=500)
             for atm_doc in db_atms:
@@ -432,8 +432,8 @@ async def _pipeline_generator(db):
                         candidate_atms.append({
                             "id": atm_id,
                             "riskScore": float(atm_doc.get("riskScore", atm_doc.get("risk_score", 50))),
-                            "lat": float(atm_doc["lat"]),
-                            "lng": float(atm_doc["lng"])
+                            "lat": float(atm_doc["latitude"]),
+                            "lng": float(atm_doc["longitude"])
                         })
                     except (TypeError, ValueError):
                         continue  # Skip ATMs with non-numeric coordinates
@@ -928,8 +928,8 @@ async def run_intelligence_pipeline(request: Request = None):
             try:
                 db_atms = await db["atms"].find(
                     {"$and": [
-                        {"lat": {"$exists": True, "$ne": None}},
-                        {"lng": {"$exists": True, "$ne": None}}
+                        {"latitude": {"$exists": True, "$ne": None}},
+                        {"longitude": {"$exists": True, "$ne": None}}
                     ]}
                 ).to_list(length=500)
                 for atm_doc in db_atms:
@@ -939,8 +939,8 @@ async def run_intelligence_pipeline(request: Request = None):
                             candidate_atms.append({
                                 "id": atm_id_val,
                                 "riskScore": float(atm_doc.get("riskScore", atm_doc.get("risk_score", 50))),
-                                "lat": float(atm_doc["lat"]),
-                                "lng": float(atm_doc["lng"])
+                                "lat": float(atm_doc["latitude"]),
+                                "lng": float(atm_doc["longitude"])
                             })
                         except (TypeError, ValueError):
                             continue
@@ -1364,7 +1364,7 @@ async def simulate_fraud_traffic(payload: SimulateTrafficRequest, request: Reque
     try:
         db_victims = await db["nodes"].find({"type": "VICTIM"}).to_list(length=20)
         db_mules = await db["nodes"].find({"type": "MULE"}).to_list(length=20)
-        db_atms = await db["nodes"].find({"type": "ATM"}).to_list(length=20)
+        db_atms = await db["atms"].find().to_list(length=20)
     except Exception:
         db_victims, db_mules, db_atms = [], [], []
 

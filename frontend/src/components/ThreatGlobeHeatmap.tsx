@@ -32,48 +32,6 @@ function weightToColor(weight: number): string {
   return '#00FF66'; // Neon Green (LOW / NORMAL)
 }
 
-function generateDefaultGlobePoints(): GlobePoint[] {
-  const hubSeeds = [
-    { lat: 16.5062, lng: 80.6480, weight: 96, label: 'Vijayawada Epicenter' },
-    { lat: 12.9716, lng: 77.5946, weight: 92, label: 'Bengaluru Core Cluster' },
-    { lat: 19.0760, lng: 72.8777, weight: 90, label: 'Mumbai Metro Vault' },
-    { lat: 28.6139, lng: 77.2090, weight: 94, label: 'NCR Financial Matrix' },
-    { lat: 13.0827, lng: 80.2707, weight: 68, label: 'Chennai South Grid' },
-    { lat: 22.5726, lng: 88.3639, weight: 75, label: 'Kolkata East Terminal' },
-    { lat: 17.3850, lng: 78.4867, weight: 84, label: 'Hyderabad Cyberabad Matrix' },
-    { lat: 23.0225, lng: 72.5714, weight: 62, label: 'Ahmedabad Industrial Zone' },
-    { lat: 1.3521, lng: 103.8198, weight: 72, label: 'Singapore APAC Relay' },
-    { lat: 25.2048, lng: 55.2708, weight: 86, label: 'Dubai Trade Matrix' },
-    { lat: 51.5074, lng: -0.1278, weight: 80, label: 'London Gateway' },
-    { lat: 40.7128, lng: -74.0060, weight: 91, label: 'New York Financial Node' },
-    { lat: 35.6762, lng: 139.6503, weight: 65, label: 'Tokyo Global Hub' },
-    { lat: -33.8688, lng: 151.2093, weight: 58, label: 'Sydney Endpoint' },
-  ];
-
-  const scatter: GlobePoint[] = [];
-  hubSeeds.forEach((hub) => {
-    scatter.push(hub);
-    for (let i = 0; i < 18; i++) {
-      scatter.push({
-        lat: Number((hub.lat + (Math.random() - 0.5) * 6).toFixed(4)),
-        lng: Number((hub.lng + (Math.random() - 0.5) * 6).toFixed(4)),
-        weight: Math.max(20, Math.min(100, Math.round(hub.weight + (Math.random() - 0.5) * 30))),
-        label: `${hub.label} - Terminal #${100 + i}`,
-      });
-    }
-  });
-
-  for (let i = 0; i < 100; i++) {
-    scatter.push({
-      lat: Number(((Math.random() - 0.5) * 120).toFixed(4)),
-      lng: Number(((Math.random() - 0.5) * 340).toFixed(4)),
-      weight: Math.floor(Math.random() * 75) + 15,
-      label: `Surveillance Node #${2000 + i}`,
-    });
-  }
-
-  return scatter;
-}
 
 export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeHeatmapProps>(({
   points,
@@ -105,7 +63,7 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
     },
   }));
 
-  // Validate points or fallback to rich mock data
+  // Validate points
   const globeData: GlobePoint[] = useMemo(() => {
     if (points && points.length > 0) {
       const valid: GlobePoint[] = [];
@@ -124,9 +82,9 @@ export const ThreatGlobeHeatmap = forwardRef<ThreatGlobeHeatmapRef, ThreatGlobeH
           });
         }
       });
-      if (valid.length > 0) return valid;
+      return valid;
     }
-    return generateDefaultGlobePoints();
+    return [];
   }, [points]);
 
   // Responsive dynamic measurement

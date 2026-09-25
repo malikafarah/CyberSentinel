@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Banknote,
@@ -37,6 +37,7 @@ export function Dashboard() {
   const [locs, setLocs] = useState<LocationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPredicting, setIsPredicting] = useState(false);
   const [showConsole, setShowConsole] = useState(false);
   const [timeRange, setTimeRange] = useState('Next 24h Window');
   const nav = useNavigate();
@@ -59,6 +60,20 @@ export function Dashboard() {
       setError(err?.message || 'Failed to load predictive intelligence from the backend server.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runLivePrediction = async () => {
+    setIsPredicting(true);
+    setError(null);
+    try {
+      const newPredictions = await predictionService.triggerPredictLive();
+      setP(newPredictions);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || 'Failed to run prediction pipeline. Check backend connection and ATM data.');
+    } finally {
+      setIsPredicting(false);
     }
   };
 
@@ -91,25 +106,16 @@ export function Dashboard() {
   const highCount = p.filter((x) => x.risk_level === 'HIGH').length || 38;
   const medCount = p.filter((x) => x.risk_level === 'MEDIUM').length || 52;
 
-  // Hourly flagged withdrawal attempts dataset (INR in Lakhs / attempts)
-  const withdrawalVolumeData = [
-    { hour: '00:00', volume: 42, amount: '₹18.5L' },
-    { hour: '02:00', volume: 68, amount: '₹31.2L' },
-    { hour: '04:00', volume: 95, amount: '₹48.0L' },
-    { hour: '06:00', volume: 34, amount: '₹14.0L' },
-    { hour: '08:00', volume: 88, amount: '₹41.5L' },
-    { hour: '10:00', volume: 145, amount: '₹72.8L' },
-    { hour: '12:00', volume: 165, amount: '₹84.2L' },
-    { hour: '14:00', volume: 120, amount: '₹59.0L' },
-    { hour: '16:00', volume: 135, amount: '₹67.4L' },
-    { hour: '18:00', volume: 178, amount: '₹92.1L' },
-    { hour: '20:00', volume: 150, amount: '₹76.5L' },
-    { hour: '22:00', volume: 110, amount: '₹52.0L' },
-  ];
+  // Dynamic prediction graph dataset
+  const withdrawalVolumeData = p.slice(0, 10).map((pred) => ({
+    location: pred.location_id,
+    volume: pred.predicted_withdrawal_volume || 0,
+    amount: 'INR ' + (pred.predicted_withdrawal_volume || 0)
+  }));
 
   return (
     <div className="page bento-dashboard">
-      {/* ── Top SIH26184 Cash Withdrawal Forecaster Banner ───────────────────── */}
+      {/* â”€â”€ Top SIH26184 Cash Withdrawal Forecaster Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="bento-banner">
         <div className="bento-banner-left">
           <p className="eyebrow">
@@ -119,6 +125,14 @@ export function Dashboard() {
         </div>
 
         <div className="bento-banner-actions">
+          <button 
+            className={`primary-btn ${isPredicting ? 'loading' : ''}`}
+            onClick={runLivePrediction}
+            disabled={isPredicting}
+            style={{ marginRight: '12px' }}
+          >
+            {isPredicting ? 'RUNNING PIPELINE...' : 'RUN LIVE PREDICTION'}
+          </button>
           <div className="timeframe-select-wrap">
             <select
               value={timeRange}
@@ -157,7 +171,7 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* ── Bento Grid Row 1: Node Distribution, Cash-Out Risk Dial, & Financial KPIs ── */}
+      {/* â”€â”€ Bento Grid Row 1: Node Distribution, Cash-Out Risk Dial, & Financial KPIs â”€â”€ */}
       <div className="bento-grid-row-1">
         {/* 1. ATM Terminal & Cash Point Distribution */}
         <div className="bento-card asset-distribution-card">
@@ -234,7 +248,7 @@ export function Dashboard() {
               <span className="kpi-label">ESTIMATED EXPOSURE</span>
               <ShieldCheck size={14} className="kpi-icon" />
             </div>
-            <strong className="kpi-val">₹4.82 Cr</strong>
+            <strong className="kpi-val">â‚¹4.82 Cr</strong>
             <span className="kpi-trend positive"><ArrowUpRight size={12} /> Flagged Flow</span>
           </div>
 
@@ -249,7 +263,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ── Bento Grid Row 2: ATM Threat Classification & GIS Interdiction Map ── */}
+      {/* â”€â”€ Bento Grid Row 2: ATM Threat Classification & GIS Interdiction Map â”€â”€ */}
       <div className="bento-grid-row-2">
         {/* ATM Threat Severity & Interdiction Readiness */}
         <div className="bento-card severity-card">
@@ -346,7 +360,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ── Bento Grid Row 3: LEA Response Queue & Flagged Transaction Velocity ── */}
+      {/* â”€â”€ Bento Grid Row 3: LEA Response Queue & Flagged Transaction Velocity â”€â”€ */}
       <div className="bento-grid-row-3">
         {/* LEA Response Queue & Terminal Alerts */}
         <div className="bento-card findings-card">
@@ -364,7 +378,7 @@ export function Dashboard() {
             {a.slice(0, 4).map((x, idx) => {
               const pp = p.find((q) => q.id === x.prediction_id);
               const nodeLabel = pp ? `Node ${pp.location_id}` : `Terminal ATM-${101 + idx * 3}`;
-              const regionText = pp ? `${pp.location_name} • ${pp.region}` : idx === 0 ? 'Vijayawada • Andhra Pradesh' : idx === 1 ? 'Bengaluru • Karnataka' : idx === 2 ? 'Delhi NCR • Central Zone' : 'Mumbai • Western Zone';
+              const regionText = pp ? `${pp.location_name} â€¢ ${pp.region}` : idx === 0 ? 'Vijayawada â€¢ Andhra Pradesh' : idx === 1 ? 'Bengaluru â€¢ Karnataka' : idx === 2 ? 'Delhi NCR â€¢ Central Zone' : 'Mumbai â€¢ Western Zone';
               const timeFormatted = idx === 0 ? '09:25 AM' : idx === 1 ? '09:33 AM' : idx === 2 ? '09:43 PM' : '10:12 AM';
 
               return (
@@ -379,7 +393,7 @@ export function Dashboard() {
                       {nodeLabel} &bull; {x.severity === 'CRITICAL' ? 'Predicted Imminent Cash-Out' : 'Suspicious Velocity Spike'}
                     </strong>
                     <p className="finding-meta">
-                      {regionText} {pp ? `• Score ${pp.risk_score}%` : ''}
+                      {regionText} {pp ? `â€¢ Score ${pp.risk_score}%` : ''}
                     </p>
                   </div>
                   <RiskBadge level={x.severity} />
@@ -393,10 +407,10 @@ export function Dashboard() {
         <div className="bento-card attack-volume-card">
           <div className="card-header">
             <div>
-              <h3>HOURLY FLAGGED CASH WITHDRAWAL ATTEMPTS (INR)</h3>
-              <p className="card-subtitle">Peak Withdrawal Velocity &amp; Anomaly Signals &bull; {timeRange}</p>
+              <h3>PREDICTED CASH WITHDRAWAL VOLUME BY HOTSPOT</h3>
+              <p className="card-subtitle">Predicted Volume Output from ML Engine &bull; {timeRange}</p>
             </div>
-            <span className="data-note">Peak: ₹92.1 Lakhs / 178 Attempts</span>
+            <span className="data-note">Peak: â‚¹92.1 Lakhs / 178 Attempts</span>
           </div>
 
           <div className="volume-chart-wrap">
@@ -409,7 +423,7 @@ export function Dashboard() {
                   </linearGradient>
                 </defs>
                 <XAxis
-                  dataKey="hour"
+                  dataKey="location"
                   stroke="var(--border)"
                   tick={{ fill: 'var(--text-muted)', fontSize: 10, fontFamily: 'var(--font-mono)' }}
                   axisLine={{ stroke: 'var(--border)' }}
@@ -433,7 +447,7 @@ export function Dashboard() {
                   }}
                   itemStyle={{ color: 'var(--accent)' }}
                   formatter={(val: any, _name: any, item: any) => [`${val} Attempts (${item.payload.amount})`, 'Flagged Cash Withdrawals']}
-                  labelFormatter={(lbl) => `Time Window: ${lbl}`}
+                  labelFormatter={(lbl) => `Hotspot ID: ${lbl}`}
                 />
                 <Bar
                   dataKey="volume"

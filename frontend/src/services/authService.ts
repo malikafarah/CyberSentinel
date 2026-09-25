@@ -54,62 +54,20 @@ export const authService = {
    * Performs authentication against /auth/login and immediately calls getMe()
    */
   login: async (email: string, password: string, _role?: Role): Promise<User> => {
-    try {
-      const res = await api.post<TokenResponse>('/auth/login', {
-        email,
-        password,
-      });
+    const res = await api.post<TokenResponse>('/auth/login', {
+      email,
+      password,
+    });
 
-      if (res && res.access_token) {
-        localStorage.setItem('token', res.access_token);
-        localStorage.setItem('cs-token', res.access_token);
+    if (res && res.access_token) {
+      localStorage.setItem('token', res.access_token);
+      localStorage.setItem('cs-token', res.access_token);
 
-        try {
-          const verifiedUser = await authService.getMe();
-          return verifiedUser;
-        } catch {
-          const userName = email.split('@')[0]?.replace(/\./g, ' ') || 'Officer';
-          const formattedName = userName
-            .split(' ')
-            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ');
-
-          const fallbackUser: User = {
-            id: email,
-            name: formattedName,
-            email: email,
-            username: email,
-            role: _role || 'LEA Officer',
-          };
-          localStorage.setItem('user', JSON.stringify(fallbackUser));
-          localStorage.setItem('cs-user', JSON.stringify(fallbackUser));
-          return fallbackUser;
-        }
-      }
-    } catch {
-      // Demo environment fallback
+      const verifiedUser = await authService.getMe();
+      return verifiedUser;
     }
-
-    const fallbackToken = 'demo-jwt-token-cybersentinel-2026';
-    const userName = email.split('@')[0]?.replace(/\./g, ' ') || 'Officer';
-    const formattedName = userName
-      .split(' ')
-      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-
-    const user: User = {
-      id: email,
-      name: formattedName,
-      email: email,
-      username: email,
-      role: _role || 'LEA Officer',
-    };
-
-    localStorage.setItem('token', fallbackToken);
-    localStorage.setItem('cs-token', fallbackToken);
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('cs-user', JSON.stringify(user));
-    return user;
+    
+    throw new Error('Login failed: Invalid response');
   },
 
   current: (): User | null => {
