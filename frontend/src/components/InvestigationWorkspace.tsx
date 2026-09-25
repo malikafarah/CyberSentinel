@@ -506,10 +506,10 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#0F1210] text-slate-900 dark:text-gray-200 font-sans overflow-hidden">
+    <div className="flex flex-col min-h-screen lg:h-screen bg-slate-50 dark:bg-[#0F1210] text-slate-900 dark:text-gray-200 font-sans overflow-x-hidden">
       {/* 1. Workspace Header */}
-      <header className="px-6 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.02] flex justify-between items-center z-20 shrink-0">
-        <div className="flex items-center gap-4">
+      <header className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.02] flex flex-wrap gap-2.5 justify-between items-center z-20 shrink-0">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <GitGraph size={18} className="text-emerald-600 dark:text-[#48D878]" />
             <h1 className="text-sm font-semibold tracking-wide text-slate-900 dark:text-white uppercase">CASE #{caseId}</h1>
@@ -524,59 +524,59 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           {activeChain && (
             <button
               onClick={handleResetHighlighting}
-              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-mono text-xs font-bold rounded-md border border-red-500/40 transition-all uppercase tracking-widest cursor-pointer flex items-center gap-1.5"
+              className="px-2.5 sm:px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-mono text-xs font-bold rounded-md border border-red-500/40 transition-all uppercase tracking-widest cursor-pointer flex items-center gap-1.5"
             >
-              <RotateCcw size={12} /> Reset Trail Highlight
+              <RotateCcw size={12} /> Reset Trail
             </button>
           )}
 
           <button
             onClick={() => setRightPanelTab((prev) => (prev === 'intake' ? 'inspection' : 'intake'))}
-            className={`px-3.5 py-2 font-mono text-xs font-bold rounded-md border transition-all uppercase tracking-widest cursor-pointer flex items-center gap-2 ${
+            className={`px-3 py-1.5 sm:py-2 font-mono text-xs font-bold rounded-md border transition-all uppercase tracking-widest cursor-pointer flex items-center gap-2 ${
               rightPanelTab === 'intake'
                 ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
                 : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-300 border-gray-200 dark:border-white/10'
             }`}
           >
-            <Cpu size={13} /> {rightPanelTab === 'intake' ? 'Viewing NCRP Intake' : 'NCRP Complaint Intake'}
+            <Cpu size={13} /> {rightPanelTab === 'intake' ? 'Viewing NCRP' : 'NCRP Intake'}
           </button>
 
           <button
             onClick={() => setIsLiveStreaming((prev) => !prev)}
-            className={`px-3.5 py-2 font-mono text-xs font-bold rounded-md border transition-all uppercase tracking-widest cursor-pointer flex items-center gap-2 ${
+            className={`px-3 py-1.5 sm:py-2 font-mono text-xs font-bold rounded-md border transition-all uppercase tracking-widest cursor-pointer flex items-center gap-2 ${
               isLiveStreaming
                 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
                 : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 border-gray-200 dark:border-white/10'
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${isLiveStreaming ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`} />
-            {isLiveStreaming ? 'STREAM: LIVE 🟢' : 'STREAM: PAUSED ⏸'}
+            {isLiveStreaming ? 'LIVE 🟢' : 'PAUSED ⏸'}
           </button>
 
           <button
             onClick={() => setLayoutDirection((prev) => (prev === 'TB' ? 'LR' : 'TB'))}
-            className="px-3.5 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-300 font-mono text-xs font-bold rounded-md border border-gray-200 dark:border-white/15 transition-all uppercase tracking-widest cursor-pointer"
+            className="px-3 py-1.5 sm:py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-300 font-mono text-xs font-bold rounded-md border border-gray-200 dark:border-white/15 transition-all uppercase tracking-widest cursor-pointer"
           >
-            LAYOUT: {layoutDirection === 'TB' ? 'TOP-DOWN ⬇' : 'LEFT-RIGHT ➡'}
+            {layoutDirection === 'TB' ? '⬇ TB' : '➡ LR'}
           </button>
 
           <button
             onClick={() => navigate('/heatmap')}
-            className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold rounded-md border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase tracking-widest cursor-pointer font-semibold"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold rounded-md border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase tracking-widest cursor-pointer font-semibold"
           >
-            OPEN GIS HEATMAP
+            HEATMAP
           </button>
         </div>
       </header>
 
-      {/* 2. Main Intelligence Area (75% height) */}
-      <div className="flex flex-grow relative h-[75vh] overflow-hidden">
+      {/* 2. Main Intelligence Area (Responsive flex-col on mobile, flex-row on desktop) */}
+      <div className="flex flex-col lg:flex-row flex-grow relative min-h-[75vh] lg:h-[75vh] overflow-y-auto lg:overflow-hidden">
         {/* CENTER: The Visualizer Canvas */}
-        <div className="flex-grow relative">
+        <div className="flex-grow relative min-h-[420px] lg:min-h-0 h-[50vh] lg:h-auto">
           {isLoading && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/40 dark:bg-[#0F1210]/80">
               <div className="text-[11px] text-emerald-600 dark:text-[#48D878] tracking-widest uppercase font-mono animate-pulse">
@@ -600,23 +600,23 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
           </ReactFlow>
 
           {/* Graph Legend Overlay */}
-          <div className="absolute bottom-4 left-4 z-10 bg-white/95 dark:bg-[#0F1210]/90 backdrop-blur-md p-3.5 rounded-lg border border-slate-200 dark:border-white/10 text-[9.5px] font-mono space-y-1.5 shadow-lg text-slate-800 dark:text-gray-300">
+          <div className="absolute bottom-4 left-4 z-10 bg-white/95 dark:bg-[#0F1210]/90 backdrop-blur-md p-3.5 rounded-lg border border-slate-200 dark:border-white/10 text-[9.5px] font-mono space-y-1.5 shadow-lg text-slate-800 dark:text-gray-300 max-w-[200px] sm:max-w-none">
             <div className="text-slate-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1.5 font-sans text-[10px]">Graph Legend</div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#F0FDF4] border border-[#86EFAC]" />
-              <span className="text-slate-700 dark:text-gray-300">Victim Account (Origin)</span>
+              <span className="text-slate-700 dark:text-gray-300">Victim Account</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#FFFBEB] border border-[#FCD34D]" />
-              <span className="text-slate-700 dark:text-gray-300">Mule Account (Layering)</span>
+              <span className="text-slate-700 dark:text-gray-300">Mule Account</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#ECFEFF] border border-[#A5F3FC]" />
-              <span className="text-slate-700 dark:text-gray-300">Frozen / Isolated Mule</span>
+              <span className="text-slate-700 dark:text-gray-300">Frozen Mule</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#FEF2F2] border border-[#FECACA]" />
-              <span className="text-slate-700 dark:text-gray-300">ATM Terminal (Cash-out)</span>
+              <span className="text-slate-700 dark:text-gray-300">ATM Terminal</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#FAF5FF] border border-[#E9D5FF]" />
@@ -626,7 +626,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
         </div>
 
         {/* FAR RIGHT: Entity Inspection or NCRP Complaint Intake Panel */}
-        <aside className="w-96 border-l border-gray-200 dark:border-white/10 bg-white/95 dark:bg-[#0B0F0D]/95 backdrop-blur-3xl p-5 flex flex-col z-20 shrink-0 overflow-y-auto text-slate-900 dark:text-gray-200">
+        <aside className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-white/10 bg-white/95 dark:bg-[#0B0F0D]/95 backdrop-blur-3xl p-4 sm:p-5 flex flex-col z-20 shrink-0 overflow-y-auto text-slate-900 dark:text-gray-200">
           {/* Panel Selector Tabs */}
           <div className="flex border-b border-gray-200 dark:border-white/10 mb-4 pb-2 justify-between items-center">
             <div className="flex gap-2">
@@ -652,6 +652,7 @@ export default function InvestigationWorkspace({ initialNodes, initialEdges }: I
               </button>
             </div>
           </div>
+
 
           {/* TAB 1: Inspection & Interdiction Action */}
           {rightPanelTab === 'inspection' ? (

@@ -53,7 +53,7 @@ export function ThreatFusion() {
         </span>
       </PageHeader>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         {Object.entries(SOURCE_META).map(([key, meta]) => {
           const count = signals.filter(s => s.source === key || s.source.includes(key.split('_')[0])).length;
           return (
@@ -69,7 +69,7 @@ export function ThreatFusion() {
         })}
       </div>
 
-      <section className="panel p-6 sm:p-7">
+      <section className="panel p-4 sm:p-7">
         <div className="mb-5 pb-2">
           <p className="eyebrow">REAL-TIME FUSION LOG</p>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">National Agency Signals</h2>
@@ -84,23 +84,33 @@ export function ThreatFusion() {
             {signals.map((sig, idx) => {
               const meta = SOURCE_META[sig.source] || SOURCE_META['NCRP'];
               return (
-                <article key={idx} className="flex items-center gap-4 p-3.5 rounded-lg bg-slate-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 hover:border-emerald-500/40 transition-colors">
-                  <div className={`flex items-center gap-2 px-2.5 py-1 rounded border text-xs font-bold font-mono ${meta?.color || 'text-slate-600 dark:text-gray-400 border-gray-300 dark:border-gray-500/40 bg-slate-100 dark:bg-gray-500/10'}`}>
-                    {meta?.icon}
-                    <span>{sig.source}</span>
+                <article key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-lg bg-slate-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 hover:border-emerald-500/40 transition-colors">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className={`flex items-center gap-2 px-2.5 py-1 rounded border text-xs font-bold font-mono ${meta?.color || 'text-slate-600 dark:text-gray-400 border-gray-300 dark:border-gray-500/40 bg-slate-100 dark:bg-gray-500/10'}`}>
+                      {meta?.icon}
+                      <span>{sig.source}</span>
+                    </div>
+                    <div className="flex-grow min-w-0 sm:hidden">
+                      <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">{sig.identifier}</div>
+                    </div>
                   </div>
-                  <div className="flex-grow min-w-0">
+                  <div className="hidden sm:block flex-grow min-w-0">
                     <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">{sig.identifier}</div>
                     <div className="text-[10px] text-slate-500 dark:text-gray-500 truncate">{sig.reason}</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-[9px] text-slate-500 dark:text-gray-500 uppercase">Risk Delta</div>
-                    <div className="text-sm font-mono font-bold text-red-500 dark:text-red-400">
-                      {sig.input_risk.toFixed(0)} → {sig.resulting_risk.toFixed(0)}
-                    </div>
+                  <div className="sm:hidden text-[10px] text-slate-500 dark:text-gray-500 w-full">
+                    {sig.reason}
                   </div>
-                  <div className="text-[10px] text-slate-500 dark:text-gray-500 font-mono text-right whitespace-nowrap">
-                    {new Date(sig.timestamp).toLocaleTimeString('en-IN')}
+                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200/50 dark:border-white/5">
+                    <div className="text-left sm:text-center">
+                      <div className="text-[9px] text-slate-500 dark:text-gray-500 uppercase">Risk Delta</div>
+                      <div className="text-sm font-mono font-bold text-red-500 dark:text-red-400">
+                        {sig.input_risk.toFixed(0)} → {sig.resulting_risk.toFixed(0)}
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-gray-500 font-mono text-right whitespace-nowrap">
+                      {new Date(sig.timestamp).toLocaleTimeString('en-IN')}
+                    </div>
                   </div>
                 </article>
               );

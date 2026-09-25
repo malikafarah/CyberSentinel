@@ -1975,54 +1975,76 @@ html.light .modal-backdrop {
 @keyframes shimmer    { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes slide-down { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
-/* ── Responsive ───────────────────────────────────────────────────────────── */
-@media (max-width: 1200px) {
+/* ── Responsive Architecture ─────────────────────────────────────────────────── */
+@media (max-width: 1280px) {
   .bento-grid-row-1 { grid-template-columns: 1fr 1fr; }
   .bento-kpi-grid { grid-column: span 2; }
   .bento-grid-row-2, .bento-grid-row-3 { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 1024px) {
-  .nav-brand .brand-name { font-size: 12px; }
+  .nav-brand .brand-name { font-size: 12.5px; }
   .simulate-label { display: none; }
   .user-info-text { display: none; }
-  .user-card-pill { padding: 3px; }
+  .user-card-pill { padding: 4px; }
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid, .heatmap-layout { grid-template-columns: 1fr; }
+  .detail-grid, .case-grid { grid-template-columns: 1fr; }
   .classification-badge { display: none; }
-  .bento-banner { flex-direction: column; align-items: flex-start; }
-  .bento-banner-actions { width: 100%; justify-content: space-between; }
+  .bento-banner { flex-direction: column; align-items: stretch; gap: 14px; }
+  .bento-banner-actions { width: 100%; justify-content: flex-start; gap: 8px; }
   .bento-grid-row-1 { grid-template-columns: 1fr; }
-  .bento-kpi-grid { grid-column: span 1; }
+  .bento-kpi-grid { grid-column: span 1; grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .cyber-top-header { padding: 0 14px; }
+  .cyber-top-header { padding: 0 14px; height: 54px; }
   .attack-surface-banner-tag { display: none; }
+  .header-divider { display: none; }
+  .theme-toggle-label { display: none; }
+  .topbar-btn { padding: 6px; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .page-header > div:last-child { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+  .bento-dashboard { padding: 14px 10px 80px; }
   .bento-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .cyber-dock-wrapper { bottom: 12px; max-width: calc(100vw - 16px); }
   .cyber-dock { padding: 6px 10px; gap: 4px; border-radius: 28px; }
   .dock-item { padding: 5px 8px; }
   .dock-label { font-size: 9.5px; }
-  .bento-dashboard { padding: 14px 10px; }
+  .page { padding: 18px 14px 84px; }
+  .alert-table-wrap { min-width: unset; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .alert-table-header, .alert-row { min-width: 600px; }
+  .tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .filters { flex-direction: column; align-items: stretch; gap: 10px; }
+  .filters label, .filters select, .filters input { width: 100%; }
 }
 
-@media (max-width: 650px) {
-  .main-content-docked { padding-bottom: 84px; }
-  .page { padding: 16px 12px; }
-  .page h1 { font-size: 20px; }
-  .kpis, .detail-grid, .case-grid { grid-template-columns: 1fr; }
-  .filters { display: grid; grid-template-columns: 1fr 1fr; }
-  .filters select { max-width: 100%; }
-  .login { grid-template-columns: 1fr; }
-  .login-intro { min-height: 260px; padding: 24px; }
-  .login h1 { font-size: 24px; }
-  .login-intro small { display: none; }
-  .login-panel { padding: 24px 16px; }
-  .dashboard-grid { display: block; }
-  .dashboard-grid > .panel { margin-bottom: 12px; }
-  .map.compact { height: 240px; }
+@media (max-width: 540px) {
+  .cyber-top-header { padding: 0 10px; height: 50px; }
+  .nav-brand { font-size: 12px; gap: 6px; }
+  .nav-brand .brand-name { font-size: 11.5px; }
+  .page { padding: 14px 10px 84px; }
+  .page h1 { font-size: 19px; }
+  .bento-dashboard { padding: 10px 6px 84px; }
+  .bento-banner h1 { font-size: 16px; }
+  .bento-banner-actions { flex-direction: column; align-items: stretch; }
+  .bento-banner-actions .btn, .timeframe-select-wrap select { width: 100%; justify-content: center; }
+  .bento-kpi-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .bento-kpi-tile { padding: 8px 10px; }
+  .kpi-val { font-size: 17px; }
+  .kpi-label { font-size: 8.5px; }
+  .kpis { grid-template-columns: 1fr; }
+  .risk-node-radial-chart { flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 4px; }
+  .radial-graphic-wrap { width: 180px; height: 180px; }
+  .radial-legend-list { width: 100%; }
+  .radial-legend-row { justify-content: space-between; }
+  .radial-legend-name { text-align: left; }
+  .cyber-dock { padding: 4px 6px; gap: 2px; border-radius: 24px; }
+  .dock-item { padding: 4px 5px; }
+  .dock-label { font-size: 7.5px; letter-spacing: -0.2px; }
+  .dock-icon-box svg { width: 14px; height: 14px; }
   .detail-hero { display: block; }
-  .metric-row { gap: 12px; }
+  .metric-row { gap: 10px; flex-direction: column; }
   .notes form { flex-wrap: wrap; }
 }
 
@@ -2034,3 +2056,4 @@ html.light .modal-backdrop {
     scroll-behavior: auto !important;
   }
 }
+

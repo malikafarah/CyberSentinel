@@ -179,7 +179,7 @@ export default function CasesPage() {
       ) : filteredCases.length === 0 ? (
         <Empty>No investigation cases found matching the criteria.</Empty>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '16px' }}>
           {filteredCases.map((c) => (
             <div
               key={c.id}
