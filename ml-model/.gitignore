@@ -9,7 +9,16 @@ venv/
 .venv/
 .pytest_cache/
 
-# Large Datasets
+# Large Datasets — do not commit generated data
+data/synthetic/*.csv
+data/processed/*.csv
+data/public/*.csv
+
+# Trained model artifacts — do not commit large binaries
+models/**/*.joblib
+models/**/*.pkl
+models/model.pkl
+models/.last_train_metadata.json
 
 # Node / Frontend
 node_modules/
