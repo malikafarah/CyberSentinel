@@ -1,0 +1,19 @@
+services:
+  # ─────────────────────────────────────────────
+  # CyberSentinel ML Microservice
+  # Deploy this on Render (free tier available)
+  # after deploying, paste the URL into Vercel as
+  # the ML_SERVICE_URL environment variable.
+  # ─────────────────────────────────────────────
+  - type: web
+    name: cybersentinel-ml
+    runtime: python
+    rootDir: ml-model
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.predictionapi:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: MONGODB_CONNECTION_STRING
+        sync: false   # Set this manually in Render dashboard
+      - key: MONGODB_DB_NAME
+        value: cybersentinel_db

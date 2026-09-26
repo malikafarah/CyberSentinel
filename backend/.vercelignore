@@ -1,0 +1,31 @@
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local secrets — never commit these
+.env
+
+# Test & scratch scripts — don't deploy to lambda
+tests/
+fix_*.py
+seed_db.py
+simulate_traffic.py
+test_*.py
+import_atms.py
+
+# Large data / model artifacts that don't fit Vercel's 50 MB lambda limit
+# (the ML model service is deployed separately on Render)
+../ml-model/

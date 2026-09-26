@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -50,15 +51,27 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:5175",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    # Production: set FRONTEND_URL env var in Vercel dashboard to your deployed URL
 ]
+
+# Allow the deployed frontend URL from env (e.g. https://cybersentinel.vercel.app)
+_frontend_url = os.getenv("FRONTEND_URL", "")
+if _frontend_url:
+    ALLOWED_ORIGINS.append(_frontend_url.rstrip("/"))
+
+# Allow all *.vercel.app preview URLs for PR previews
+CORS_ALLOW_ORIGIN_REGEX = r"https://.*\.vercel\.app"
+
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=CORS_ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 API_PREFIX = "/api/v1"
 app.include_router(auth_router, prefix=API_PREFIX)
